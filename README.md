@@ -1,0 +1,1 @@
+Spec-shaped, object-oriented SDK for working with SysML v2 and KerML models, generated from the OMG metamodel for Python, Java, JavaScript/TypeScript, C#, and C++, with direct kernel and interchange JSON backends.
