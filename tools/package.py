@@ -50,9 +50,10 @@ import third_party_notices  # noqa: E402
 VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
 # Wheel platform tags. The macOS ones match the deployment targets the libraries are built for
-# (MACOSX_DEPLOYMENT_TARGET in CI, which are also Rust's defaults for these targets).
+# (MACOSX_DEPLOYMENT_TARGET in CI, which are also Rust's defaults for these targets); the x86-64
+# Linux one matches the glibc the library is linked against in CI (2.28).
 PLATFORM_TAGS = {
-    "x86_64-unknown-linux-gnu": "linux_x86_64",
+    "x86_64-unknown-linux-gnu": "manylinux_2_28_x86_64",
     "aarch64-unknown-linux-gnu": "linux_aarch64",
     "aarch64-apple-darwin": "macosx_11_0_arm64",
     "x86_64-apple-darwin": "macosx_10_12_x86_64",

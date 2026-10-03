@@ -16,7 +16,7 @@ A model is read through one of two backends, with the same classes over both:
 Python 3.10 or newer. Download the wheel for your platform from the release and install it:
 
 ```sh
-pip install sysml-0.1.0-py3-none-win_amd64.whl        # or linux_x86_64, macosx_11_0_arm64, macosx_10_12_x86_64
+pip install sysml-0.1.0-py3-none-win_amd64.whl        # or manylinux_2_28_x86_64, macosx_11_0_arm64, macosx_10_12_x86_64
 ```
 
 The wheel carries the binding library; nothing else is needed. The same release has
