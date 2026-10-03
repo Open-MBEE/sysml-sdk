@@ -83,7 +83,7 @@ platform, and the standard library. The packages are not on the public registrie
 | Platform | Target | Wheel tag |
 |---|---|---|
 | Windows x64 | `x86_64-pc-windows-msvc` | `win_amd64` |
-| Linux x64 (glibc; built on Ubuntu 24.04) | `x86_64-unknown-linux-gnu` | `linux_x86_64` |
+| Linux x64 (glibc 2.28 or later) | `x86_64-unknown-linux-gnu` | `manylinux_2_28_x86_64` |
 | macOS, Apple silicon (11 or later) | `aarch64-apple-darwin` | `macosx_11_0_arm64` |
 | macOS, Intel (10.12 or later) | `x86_64-apple-darwin` | `macosx_10_12_x86_64` |
 | Anywhere JavaScript runs | `wasm32-unknown-unknown` | (in the npm package) |

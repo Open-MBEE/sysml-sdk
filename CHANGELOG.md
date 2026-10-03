@@ -119,7 +119,8 @@ A payload, and the SysML Toolkit's JSON export:
 Platforms and packages:
 
 - Java needs `--enable-preview` on JDK 21; from JDK 22 on it does not.
-- The Linux library is built on Ubuntu 24.04; older glibc versions are not tested.
+- The Linux library is linked against glibc 2.28, so it loads on distributions with glibc 2.28 or
+  later (for example RHEL 8, Debian 10, Ubuntu 20.04 and newer); CI tests it on Ubuntu 24.04.
 - The C++ package is tested with GCC on Linux and with Apple Clang on macOS in CI, and with MinGW GCC
   on Windows by hand.
 - On macOS a library downloaded through a web browser is quarantined; remove the attribute with
