@@ -1,0 +1,6 @@
+# Generated files are byte-compared in CI (drift check): everything text
+# is LF everywhere; vendored inputs and test payloads keep their exact
+# committed bytes (PIN.json hashes are newline-normalized separately).
+* text=auto eol=lf
+vendor/** -text
+data/** -text

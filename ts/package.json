@@ -1,0 +1,36 @@
+{
+  "name": "sysml",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "description": "Spec-shaped SysML v2 SDK: generated metaclass surface over the SysML Toolkit, or over interchange payloads",
+  "type": "module",
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.mjs"
+    }
+  },
+  "files": [
+    "index.mjs",
+    "index.d.ts",
+    "runtime.mjs",
+    "meta.mjs",
+    "classes.d.ts",
+    "toolkit.mjs",
+    "toolkit_table.mjs",
+    "sysmlv2_abi.wasm",
+    "LICENSE",
+    "NOTICE",
+    "THIRD-PARTY-NOTICES.txt",
+    "RUST-STANDARD-LIBRARY-NOTICES.html"
+  ],
+  "scripts": {
+    "test": "node demo.mjs && node conformance.generated.mjs",
+    "check": "tsc --noEmit --strict --skipLibCheck check_types.ts index.d.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

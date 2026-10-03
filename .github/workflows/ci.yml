@@ -1,0 +1,550 @@
+name: CI
+
+# Pushes to work branches build nothing; a pull request, a push to main or a release branch, a
+# version tag, or a run started by hand (Actions, "Run workflow") does.
+on:
+  push:
+    branches: [main, "release/**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # The payload path reads JSON that is generated, not committed: the SysML Toolkit's exports of
+  # the example models and the standard library as JSON (tools/export_example.py). This job makes
+  # them with the pinned SysML Toolkit release on one Linux runner, cached until the SysML Toolkit
+  # pin or anything that shapes them changes, and every job that reads payloads downloads them. A
+  # version tag also packages the library JSON as a release asset.
+  example-json:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sysml-sdk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: sysml-sdk
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Read the SysML Toolkit pin
+        id: pin
+        run: |
+          python - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          k = json.load(open("vendor/sysml-toolkit/PIN.json"))["toolkit"]
+          print("repository=" + k["repository"].removeprefix("https://github.com/"))
+          print("tag=" + k["tag"])
+          print("commit=" + k["commit"])
+          EOF
+      - name: Cached example JSON
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: sysml-sdk/example-json
+          key: example-json-${{ steps.pin.outputs.commit }}-${{ hashFiles('sysml-sdk/abi/Cargo.lock', 'sysml-sdk/abi/src/**', 'sysml-sdk/abi/examples/**', 'sysml-sdk/python/sysml/toolkit.py', 'sysml-sdk/tools/export_example.py', 'sysml-sdk/examples/**/*.sysml') }}
+      - uses: actions/checkout@v4
+        if: steps.cache.outputs.cache-hit != 'true' || startsWith(github.ref, 'refs/tags/v')
+        with:
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.tag }}
+          path: sysml-toolkit
+      - name: The SysML Toolkit checkout is the pinned commit, with the specification's library
+        if: steps.cache.outputs.cache-hit != 'true' || startsWith(github.ref, 'refs/tags/v')
+        run: |
+          test "$(git -C ../sysml-toolkit rev-parse HEAD)" = "${{ steps.pin.outputs.commit }}"
+          git -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
+      - name: Generate the example JSON with the SysML Toolkit
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          (cd abi && cargo build --release --locked)
+          python tools/export_example.py --library ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library
+          for f in examples/vehicle.full.json examples/queries/models/pumps.full.json \
+                   examples/queries/models/drones.full.json examples/sysml.library.full.json; do
+            mkdir -p "example-json/$(dirname "$f")"
+            cp "$f" "example-json/$f"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-json
+          path: sysml-sdk/example-json
+          retention-days: 7
+          if-no-files-found: error
+      - name: The library JSON as a release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: python tools/package_library.py example-json/examples/sysml.library.full.json --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --out "$RUNNER_TEMP/library"
+      - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: packages-library
+          path: ${{ runner.temp }}/library/*
+          if-no-files-found: error
+
+  generate-and-test:
+    needs: example-json
+    runs-on: ubuntu-latest
+    env:
+      SYSML_REQUIRE_EXAMPLE_JSON: "1"
+    steps:
+      - uses: actions/checkout@v4
+      # The generated example JSON, in place (see the example-json job).
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify vendored input pin
+        run: python tools/verify_pin.py
+
+      # The anti-drift gate: every generated artifact must be exactly what
+      # the checked-in metamodel.json (and pinned inputs) produce.
+      - name: Regenerate everything from pinned inputs
+        run: |
+          python tools/extract_metamodel.py
+          python tools/gen_toolkit_table.py
+          python tools/gen_toolkit_table_java.py
+          python tools/gen_toolkit_table_cs.py
+          python tools/gen_toolkit_table_cpp.py
+          python tools/gen_toolkit_table_js.py
+          python tools/gen_abi.py
+          python tools/gen_classes.py
+          python tools/gen_classes_ts.py
+          python tools/gen_classes_cs.py
+          python tools/gen_classes_java.py
+          python tools/gen_classes_cpp.py
+          python tools/gen_conformance.py
+
+      - name: Fail on drift
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::generated files drifted from checked-in state"
+            git status --porcelain
+            git diff
+            exit 1
+          fi
+
+      - name: Python tests + demo
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest -q
+          python python/demo.py
+          python examples/python/tutorial.py --payload
+          python examples/queries/python/demo.py --payload | diff - examples/queries/expected/report.txt
+
+      - name: TS tests + demo
+        run: |
+          node ts/demo.mjs
+          node ts/conformance.generated.mjs
+          node examples/typescript/tutorial.mjs
+          node examples/queries/typescript/demo.mjs --payload | diff - examples/queries/expected/report.txt
+          node ts/toolkit_checks.mjs
+
+      - name: TS strict type check
+        working-directory: ts
+        run: npx -y -p typescript tsc --noEmit --strict --skipLibCheck check_types.ts index.d.ts
+
+  csharp:
+    needs: example-json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The generated example JSON, in place (see the example-json job).
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-json
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build and run C# conformance + smoke
+        run: dotnet run --project csharp/OpenMBEE.SysML.Checks -c Release
+      - name: C# query example on the payload
+        run: |
+          dotnet build examples/queries/csharp -c Release
+          dotnet run --no-build -c Release --project examples/queries/csharp -- --payload | diff - examples/queries/expected/report.txt
+
+  java:
+    needs: example-json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The generated example JSON, in place (see the example-json job).
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Build and run Java conformance + smoke
+        run: |
+          javac --enable-preview --release 21 -d /tmp/java-out $(find java/src -name '*.java')
+          java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.Checks
+          java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.ToolkitChecks
+          javac --enable-preview --release 21 -cp /tmp/java-out -d /tmp/java-out examples/queries/java/*.java
+          java --enable-preview -cp /tmp/java-out QueriesDemo --payload | diff - examples/queries/expected/report.txt
+
+  cpp:
+    needs: example-json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The generated example JSON, in place (see the example-json job).
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-json
+      - name: Build and run C++ conformance + smoke
+        run: |
+          g++ -std=c++17 -Wall -Werror -O0 -I cpp/include -I vendor \
+            cpp/checks/checks.cpp cpp/checks/conformance.g.cpp -o /tmp/cpp-checks
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/toolkit_checks.cpp -o /tmp/cpp-toolkit-checks && /tmp/cpp-toolkit-checks
+          /tmp/cpp-checks
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/queries/cpp/demo.cpp -o /tmp/queries-demo -ldl
+          /tmp/queries-demo --payload | diff - examples/queries/expected/report.txt
+
+  # The SysML Toolkit path on every platform: build the binding library against the pinned
+  # SysML Toolkit release and run every language through it. SYSML_REQUIRE_TOOLKIT makes a
+  # SysML Toolkit check that would skip itself fail instead, so this job cannot pass without
+  # exercising the SysML Toolkit.
+  toolkit:
+    name: toolkit (${{ matrix.target }})
+    needs: example-json
+    # Four platforms, two of them macOS, cost many runner minutes: this job runs for a version tag,
+    # on main, and when started by hand (Actions, "Run workflow"), not on every push.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            deployment: "11.0"
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            deployment: "10.12"
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    env:
+      SYSML_REQUIRE_TOOLKIT: "1"
+      SYSML_REQUIRE_EXAMPLE_JSON: "1"
+      # The oldest macOS the library supports; the wheel's platform tag says the same.
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: sysml-sdk
+    steps:
+      # The binding library depends on the SysML Toolkit by the relative path ../../sysml-toolkit,
+      # so the two checkouts sit side by side.
+      - uses: actions/checkout@v4
+        with:
+          path: sysml-sdk
+      # The generated example JSON, in place (see the example-json job).
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-json
+          path: sysml-sdk
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Read the SysML Toolkit pin
+        id: pin
+        run: |
+          python - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          k = json.load(open("vendor/sysml-toolkit/PIN.json"))["toolkit"]
+          print("repository=" + k["repository"].removeprefix("https://github.com/"))
+          print("tag=" + k["tag"])
+          print("commit=" + k["commit"])
+          EOF
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.tag }}
+          path: sysml-toolkit
+      - name: The SysML Toolkit checkout is the pinned commit
+        run: test "$(git -C ../sysml-toolkit rev-parse HEAD)" = "${{ steps.pin.outputs.commit }}"
+
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustc -vV | grep -x "host: ${{ matrix.target }}"
+      - name: Build the binding library
+        working-directory: sysml-sdk/abi
+        run: cargo build --release --locked
+
+      # The Annex A regression test reads the specification's example model and standard library
+      # from the SysML Toolkit's SysML-v2-Release submodule; one runner fetches it.
+      - name: The specification's example model and library
+        if: runner.os == 'Linux'
+        run: git -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
+
+      - name: Python through the SysML Toolkit
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest -q
+          python examples/python/tutorial.py
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      # The query reports through the SysML Toolkit: tools/compare_report.py accepts a report the
+      # SysML Toolkit stopped only where toolkit_gaps.py (TOOLKIT_REPORT_REFUSALS) expects that
+      # refusal, and only when what it printed before stopping matches the expected report.
+      - name: Java through the SysML Toolkit
+        run: |
+          out="$RUNNER_TEMP/java-out"
+          javac --enable-preview --release 21 -d "$out" $(find java/src -name '*.java')
+          java --enable-preview -cp "$out" org.openmbee.sysml.checks.ToolkitChecks
+          javac --enable-preview --release 21 -cp "$out" -d "$out" examples/java/Tutorial.java
+          java --enable-preview -cp "$out" Tutorial --toolkit
+          javac --enable-preview --release 21 -cp "$out" -d "$out" examples/queries/java/*.java
+          queries() { java --enable-preview -cp "$out" QueriesDemo "$@" | tr -d '\r'; }
+          queries | python tools/compare_report.py examples/queries/expected/report.txt
+          R=../sysml-toolkit/spec-refs/SysML-v2-Release
+          if [ -d "$R/sysml.library" ]; then
+            queries --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/report.txt
+            queries --annex-a "$R/sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml" --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/annex-a.txt
+          fi
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: C# through the SysML Toolkit
+        run: |
+          dotnet run --project csharp/OpenMBEE.SysML.Checks -c Release
+          dotnet run --project examples/csharp -- --toolkit
+          dotnet build examples/queries/csharp -c Release
+          queries() { dotnet run --no-build -c Release --project examples/queries/csharp -- "$@" | tr -d '\r'; }
+          queries | python tools/compare_report.py examples/queries/expected/report.txt
+          R=../sysml-toolkit/spec-refs/SysML-v2-Release
+          if [ -d "$R/sysml.library" ]; then
+            queries --annex-a "$R/sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml" --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/annex-a.txt
+          fi
+
+      # C++ on Windows stays a local check (MinGW); the runner's compilers are not set up for it.
+      - name: C++ through the SysML Toolkit
+        if: runner.os != 'Windows'
+        run: |
+          out="$RUNNER_TEMP/cpp-out"
+          mkdir -p "$out"
+          c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/toolkit_checks.cpp -o "$out/toolkit_checks" -ldl
+          "$out/toolkit_checks"
+          c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/cpp/tutorial.cpp -o "$out/tutorial" -ldl
+          "$out/tutorial" --toolkit
+          c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/queries/cpp/demo.cpp -o "$out/queries" -ldl
+          "$out/queries" | python tools/compare_report.py examples/queries/expected/report.txt
+          R=../sysml-toolkit/spec-refs/SysML-v2-Release
+          if [ -d "$R/sysml.library" ]; then
+            "$out/queries" --annex-a "$R/sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml" --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/annex-a.txt
+          fi
+
+      # The WebAssembly build is the same on every platform; one runner builds and checks it.
+      - uses: actions/setup-node@v4
+        if: runner.os == 'Linux'
+        with:
+          node-version: "22"
+      - name: WebAssembly build, and JavaScript through the SysML Toolkit
+        if: runner.os == 'Linux'
+        run: |
+          rustup target add wasm32-unknown-unknown
+          (cd abi && cargo build --release --locked --target wasm32-unknown-unknown)
+          node ts/toolkit_checks.mjs
+          node examples/typescript/tutorial.mjs --toolkit
+          node examples/queries/typescript/demo.mjs | python tools/compare_report.py examples/queries/expected/report.txt
+          R=../sysml-toolkit/spec-refs/SysML-v2-Release
+          node examples/queries/typescript/demo.mjs --annex-a "$R/sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml" --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/annex-a.txt
+
+      - name: Package the binding library
+        run: |
+          python tools/package_abi.py ${{ matrix.target }} --out "$RUNNER_TEMP/dist"
+          if [ "$RUNNER_OS" = Linux ]; then
+            python tools/package_abi.py wasm32-unknown-unknown --out "$RUNNER_TEMP/dist"
+          fi
+
+      - name: Python wheel for this platform, installed and read through
+        run: |
+          python -m pip install --quiet build wheel
+          python tools/package.py python --target ${{ matrix.target }} --out "$RUNNER_TEMP/dist"
+          python tools/check_packages.py python --dist "$RUNNER_TEMP/dist"
+
+      # Packages that are the same on every platform and carry no native library: built and checked
+      # once. The jar, the NuGet package and the C++ archive carry every platform's binding library,
+      # so they are built in the portable job, from the archives of all four.
+      - name: The sdist and the npm package, installed and read through
+        if: runner.os == 'Linux'
+        run: |
+          python tools/package.py sdist --out "$RUNNER_TEMP/dist"
+          python tools/package.py npm --out "$RUNNER_TEMP/dist"
+          python tools/check_packages.py npm --dist "$RUNNER_TEMP/dist"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.target }}
+          path: ${{ runner.temp }}/dist/*
+          if-no-files-found: error
+
+  # The jar, the NuGet package and the C++ archive, each carrying the binding library of all four
+  # platforms: built once, from the binding library archives the SysML Toolkit job made on each.
+  portable:
+    needs: toolkit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # JDK 25 compiles the SysML Toolkit backend for JDK 22 and later in the multi-release jar;
+      # JDK 21, installed last, stays the default.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          path: ${{ runner.temp }}/abi
+          merge-multiple: true
+      - name: Jar, NuGet package and C++ archive, with every platform's binding library
+        run: |
+          python tools/package.py java --javac22 "$JAVA_HOME_25_X64/bin/javac" --abi-archives "$RUNNER_TEMP/abi" --out "$RUNNER_TEMP/dist"
+          python tools/package.py csharp --abi-archives "$RUNNER_TEMP/abi" --out "$RUNNER_TEMP/dist"
+          python tools/package.py cpp --abi-archives "$RUNNER_TEMP/abi" --out "$RUNNER_TEMP/dist"
+          python - <<'EOF'
+          import glob, os, sys, zipfile
+          libs = ("sysmlv2_abi.dll", "libsysmlv2_abi.so", "libsysmlv2_abi.dylib")
+          dist = os.environ["RUNNER_TEMP"] + "/dist"
+          for f in sorted(glob.glob(dist + "/*")):
+              if f.endswith("-sources.jar"):
+                  continue
+              n = sum(1 for e in zipfile.ZipFile(f).namelist() if e.rsplit("/", 1)[-1] in libs)
+              print(os.path.basename(f), "carries", n, "binding libraries")
+              if n != 4:
+                  sys.exit(f"{f}: expected the binding library of four platforms")
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-portable
+          path: ${{ runner.temp }}/dist/*
+          if-no-files-found: error
+
+  # Every platform installs the portable packages and reads through the binding library they
+  # carry, with SYSMLV2_ABI unset (check_packages.py --bundled), as a user of the release does.
+  portable-check:
+    name: portable packages (${{ matrix.os }})
+    needs: [example-json, portable]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      SYSML_REQUIRE_EXAMPLE_JSON: "1"
+    defaults:
+      run:
+        shell: bash
+        working-directory: sysml-sdk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: sysml-sdk
+      - uses: actions/download-artifact@v4
+        with:
+          name: example-json
+          path: sysml-sdk
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-portable
+          path: ${{ runner.temp }}/dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # The guides read the standard library from the SysML Toolkit's SysML-v2-Release submodule.
+      - name: Read the SysML Toolkit pin
+        id: pin
+        run: |
+          python - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          k = json.load(open("vendor/sysml-toolkit/PIN.json"))["toolkit"]
+          print("repository=" + k["repository"].removeprefix("https://github.com/"))
+          print("tag=" + k["tag"])
+          EOF
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.tag }}
+          path: sysml-toolkit
+      - name: The specification's library
+        run: git -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
+      - uses: actions/setup-java@v4
+        if: runner.os == 'Linux'
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      # C++ on Windows stays a local check (MinGW); the runner's compilers are not set up for it.
+      - name: Jar, NuGet package and C++ archive, through the binding library they carry
+        run: |
+          python tools/check_packages.py java --dist "$RUNNER_TEMP/dist" --bundled
+          if [ "$RUNNER_OS" = Linux ]; then
+            python tools/check_packages.py java --dist "$RUNNER_TEMP/dist" --bundled --java-home "$JAVA_HOME_25_X64"
+          fi
+          python tools/check_packages.py csharp --dist "$RUNNER_TEMP/dist" --bundled
+          if [ "$RUNNER_OS" != Windows ]; then
+            python tools/check_packages.py cpp --dist "$RUNNER_TEMP/dist" --bundled
+          fi
+
+  # A version tag publishes a draft release with every package and the changelog section as its
+  # notes; the draft is made public by hand. A tag with a suffix (v0.1.0-rc1) is a prerelease.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [example-json, generate-and-test, csharp, java, cpp, toolkit, portable, portable-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: The packages carry the tag's version, and the changelog has its section
+        run: python tools/release_notes.py "$GITHUB_REF_NAME" > "$RUNNER_TEMP/notes.md"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          path: ${{ runner.temp }}/dist
+          merge-multiple: true
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/dist/* --draft $prerelease --title "sysml-sdk ${GITHUB_REF_NAME#v}" --notes-file "$RUNNER_TEMP/notes.md"

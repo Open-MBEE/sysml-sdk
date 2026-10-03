@@ -1,0 +1,57 @@
+declaring_class,member,rust_fn,kind,current_accessor,fidelity,note
+AnnotatingElement,annotatedElement,annotating_element_annotated_element,property,annotated_elements,approximate,explicit about targets only; implicit owner target not included
+Behavior,parameter,behavior_parameter,property,calc_params,approximate,"returns declared parameter NAMES as strings, not Feature elements"
+Connector,relatedFeature,connector_related_feature,property,connector_end_targets,approximate,"feature chains per end, not plain features"
+Dependency,client,dependency_client,property,dependency_ends,approximate,first half of the returned pair
+Dependency,supplier,dependency_supplier,property,dependency_ends,approximate,second half of the returned pair
+Element,declaredName,element_declared_name,property,element_name,exact,"doc: ""the element's declared name"""
+Element,declaredShortName,element_declared_short_name,property,element_short_name,exact,"doc: ""declared short name"""
+Element,documentation,element_documentation,property,element_docs,approximate,"returns (name, body) strings, not Documentation elements"
+Element,effectiveName,element_effective_name,operation,derived(name),exact,"operation; the specification defines the derived name as effectiveName(), and the SysML Toolkit computes name"
+Element,effectiveShortName,element_effective_short_name,operation,derived(shortName),exact,"operation; the specification defines the derived shortName as effectiveShortName(), and the SysML Toolkit computes shortName"
+Element,elementId,element_element_id,property,element_id,exact,"doc: interchange @id, deterministic UUIDv5"
+Element,isLibraryElement,element_is_library_element,property,is_library_element,exact,doc: belongs to a loaded library unit
+Element,name,element_name,property,element_effective_name,approximate,"spec name is derived; effective-name accessor is the closest, confirm"
+Element,ownedAnnotation,element_owned_annotation,property,metadata_of,approximate,prefix metadata only; comments and docs arrive via element_docs
+Element,owner,element_owner,property,owner,exact,doc names it; relationship elements answer their carrier
+Element,qualifiedName,element_qualified_name,property,element_qualified_name,exact,doc: names joined with :: from document root
+Element,shortName,element_short_name,property,element_short_name,approximate,"returns the DECLARED short name, not the derived one"
+Feature,direction,feature_direction,property,declared_direction,approximate,"declared direction only, not the derived effective one"
+Feature,isComposite,feature_is_composite,property,is_composite,exact,doc: the serialized isComposite
+Feature,isOrdered,feature_is_ordered,property,is_ordered,exact,doc: declared ordered
+Feature,isUnique,feature_is_unique,property,is_unique,exact,doc: declared uniqueness
+Feature,ownedRedefinition,feature_owned_redefinition,property,redefinition_targets,approximate,"returns the redefined Features, not the Redefinition relationships"
+Feature,type,feature_type,property,typings,approximate,explicit FeatureTyping targets only; spec type includes inherited
+Function,result,function_result,property,calc_return_param,approximate,"the declared return parameter, when present"
+Import,isRecursive,import_is_recursive,property,import_details,approximate,the recursive flag of the tuple
+Import,visibility,import_visibility,property,import_details,approximate,"one field of a tuple, per owned import relationship"
+Membership,memberElement,membership_member_element,property,membership_member,exact,doc: the member a Membership binds
+Membership,memberName,membership_member_name,property,membership_member_name,exact,doc matches the spec derivation incl. alias name
+Membership,visibility,membership_visibility,property,member_visibility,approximate,"takes the member element, not the Membership"
+Namespace,importedMembership,namespace_imported_membership,property,import_targets,approximate,"returns resolved target elements, not Membership handles"
+Namespace,ownedMember,namespace_owned_member,property,owned_members,exact,doc names KerML Namespace::ownedMember
+Namespace,resolve,namespace_resolve,operation,resolve_qualified,refused,"operation; returns a Membership in the specification, and resolves relative to this namespace; the accessor answers an element from the model root. Refused until the SysML Toolkit has an operation entry point"
+Namespace,resolveLocal,namespace_resolve_local,operation,owned_member,refused,operation; returns a Membership in the specification; the accessor answers an owned member element. Refused until the SysML Toolkit has an operation entry point
+OccurrenceUsage,portionKind,occurrence_usage_portion_kind,property,portion_kind,exact,doc: declared portion kind
+ReferenceSubsetting,referencedFeature,reference_subsetting_referenced_feature,property,referenced_features,approximate,"one chain per relationship, links first to last"
+StateDefinition,doAction,state_definition_do_action,property,state_subactions,approximate,"filter on ""do"""
+StateDefinition,entryAction,state_definition_entry_action,property,state_subactions,approximate,"filter the returned (kind, action) pairs on ""entry"""
+StateDefinition,exitAction,state_definition_exit_action,property,state_subactions,approximate,"filter on ""exit"""
+StateUsage,doAction,state_usage_do_action,property,state_subactions,approximate,"filter on ""do"""
+StateUsage,entryAction,state_usage_entry_action,property,state_subactions,approximate,"filter on ""entry"""
+StateUsage,exitAction,state_usage_exit_action,property,state_subactions,approximate,"filter on ""exit"""
+TransitionUsage,effectAction,transition_usage_effect_action,property,transition_parts,approximate,one field of the struct
+TransitionUsage,guardExpression,transition_usage_guard_expression,property,transition_parts,approximate,one field of the struct
+TransitionUsage,source,transition_usage_source,property,transition_parts,approximate,one field of the TransitionParts struct
+TransitionUsage,target,transition_usage_target,property,transition_parts,approximate,one field of the struct
+TransitionUsage,triggerAction,transition_usage_trigger_action,property,transition_parts,approximate,one field of the struct
+Type,feature,type_feature,property,effective_features,approximate,owned plus inherited with shadowing applied; spec feature does not shadow
+Type,inheritedFeature,type_inherited_feature,property,inherited_features,exact,doc names KerML Type::inheritedFeature
+Type,inheritedMembership,type_inherited_membership,property,inherited_memberships,exact,doc names the normative operation; returns Membership handles
+Type,inheritedMemberships,type_inherited_memberships,operation,inherited_memberships,exact,"operation; answered only when both excluded lists are empty, refused otherwise: the SysML Toolkit does not take the excluded parameters"
+Type,isCompatibleWith,type_is_compatible_with,operation,conforms,refused,operation; implied library bases are not walked. Refused until the SysML Toolkit has an operation entry point
+Type,ownedFeature,type_owned_feature,property,owned_features,exact,doc names KerML Type::ownedFeature
+Type,ownedSpecialization,type_owned_specialization,property,explicit_specializations,approximate,"returns (relationship metaclass, target) pairs, not Specialization elements"
+Type,supertypes,type_supertypes,operation,explicit_supertypes,refused,"operation; explicit edges only, implied bases and conjugation not considered. Refused until the SysML Toolkit has an operation entry point"
+ViewUsage,exposedElement,view_usage_exposed_element,property,view_exposed_elements,exact,doc matches: members visible through expose imports under filters
+Comment,body,comment_body,property,annotation_notes,exact,matched on the annotating element handle across the user-unit notes; library comments not covered

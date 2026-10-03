@@ -1,0 +1,10 @@
+{
+  "source": "the naming table of the binding library",
+  "sourceCommit": "932d4b995cacaa93c9b49a659e8e8783bd0246ff",
+  "vendoredDate": "2026-10-01",
+  "files": {
+    "toolkit-api-names.csv": "3f9b7564be50625bf64b6d5b8f8959ad9b0ca10a64c6b56ce5b1c84b6d2cd351",
+    "toolkit-delegation-map.csv": "f769720457a89fbe21153464a75118dac568e1d03f1ceb2e038f3ccaa985780c"
+  },
+  "hashAlgorithm": "sha256 over LF-normalized bytes (CRLF -> LF)"
+}

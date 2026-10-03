@@ -1,0 +1,29 @@
+== Reachable states: SimpleVehicleModel::Definitions::PartDefinitions::Vehicle::vehicleStates ==
+8 states, 9 transitions:
+  operatingStates::initial -> operatingStates::off
+  operatingStates::off -> operatingStates::starting on IgnitionCmd if (ignitionCmd.ignitionOnOff == IgnitionOnOff::on) and brakePedalDepressed
+  operatingStates::starting -> operatingStates::on on VehicleOnSignal
+  operatingStates::on -> operatingStates::off on VehicleOffSignal
+  healthStates::initial -> healthStates::normal
+  healthStates::normal -> healthStates::maintenance on at maintenanceTime
+  healthStates::normal -> healthStates::degraded on when senseTemperature.temp > Tmax
+  healthStates::maintenance -> healthStates::normal on ReturnToNormal
+  healthStates::degraded -> healthStates::normal on ReturnToNormal
+A: nothing bound, every trigger
+  reachable (8): operatingStates, operatingStates::off, operatingStates::starting, operatingStates::on, healthStates, healthStates::normal, healthStates::maintenance, healthStates::degraded
+  unreachable (0): -
+B: brakePedalDepressed = false
+  reachable (6): operatingStates, operatingStates::off, healthStates, healthStates::normal, healthStates::maintenance, healthStates::degraded
+  unreachable (2): operatingStates::starting, operatingStates::on
+C: only IgnitionCmd, VehicleOnSignal, VehicleOffSignal, when, ReturnToNormal
+  reachable (7): operatingStates, operatingStates::off, operatingStates::starting, operatingStates::on, healthStates, healthStates::normal, healthStates::degraded
+  unreachable (1): healthStates::maintenance
+shortest trigger sequences (nothing bound, every trigger):
+  operatingStates            (no trigger)
+  operatingStates::off       (no trigger)
+  operatingStates::starting  IgnitionCmd
+  operatingStates::on        IgnitionCmd, VehicleOnSignal
+  healthStates               (no trigger)
+  healthStates::normal       (no trigger)
+  healthStates::maintenance  at maintenanceTime
+  healthStates::degraded     when senseTemperature.temp > Tmax
