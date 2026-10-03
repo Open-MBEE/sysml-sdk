@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sysml"
+version = "0.1.0"
+description = "Spec-shaped SysML v2 SDK: generated metaclass surface over the SysML Toolkit, or over interchange payloads"
+requires-python = ">=3.10"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["sysml"]
+package-dir = {"" = "python"}
+
+# A platform wheel carries the binding library in _native/ (tools/package.py puts it there).
+[tool.setuptools.package-data]
+sysml = ["*.pyi", "_native/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
+pythonpath = ["python"]

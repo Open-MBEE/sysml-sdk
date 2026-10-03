@@ -1,0 +1,18 @@
+[package]
+name = "sysmlv2-abi"
+version = "0.1.0"
+edition = "2021"
+description = "C ABI over the SysML Toolkit: one function per specification member, read-only"
+license = "Apache-2.0"
+publish = false
+
+# The SysML Toolkit's repository is checked out beside this one, as `sysml-toolkit`. If its
+# crates are published, these become plain version requirements. See README.md.
+[dependencies]
+sysmlv2-model = { path = "../../sysml-toolkit/crates/sysmlv2-model" }
+sysmlv2-transform = { path = "../../sysml-toolkit/crates/sysmlv2-transform" }
+serde_json = "1"
+
+[lib]
+name = "sysmlv2_abi"
+crate-type = ["cdylib", "rlib"]

@@ -1,0 +1,19 @@
+{
+  "source": "sysml-toolkit (development tree)",
+  "sourceCommit": "69e44d72e54126157fbd4e473f9e4f97ffdf7a07",
+  "sourceWorkingTreeDirty": true,
+  "vendoredDate": "2026-08-14",
+  "files": {
+    "spec-refs/KerML.xmi": "45b18775afe2b2fcdc70e24f37c6d2f344defcc3f38a02075a193354e2d7b466",
+    "spec-refs/SysML.xmi": "caa65d54f56798bf7582d173f7567e1eea37a49c45984f8bd7df145011cf8c6f",
+    "crates/sysmlv2-model/src/schema_props.rs": "c06842d1a95658116519b11bac2a3c2f0efde5e11ae6238102fa46b2dd534da9",
+    "crates/sysmlv2-testkit/src/xmi_props.rs": "bb0cb8e43d0f32e3a2547fe0fc077f260607dab61655a9110cdd3c55d0738ead"
+  },
+  "hashAlgorithm": "sha256 over LF-normalized bytes (CRLF -> LF)",
+  "toolkit": {
+    "purpose": "the SysML Toolkit release the binding library (abi/) is built and tested against",
+    "repository": "https://github.com/Open-MBEE/sysml-toolkit",
+    "tag": "v0.10.0",
+    "commit": "af10d06e9a2ab5a1eafac6f5296004d2c34c6d79"
+  }
+}

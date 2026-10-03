@@ -1,0 +1,73 @@
+== Reachable states: Pumps::PumpController::modes ==
+9 states, 10 transitions:
+  initial state: off
+  initial state in operating: operating::idle
+  initial state in operating::pumping: operating::pumping::low
+  off -> starting on PowerOn
+  starting -> operating on SelfTestDone if selfTestPassed and (temperature < maxTemperature)
+  starting -> fault on SelfTestDone if not selfTestPassed
+  operating -> off on PowerOff
+  operating -> fault on Overheat
+  fault -> off on Reset
+  operating::idle -> operating::pumping on Start
+  operating::pumping -> operating::idle on Stop
+  operating::pumping::low -> operating::pumping::high on Boost
+  operating::pumping::high -> operating::pumping::low on Relax
+A: nothing bound, every trigger
+  reachable (8): off, starting, operating, operating::idle, operating::pumping, operating::pumping::low, operating::pumping::high, fault
+  unreachable (1): calibration
+B: selfTestPassed = true, temperature = 25
+  reachable (8): off, starting, operating, operating::idle, operating::pumping, operating::pumping::low, operating::pumping::high, fault
+  unreachable (1): calibration
+C: selfTestPassed = false
+  reachable (3): off, starting, fault
+  unreachable (6): operating, operating::idle, operating::pumping, operating::pumping::low, operating::pumping::high, calibration
+D: selfTestPassed = true, temperature = 95
+  reachable (2): off, starting
+  unreachable (7): operating, operating::idle, operating::pumping, operating::pumping::low, operating::pumping::high, fault, calibration
+E: selfTestPassed = true, temperature = 25, maxTemperature = 20
+  reachable (2): off, starting
+  unreachable (7): operating, operating::idle, operating::pumping, operating::pumping::low, operating::pumping::high, fault, calibration
+F: only PowerOn, SelfTestDone, Start; selfTestPassed = true, temperature = 25
+  reachable (6): off, starting, operating, operating::idle, operating::pumping, operating::pumping::low
+  unreachable (3): operating::pumping::high, fault, calibration
+shortest trigger sequences (selfTestPassed = true, temperature = 25):
+  off                       (no trigger)
+  starting                  PowerOn
+  operating                 PowerOn, SelfTestDone
+  operating::idle           PowerOn, SelfTestDone
+  operating::pumping        PowerOn, SelfTestDone, Start
+  operating::pumping::low   PowerOn, SelfTestDone, Start
+  operating::pumping::high  PowerOn, SelfTestDone, Start, Boost
+  fault                     PowerOn, SelfTestDone, Overheat
+  calibration               unreachable
+
+== Structure: bills of materials and roll-ups ==
+Drones::Quadcopter
+  parts: Battery 1, Cell 6, FlightController 1, Frame 1, Motor 4, Propeller 4, Rotor 4
+  mass 0.595, cost 143
+Drones::Hexacopter
+  parts: Battery 1, Cell 6, FlightController 1, Frame 1, Motor 6, Propeller 6, Rotor 6
+  mass 0.675, cost 171
+Drones::CargoHexacopter
+  parts: Battery 1, Cell 8, FlightController 1, Frame 1, Motor 6, PayloadBay 1, Propeller 6, Rotor 6
+  mass 0.815, cost 185
+
+== Connectivity: Drones::Quadcopter ==
+  battery -- controller  (connection supply)
+  battery -> rotors.motor  (flow powerFeed of Power)
+  controller -> rotors.motor  (flow commands of Command)
+  rotors.motor -- rotors.propeller  (connection drive)
+from battery: controller, rotors.motor, rotors.propeller
+from battery, through Power flows only: rotors.motor
+from controller: battery, rotors.motor, rotors.propeller
+from controller, through Command flows only: rotors.motor
+from rotors.propeller: rotors.motor
+
+== Requirements ==
+scoutMass : MassLimit, satisfied by scout
+  massBound: vehicle.totalMass <= limit  [0.595 <= 0.6]  holds
+haulerMass : MassLimit, satisfied by hauler
+  massBound: vehicle.totalMass <= limit  [0.815 <= 0.9]  holds
+haulerCost : CostLimit, satisfied by hauler
+  costBound: vehicle.totalCost <= budget  [185 <= 150]  VIOLATED

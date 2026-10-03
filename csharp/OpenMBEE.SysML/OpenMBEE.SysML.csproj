@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>OpenMBEE.SysML</RootNamespace>
+    <Description>Spec-shaped SysML v2 SDK: generated metaclass surface over the SysML Toolkit, or over interchange payloads</Description>
+    <Version>0.1.0</Version>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>SysML;SysMLv2;KerML;MBSE</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\..\NOTICE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- The binding library per platform, and the notices of what it compiles in, when
+       tools/package.py stages them here for a release package. -->
+  <ItemGroup>
+    <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />
+    <None Include="THIRD-PARTY\**\*" Pack="true" PackagePath="THIRD-PARTY\" />
+  </ItemGroup>
+
+</Project>
