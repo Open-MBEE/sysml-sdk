@@ -13,16 +13,39 @@ A model is read through one of two backends, with the same classes over both:
 
 ## Install
 
-Python 3.10 or newer. Download the wheel for your platform from the release and install it:
+Python 3.10 or newer:
 
 ```sh
-pip install sysml-0.1.0-py3-none-win_amd64.whl        # or manylinux_2_28_x86_64, macosx_11_0_arm64, macosx_10_12_x86_64
+pip install sysml
 ```
 
-The wheel carries the binding library; nothing else is needed. The same release has
-`sysml_library-0.1.0.zip`, the standard library. Unpack it anywhere: it holds `sysml.library/`
-(the library's models, for the SysML Toolkit) and `sysml.library.full.json` (the same library as
-JSON, for payloads).
+The wheels (Windows x64, Linux x64 with glibc 2.28 or later, macOS on Apple silicon and on Intel)
+carry the binding library and the standard library models; nothing else is needed. The release has
+the same wheels to install from a file (`pip install sysml-0.1.0-py3-none-win_amd64.whl`, or
+`manylinux_2_28_x86_64`, `macosx_11_0_arm64`, `macosx_10_12_x86_64`). On other platforms pip installs
+the source distribution, which reads payloads only.
+
+## First: the standard library
+
+Most models refer to the KerML and SysML standard library: `ScalarValues::Real`, `ISQ::mass`, and
+implicitly `Parts::parts` and the like. Get it once, at the start of your program, in the form your
+backend reads:
+
+```python
+from sysml import standard_library, standard_library_json
+
+library_dir = standard_library()          # the library's models the wheel carries, for the SysML Toolkit
+library_json = standard_library_json()    # the library as JSON, for payloads
+```
+
+- `standard_library_json()` downloads the JSON (about 11 MB) from this version's GitHub release on
+  its first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your
+  user cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache.
+  Nothing is downloaded unless you call it.
+- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+  `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
+  the same models the wheel carries.
+- The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
 
 ## Read a model through the SysML Toolkit
 
@@ -30,22 +53,21 @@ Copy this, and put in your file names:
 
 <!-- test: toolkit -->
 ```python
-from sysml import Model, NotImplementedInToolkit, UnresolvedReference
+from sysml import Model, NotImplementedInToolkit, UnresolvedReference, standard_library
 from sysml.classes import *
 
 model = Model.from_toolkit(
-    "model.sysml",                  # your model: one or more .sysml / .kerml files
-    library_dir="sysml.library",    # the standard library, from sysml_library-0.1.0.zip
+    "model.sysml",                      # your model: one or more .sysml / .kerml files
+    library_dir=standard_library(),     # the standard library
 )
 
 # ... your code here ...
 ```
 
-- A model in several files: pass them all, `Model.from_toolkit("a.sysml", "b.sysml")`.
+- A model in several files: pass them all, `Model.from_toolkit("a.sysml", "b.sysml", library_dir=...)`.
 - Text you already hold in memory: `Model.from_toolkit(sources={"model.sysml": text}, library_dir=...)`.
 - Without `library_dir` the model loads faster, but its references into the standard library
-  (`ScalarValues::Real`, `ISQ::mass`, and the implicit ones such as `Parts::parts`) do not resolve,
-  and reading one raises `UnresolvedReference`.
+  do not resolve, and reading one raises `UnresolvedReference`.
 - `SYSMLV2_ABI=<path to sysmlv2_abi library>` makes the SDK use another build of the binding
   library than the wheel's.
 
@@ -60,11 +82,11 @@ v2 tools. Its references into the standard library resolve against the library J
 ```python
 import json
 
-from sysml import Model, NotImplementedInToolkit, PayloadLibrary, UnresolvedReference
+from sysml import Model, NotImplementedInToolkit, PayloadLibrary, UnresolvedReference, standard_library_json
 from sysml.classes import *
 
-with open("sysml.library.full.json", encoding="utf-8") as f:
-    library = PayloadLibrary(json.load(f))    # from sysml_library-0.1.0.zip; read once, share it
+with open(standard_library_json(), encoding="utf-8") as f:
+    library = PayloadLibrary(json.load(f))    # the standard library; read once, share it
 with open("model.json", encoding="utf-8") as f:
     model = Model.from_full_json(json.load(f), library=library)    # your export
 
@@ -164,7 +186,7 @@ tool does):
 ```python
 from sysml.toolkit import ToolkitBackend
 
-backend = ToolkitBackend.open(["model.sysml"], library_dir="sysml.library")
+backend = ToolkitBackend.open(["model.sysml"], library_dir=standard_library())
 with open("model.full.json", "w", encoding="utf-8") as f:
     f.write(backend.full_json())
 exported = Model(backend)                                      # the same session, as a model

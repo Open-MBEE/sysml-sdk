@@ -9,6 +9,7 @@ var root = FindRepoRoot();
 Conformance.Run(Path.Combine(root, "metamodel.json"));
 RunSmoke(Path.Combine(root, "data", "bigger.full.json"));
 CheckPayloadLibrary();
+LibraryChecks.Run();
 Console.WriteLine();
 ToolkitChecks.RunIfAvailable();
 Console.WriteLine("ALL C#-BACKEND SMOKE TESTS PASSED");

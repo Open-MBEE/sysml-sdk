@@ -21,12 +21,28 @@ described below, or report them.
 ## Setup
 
 ```sh
-pip install sysml-0.1.0-py3-none-<platform>.whl   # the wheel carries the binding library
+pip install sysml   # the wheel carries the binding library and the standard library models
 ```
 
-The release's `sysml_library-0.1.0.zip` is the standard library: `sysml.library/` (the models,
-for the SysML Toolkit's `library_dir`) and `sysml.library.full.json` (for payloads). `SYSMLV2_ABI`
-makes the SDK use another build of the binding library than the wheel's.
+`SYSMLV2_ABI` makes the SDK use another build of the binding library than the wheel's. On a platform
+without a wheel, pip installs the source distribution, which reads payloads only.
+
+**Initialize first: get the standard library.** Nearly every model refers to it (`ScalarValues::Real`,
+`ISQ::mass`, and implicitly `Parts::parts`, `Items::items`, ...). Do this once, at the start of the
+program, before loading any model:
+
+```python
+from sysml import standard_library, standard_library_json
+
+library_dir = standard_library()          # the models the wheel carries: library_dir of the SysML Toolkit
+library_json = standard_library_json()    # the library as JSON, for a payload's PayloadLibrary
+```
+
+`standard_library_json()` downloads the JSON from the SDK's GitHub release on its first call (checked
+against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and raises
+`LibraryUnavailable` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a copy
+(the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one the
+chosen backend needs.
 
 Costs: opening a model with the standard library takes one to three seconds; the library JSON is
 about 160 MB and takes a few seconds to read (read it once); the SysML Toolkit's JSON export of a
@@ -42,9 +58,9 @@ Through the SysML Toolkit (pick one of the three calls):
 from sysml import Model, NotImplementedInToolkit, UnresolvedReference
 from sysml.classes import *      # every metaclass: PartUsage, Definition, FeatureTyping, ...
 
-model = Model.from_toolkit("model.sysml", library_dir="sysml.library")     # a file + standard library
-model = Model.from_toolkit("a.sysml", "b.sysml", library_dir="sysml.library")   # several files
-model = Model.from_toolkit(sources={"model.sysml": text}, library_dir="sysml.library")  # in-memory text
+model = Model.from_toolkit("model.sysml", library_dir=library_dir)     # a file + standard library
+model = Model.from_toolkit("a.sysml", "b.sysml", library_dir=library_dir)   # several files
+model = Model.from_toolkit(sources={"model.sysml": text}, library_dir=library_dir)  # in-memory text
 ```
 
 From a payload (a JSON export you have):
@@ -54,7 +70,7 @@ import json
 from sysml import Model, PayloadLibrary, UnresolvedReference
 from sysml.classes import *
 
-library = PayloadLibrary(json.load(open("sysml.library.full.json", encoding="utf-8")))  # once, share it
+library = PayloadLibrary(json.load(open(library_json, encoding="utf-8")))  # once, share it
 model = Model.from_full_json(json.load(open("model.json", encoding="utf-8")), library=library)
 ```
 
@@ -382,11 +398,11 @@ does not vouch for. Say so in your answer when the result depends on them.
 
 ```python
 import json
-from sysml import Model, PayloadLibrary
+from sysml import Model, PayloadLibrary, standard_library, standard_library_json
 from sysml.toolkit import ToolkitBackend
 
-backend = ToolkitBackend.open(["model.sysml"], library_dir="sysml.library")   # paths: str or Path
-library = PayloadLibrary(json.load(open("sysml.library.full.json", encoding="utf-8")))  # once
+backend = ToolkitBackend.open(["model.sysml"], library_dir=standard_library())   # paths: str or Path
+library = PayloadLibrary(json.load(open(standard_library_json(), encoding="utf-8")))  # once
 payload = Model.from_full_json(json.loads(backend.full_json()), library=library)   # same element ids
 toolkit = Model(backend)         # the same session, for operations and checked reads
 ```

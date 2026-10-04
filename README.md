@@ -43,9 +43,9 @@ The code in the guides is run against the release packages before every release.
 In Python, the whole thing is:
 
 ```python
-from sysml import Model
+from sysml import Model, standard_library
 
-model = Model.from_toolkit("model.sysml", library_dir="sysml.library")
+model = Model.from_toolkit("model.sysml", library_dir=standard_library())
 vehicle = model.resolve("Vehicles::Vehicle")
 print([feature.declaredName for feature in vehicle.ownedFeature])
 ```
@@ -56,21 +56,28 @@ checks), the same in every language and printing the same report.
 
 ## Install
 
-The release assets of each version carry one package per language, the binding library for each
-platform, and the standard library. The packages are not on the public registries yet.
+Python is on PyPI: `pip install sysml`. The release assets of each version carry one package per
+language (the Python wheels too), the binding library for each platform, and the standard library.
+How the Python packages are published: [PUBLISHING.md](PUBLISHING.md).
 
 | Language | Asset | Install | SysML Toolkit backend |
 |---|---|---|---|
-| Python 3.10+ | `sysml-0.1.0-py3-none-<platform>.whl` | `pip install sysml-0.1.0-py3-none-<platform>.whl` | included in the wheel |
+| Python 3.10+ | `sysml-0.1.0-py3-none-<platform>.whl` | `pip install sysml` (or the wheel's file) | included in the wheel |
 | JavaScript / TypeScript (Node 20+, browsers) | `sysml-0.1.0.tgz` | `npm install ./sysml-0.1.0.tgz` | included, as WebAssembly |
 | Java 21+ | `sysml-sdk-0.1.0.jar` | put it on the class path | included in the jar |
 | C# (.NET 8) | `OpenMBEE.SysML.0.1.0.nupkg` | `dotnet add package OpenMBEE.SysML --version 0.1.0 --source <folder with the .nupkg>` | included in the package |
 | C++17 | `sysml-sdk-cpp-0.1.0.zip` | put its `include/` on the include path (header-only) | included in the archive (`lib/<target>/`): copy it beside your program |
 
-- **The standard library**, `sysml_library-0.1.0.zip`: `sysml.library/` holds the library's
-  models, for the SysML Toolkit (pass the directory when a session opens), and
-  `sysml.library.full.json` the same library as JSON, for payloads. Most models refer to it
-  (`ScalarValues::Real`, `ISQ::mass`, and implicitly `Parts::parts` and the like). It is the
+- **The standard library.** Most models refer to it (`ScalarValues::Real`, `ISQ::mass`, and
+  implicitly `Parts::parts` and the like), so a program gets it first, as each language's guide
+  shows. Every package carries its models, for the SysML Toolkit: `standard_library()` (Python),
+  `standardLibrary()` (JavaScript), `StandardLibrary.directory()` (Java),
+  `StandardLibrary.Directory()` (C#), and in C++ `sysml::standard_library()` finds the archive's
+  `sysml.library/` copied beside the program. The same library as JSON, for payloads, is too large
+  for a package: `standard_library_json()` and its counterparts download it from the release on
+  their first call (checked against the SHA-256 GitHub states, kept in the user cache, shared by all
+  languages; C++ reads that cache but does not download). `sysml_library-0.1.0.zip` on the release
+  has both, for machines without access to GitHub (`SYSML_LIBRARY_JSON` names its JSON). It is the
   SysML v2 release's library, under the Eclipse Public License 2.0.
 - **The binding library** comes with every package: the wheel carries the one for its platform,
   the npm package the WebAssembly build, and the jar, the NuGet package and the C++ archive one for
@@ -117,7 +124,8 @@ in C#, and of `ToolkitBackend::open(paths, sources, library_dir)` in C++. The We
 reads no files itself: in JavaScript pass `libraryDir` in Node, or the library's files as
 `librarySources` (each file's name, without its directories, to its text), which works in a
 browser too. The library loads as a library: its elements are not listed as the model's, and they
-report `isLibraryElement`.
+report `isLibraryElement`. The packages' standard library helpers (see [Install](#install)) give the
+directory.
 
 The SysML Toolkit also writes the model back out as full-form JSON: `full_json()` in Python,
 `fullJson()` in JavaScript and Java, `FullJson()` in C#, `full_json()` in C++. By default the

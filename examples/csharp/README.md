@@ -18,10 +18,30 @@ A model is read through one of two backends, with the same interfaces over both:
 - `OpenMBEE.SysML.0.1.0.nupkg`, and add it to your project from the folder that holds it:
   `dotnet add package OpenMBEE.SysML --version 0.1.0 --source <that folder>`. It carries the
   binding library for Windows x64, Linux x64, and macOS on Apple silicon and on
-  Intel, and .NET puts the one for your platform beside your program;
-- `sysml_library-0.1.0.zip`, the standard library. Unpack it anywhere: it holds `sysml.library/`
-  (the library's models, for the SysML Toolkit) and `sysml.library.full.json` (the same library as
-  JSON, for payloads).
+  Intel, and .NET puts the one for your platform beside your program. It also carries the standard
+  library models.
+
+## First: the standard library
+
+Most models refer to the KerML and SysML standard library: `ScalarValues::Real`, `ISQ::mass`, and
+implicitly `Parts::parts` and the like. Get it once, at the start of your program, in the form your
+backend reads:
+
+```csharp
+var libraryDir = StandardLibrary.Directory();   // the library's models the package carries, for the SysML Toolkit
+var libraryJson = StandardLibrary.Json();       // the library as JSON, for payloads
+```
+
+- `StandardLibrary.Directory()` copies the models out of the package into your user cache on its
+  first call (a session reads a directory).
+- `StandardLibrary.Json()` downloads the JSON (about 11 MB) from this version's GitHub release on its
+  first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your user
+  cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache. Nothing is
+  downloaded unless you call it.
+- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+  `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
+  the same models the package carries.
+- The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
 
 ## Read a model through the SysML Toolkit
 
@@ -35,7 +55,7 @@ using SpecType = OpenMBEE.SysML.Type;     // the metaclass Type, beside System.T
 using var toolkit = ToolkitBackend.Open(ToolkitBackend.DefaultLibrary,   // the package's binding library, or SYSMLV2_ABI's
     new[] { "model.sysml" },     // your model: one or more .sysml / .kerml files
     null,                        // or in-memory sources: file name to text
-    "sysml.library");            // the standard library, from sysml_library-0.1.0.zip
+    StandardLibrary.Directory());   // the standard library
 var model = new Model(toolkit);
 
 // ... your code here ...
@@ -47,8 +67,7 @@ var model = new Model(toolkit);
 - To use another build of the binding library, point the environment variable `SYSMLV2_ABI` at
   it, or name it in code: `new ToolkitBackend.Library(path)` in place of
   `ToolkitBackend.DefaultLibrary`.
-- Without the standard library the model loads faster, but its references into it
-  (`ScalarValues::Real`, `ISQ::mass`, and the implicit ones such as `Parts::parts`) do not resolve,
+- Without the standard library the model loads faster, but its references into it do not resolve,
   and reading one throws `UnresolvedReferenceException`.
 
 ## Read a model from a JSON export
@@ -63,7 +82,7 @@ v2 tools. Its references into the standard library resolve against the library J
 using OpenMBEE.SysML;
 using SpecType = OpenMBEE.SysML.Type;     // the metaclass Type, beside System.Type
 
-var library = PayloadLibrary.FromJson(File.ReadAllText("sysml.library.full.json"));   // read once, share it
+var library = PayloadLibrary.FromJson(File.ReadAllText(StandardLibrary.Json()));   // the standard library; read once, share it
 var model = Model.FromFullJson(File.ReadAllText("model.json"), library);             // your export
 
 // ... your code here ...

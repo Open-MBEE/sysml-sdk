@@ -112,10 +112,6 @@ public:
             throw sdk_error("binding library not found: set SYSMLV2_ABI to the library file in the release's sysmlv2_abi archive for this platform (sysmlv2_abi.dll, libsysmlv2_abi.so or libsysmlv2_abi.dylib), or one built from abi/ in the SDK source");
         }
 
-    private:
-        void* handle_ = nullptr;
-        std::unordered_map<std::string, void*> syms_;
-
         /// The running executable's directory, with a trailing separator; empty if unknown.
         static std::string executable_dir() {
             std::string path;
@@ -138,6 +134,10 @@ public:
             std::size_t slash = path.find_last_of("/\\");
             return slash == std::string::npos ? std::string() : path.substr(0, slash + 1);
         }
+
+    private:
+        void* handle_ = nullptr;
+        std::unordered_map<std::string, void*> syms_;
     };
 
     static std::shared_ptr<Library> default_library() {

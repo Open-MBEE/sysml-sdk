@@ -83,6 +83,16 @@ class Library:
 
     def __init__(self, path: Optional[str] = None):
         self.path = path or _default_library_path()
+        if path is None and not os.path.exists(self.path):
+            # The source distribution, on a platform no wheel is built for, carries no library.
+            raise FileNotFoundError(
+                errno.ENOENT,
+                "no binding library for the SysML Toolkit backend: this installation of the SDK "
+                f"carries none for this platform ({sys.platform}). Platform wheels carry one for Windows "
+                "x64, Linux x64 (glibc 2.28 or later), and macOS on Apple silicon (11 or later) and on "
+                "Intel (10.12 or later). Elsewhere, set SYSMLV2_ABI to a sysmlv2_abi library built for "
+                "this platform (abi/README.md). Reading interchange JSON (Model.from_full_json) needs "
+                "no binding library")
         self.lib = C.CDLL(self.path)
         lib = self.lib
         lib.sysmlv2_free.argtypes = [C.c_void_p]

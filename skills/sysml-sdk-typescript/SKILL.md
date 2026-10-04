@@ -21,14 +21,30 @@ described below, or report them.
 ## Setup
 
 ```sh
-npm install ./sysml-0.1.0.tgz    # carries the WebAssembly module
+npm install ./sysml-0.1.0.tgz    # carries the WebAssembly module and the standard library models
 ```
 
-ES modules only: name files `.mjs`, or set `"type": "module"` in `package.json`. Node 20+. The
-release's `sysml_library-0.1.0.zip` is the standard library: `sysml.library/` (the models, for the
-SysML Toolkit's `libraryDir`) and `sysml.library.full.json` (for payloads). `SYSMLV2_ABI_WASM` makes
-the SDK use another build of the module than the package's; in a browser, pass
-`library: await ToolkitLibrary.load(await fetch(url))` to `ToolkitBackend.open`.
+ES modules only: name files `.mjs`, or set `"type": "module"` in `package.json`. Node 20+.
+`SYSMLV2_ABI_WASM` makes the SDK use another build of the module than the package's; in a browser,
+pass `library: await ToolkitLibrary.load(await fetch(url))` to `ToolkitBackend.open`.
+
+**Initialize first: get the standard library.** Nearly every model refers to it (`ScalarValues::Real`,
+`ISQ::mass`, and implicitly `Parts::parts`, `Items::items`, ...). Do this once, at the start of the
+program, before loading any model (Node):
+
+```js
+import { standardLibrary, standardLibraryJson } from "sysml";
+
+const libraryDir = await standardLibrary();        // the models the package carries: libraryDir of the SysML Toolkit
+const libraryJson = await standardLibraryJson();   // the library as JSON, for a payload's PayloadLibrary
+```
+
+`standardLibraryJson()` downloads the JSON from the SDK's GitHub release on its first call (checked
+against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and throws
+`LibraryUnavailable` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a copy
+(the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one the
+chosen backend needs. In a browser neither works (no file system): fetch the library's files for
+`librarySources`, and a library JSON you host.
 
 Costs: opening a model with the standard library takes two to three seconds; the SysML Toolkit's
 JSON export (`fullJson()`) takes ten to thirty seconds under WebAssembly even for a small model, and
@@ -46,7 +62,7 @@ import { ToolkitBackend, Model, NotImplementedInToolkit, UnresolvedReference, el
 
 const files = ["model.sysml"];                                   // your files
 const sources = Object.fromEntries(files.map((f) => [f, readFileSync(f, "utf8")]));   // file name -> text
-const toolkit = await ToolkitBackend.open({ sources, libraryDir: "sysml.library" });  // Node; relative to the cwd
+const toolkit = await ToolkitBackend.open({ sources, libraryDir });  // Node; libraryDir from the initialization
 const model = new Model(toolkit);                                // toolkit.close() when done
 // In a browser: ToolkitBackend.open({ sources, librarySources }), librarySources being the library's
 // .sysml/.kerml files as { "<file name, without directories>": text } (fetch each file; the
@@ -59,7 +75,7 @@ From a payload (a JSON export you have):
 import { readFileSync } from "node:fs";
 import { Model, PayloadLibrary, UnresolvedReference, elementsOfType, is } from "sysml";
 
-const library = new PayloadLibrary(JSON.parse(readFileSync("sysml.library.full.json", "utf8")));  // once, share it
+const library = new PayloadLibrary(JSON.parse(readFileSync(libraryJson, "utf8")));  // once, share it
 const model = Model.fromFullJson(JSON.parse(readFileSync("model.json", "utf8")), { library });
 ```
 
@@ -359,10 +375,10 @@ value for every property, including the ones the checked reader refuses, which t
 does not vouch for. Say so in your answer when the result depends on them.
 
 ```js
-import { PayloadLibrary } from "sysml";   // besides the SysML Toolkit block's imports
+import { PayloadLibrary, standardLibraryJson } from "sysml";   // besides the SysML Toolkit block's imports
 
 const exportText = toolkit.fullJson();              // first: slow once the library JSON is in memory
-const library = new PayloadLibrary(JSON.parse(readFileSync("sysml.library.full.json", "utf8")));
+const library = new PayloadLibrary(JSON.parse(readFileSync(await standardLibraryJson(), "utf8")));
 const exported = Model.fromFullJson(JSON.parse(exportText), { library });   // same element ids
 ```
 

@@ -8,6 +8,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      publishing:
+        type: boolean
+        default: false
 
 jobs:
   # The payload path reads JSON that is generated, not committed: the SysML Toolkit's exports of
@@ -145,6 +150,7 @@ jobs:
           node examples/typescript/tutorial.mjs
           node examples/queries/typescript/demo.mjs --payload | diff - examples/queries/expected/report.txt
           node ts/toolkit_checks.mjs
+          node ts/library_checks.mjs
 
       - name: TS strict type check
         working-directory: ts
@@ -187,6 +193,7 @@ jobs:
           javac --enable-preview --release 21 -d /tmp/java-out $(find java/src -name '*.java')
           java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.Checks
           java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.ToolkitChecks
+          java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.LibraryChecks
           javac --enable-preview --release 21 -cp /tmp/java-out -d /tmp/java-out examples/queries/java/*.java
           java --enable-preview -cp /tmp/java-out QueriesDemo --payload | diff - examples/queries/expected/report.txt
 
@@ -204,6 +211,7 @@ jobs:
           g++ -std=c++17 -Wall -Werror -O0 -I cpp/include -I vendor \
             cpp/checks/checks.cpp cpp/checks/conformance.g.cpp -o /tmp/cpp-checks
           g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/toolkit_checks.cpp -o /tmp/cpp-toolkit-checks && /tmp/cpp-toolkit-checks
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/library_checks.cpp -o /tmp/cpp-library-checks && /tmp/cpp-library-checks
           /tmp/cpp-checks
           g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/queries/cpp/demo.cpp -o /tmp/queries-demo -ldl
           /tmp/queries-demo --payload | diff - examples/queries/expected/report.txt
@@ -219,6 +227,7 @@ jobs:
     # on main, and when started by hand (Actions, "Run workflow"), not on every push.
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      inputs.publishing == true ||
       startsWith(github.ref, 'refs/tags/v') ||
       github.ref == 'refs/heads/main'
     strategy:
@@ -392,10 +401,13 @@ jobs:
             python tools/package_abi.py wasm32-unknown-unknown --out "$RUNNER_TEMP/dist"
           fi
 
+      # The wheel carries the standard library models, so every runner fetches them here (the Linux
+      # one already has them, for the Annex A test).
       - name: Python wheel for this platform, installed and read through
         run: |
+          git -c core.longpaths=true -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
           python -m pip install --quiet build wheel
-          python tools/package.py python --target ${{ matrix.target }} --out "$RUNNER_TEMP/dist"
+          python tools/package.py python --target ${{ matrix.target }} --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --out "$RUNNER_TEMP/dist"
           python tools/check_packages.py python --dist "$RUNNER_TEMP/dist"
 
       # Packages that are the same on every platform and carry no native library: built and checked
@@ -405,7 +417,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python tools/package.py sdist --out "$RUNNER_TEMP/dist"
-          python tools/package.py npm --out "$RUNNER_TEMP/dist"
+          python tools/package.py npm --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --out "$RUNNER_TEMP/dist"
           python tools/check_packages.py npm --dist "$RUNNER_TEMP/dist"
 
       - uses: actions/upload-artifact@v4
@@ -442,11 +454,33 @@ jobs:
           pattern: packages-*
           path: ${{ runner.temp }}/abi
           merge-multiple: true
+      # The packages carry the standard library models: the specification's release, from the
+      # pinned SysML Toolkit's submodule.
+      - name: Read the SysML Toolkit pin
+        id: pin
+        run: |
+          python - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          k = json.load(open("vendor/sysml-toolkit/PIN.json"))["toolkit"]
+          print("repository=" + k["repository"].removeprefix("https://github.com/"))
+          print("tag=" + k["tag"])
+          print("commit=" + k["commit"])
+          EOF
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.tag }}
+          path: sysml-toolkit
+      - name: The SysML Toolkit checkout is the pinned commit, with the specification's library
+        run: |
+          test "$(git -C sysml-toolkit rev-parse HEAD)" = "${{ steps.pin.outputs.commit }}"
+          git -C sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
       - name: Jar, NuGet package and C++ archive, with every platform's binding library
         run: |
-          python tools/package.py java --javac22 "$JAVA_HOME_25_X64/bin/javac" --abi-archives "$RUNNER_TEMP/abi" --out "$RUNNER_TEMP/dist"
-          python tools/package.py csharp --abi-archives "$RUNNER_TEMP/abi" --out "$RUNNER_TEMP/dist"
-          python tools/package.py cpp --abi-archives "$RUNNER_TEMP/abi" --out "$RUNNER_TEMP/dist"
+          L=sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library
+          python tools/package.py java --javac22 "$JAVA_HOME_25_X64/bin/javac" --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --out "$RUNNER_TEMP/dist"
+          python tools/package.py csharp --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --out "$RUNNER_TEMP/dist"
+          python tools/package.py cpp --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --out "$RUNNER_TEMP/dist"
           python - <<'EOF'
           import glob, os, sys, zipfile
           libs = ("sysmlv2_abi.dll", "libsysmlv2_abi.so", "libsysmlv2_abi.dylib")
@@ -540,7 +574,7 @@ jobs:
   # A version tag publishes a draft release with every package and the changelog section as its
   # notes; the draft is made public by hand. A tag with a suffix (v0.1.0-rc1) is a prerelease.
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && inputs.publishing != true
     needs: [example-json, generate-and-test, csharp, java, cpp, toolkit, portable, portable-check]
     runs-on: ubuntu-latest
     permissions:

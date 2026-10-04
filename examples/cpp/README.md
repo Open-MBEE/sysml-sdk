@@ -20,14 +20,33 @@ A C++17 compiler. Download from the release:
 - `sysml-sdk-cpp-0.1.0.zip`, and put its `include/` on your include path. For the SysML Toolkit,
   its `lib/<target>/` holds the binding library for Windows x64, Linux x64, and macOS on Apple
   silicon and on Intel: copy the one for your platform (`sysmlv2_abi.dll`, `libsysmlv2_abi.so` or
-  `libsysmlv2_abi.dylib`) beside your executable;
-- `sysml_library-0.1.0.zip`, the standard library. Unpack it anywhere: it holds `sysml.library/`
-  (the library's models, for the SysML Toolkit) and `sysml.library.full.json` (the same library as
-  JSON, for payloads).
+  `libsysmlv2_abi.dylib`) beside your executable. Its `sysml.library/` holds the standard library
+  models: copy that directory beside your executable too.
 
 ```sh
 g++ -std=c++17 -I sysml-sdk-cpp-0.1.0/include read_model.cpp -o read_model    # add -ldl on Linux, -static with MinGW
 ```
+
+## First: the standard library
+
+Most models refer to the KerML and SysML standard library: `ScalarValues::Real`, `ISQ::mass`, and
+implicitly `Parts::parts` and the like. Get it once, at the start of your program, in the form your
+backend reads:
+
+```cpp
+#include <sysml/library.hpp>
+
+std::string library_dir = sysml::standard_library();         // the library's models, for the SysML Toolkit
+std::string library_json = sysml::standard_library_json();   // the library as JSON, for payloads
+```
+
+- `standard_library()` finds the `sysml.library` directory beside your executable, or the one the
+  environment variable `SYSML_LIBRARY_DIR` names.
+- `standard_library_json()` is the file `SYSML_LIBRARY_JSON` names, else the copy in your user cache
+  that the other SDK languages download (`SYSML_CACHE_DIR` moves it). C++ downloads nothing: get it
+  once with another SDK language, or download `sysml_library-0.1.0.zip` from the release, unpack it,
+  and set `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds.
+- The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
 
 ## Read a model through the SysML Toolkit
 
@@ -39,15 +58,16 @@ Copy this, and put in your file names:
 
 #include <sysml/sdk.hpp>
 #include <sysml/classes.g.hpp>
+#include <sysml/library.hpp>
 #include <sysml/toolkit.hpp>
 
 using namespace sysml;
 
 int main() {
     Model model = Model::from_backend(ToolkitBackend::open(
-        {"model.sysml"},     // your model: one or more .sysml / .kerml files
-        {},                  // or in-memory sources: {file name, text} pairs
-        "sysml.library"));   // the standard library, from sysml_library-0.1.0.zip
+        {"model.sysml"},         // your model: one or more .sysml / .kerml files
+        {},                      // or in-memory sources: {file name, text} pairs
+        standard_library()));    // the standard library
 
     // ... your code here ...
     return 0;
@@ -59,8 +79,7 @@ int main() {
 - To load the binding library from elsewhere, point the environment variable `SYSMLV2_ABI` at it,
   or name it in code: pass `std::make_shared<ToolkitBackend::Library>(path)` as the last argument
   of `open`.
-- Without the standard library the model loads faster, but its references into it
-  (`ScalarValues::Real`, `ISQ::mass`, and the implicit ones such as `Parts::parts`) do not resolve,
+- Without the standard library the model loads faster, but its references into it do not resolve,
   and reading one throws `unresolved_reference`.
 
 ## Read a model from a JSON export
@@ -78,6 +97,7 @@ v2 tools. Its references into the standard library resolve against the library J
 
 #include <sysml/sdk.hpp>
 #include <sysml/classes.g.hpp>
+#include <sysml/library.hpp>
 
 using namespace sysml;
 
@@ -90,7 +110,7 @@ static std::string read_file(const std::string& path) {
 }
 
 int main() {
-    auto library = PayloadLibrary::parse(read_file("sysml.library.full.json"));   // read once, share it
+    auto library = PayloadLibrary::parse(read_file(standard_library_json()));   // the standard library; read once, share it
     Model model = Model::from_full_json(read_file("model.json"), library);         // your export
 
     // ... your code here ...
@@ -196,7 +216,7 @@ tool does). `full_json` belongs to the backend, so keep it before handing it to 
 
 <!-- test: queries toolkit -->
 ```cpp
-auto backend = ToolkitBackend::open({"model.sysml"}, {}, "sysml.library");
+auto backend = ToolkitBackend::open({"model.sysml"}, {}, standard_library());
 std::cout << backend->full_json().size() << " bytes of JSON\n";   // write it where you need it
 Model exported = Model::from_backend(std::move(backend));          // the same session, as a model
 ```

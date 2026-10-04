@@ -1,7 +1,7 @@
 {
   "name": "sysml",
   "version": "0.1.0",
-  "license": "Apache-2.0",
+  "license": "(Apache-2.0 AND EPL-2.0)",
   "description": "Spec-shaped SysML v2 SDK: generated metaclass surface over the SysML Toolkit, or over interchange payloads",
   "type": "module",
   "main": "index.mjs",
@@ -19,6 +19,8 @@
     "meta.mjs",
     "classes.d.ts",
     "toolkit.mjs",
+    "library.mjs",
+    "stdlib/",
     "toolkit_table.mjs",
     "sysmlv2_abi.wasm",
     "LICENSE",
