@@ -32,8 +32,24 @@ g++ -std=c++17 -I sysml-sdk-cpp-0.1.0/include main.cpp -o main   # add -ldl on L
   executable, where `ToolkitBackend::open` finds it. To load it from elsewhere, set `SYSMLV2_ABI` to
   it, or name it in code: pass `std::make_shared<ToolkitBackend::Library>(path)` as the last
   argument of `ToolkitBackend::open`.
-- The release's `sysml_library-0.1.0.zip` is the standard library: `sysml.library/` (the models,
-  for the SysML Toolkit) and `sysml.library.full.json` (for payloads).
+- The archive's `sysml.library/` holds the standard library models: copy that directory beside your
+  executable too, or name it in `SYSML_LIBRARY_DIR`.
+
+**Initialize first: get the standard library.** Nearly every model refers to it (`ScalarValues::Real`,
+`ISQ::mass`, and implicitly `Parts::parts`, `Items::items`, ...). Do this once, at the start of the
+program, before loading any model:
+
+```cpp
+#include <sysml/library.hpp>
+
+std::string library_dir = sysml::standard_library();         // sysml.library beside the executable, or SYSML_LIBRARY_DIR
+std::string library_json = sysml::standard_library_json();   // the library as JSON, for a payload's PayloadLibrary
+```
+
+C++ downloads nothing: `standard_library_json()` is the file `SYSML_LIBRARY_JSON` names, else the
+copy in the user cache that the other SDK languages download; otherwise it throws
+`library_unavailable` with instructions (download the release's `sysml_library-0.1.0.zip` and set
+`SYSML_LIBRARY_JSON` to its `sysml.library.full.json`). Call only the one the chosen backend needs.
 
 Costs: `classes.g.hpp` is about 4 MB, so a translation unit that includes it takes tens of seconds
 to compile: keep the SDK in one translation unit (or a precompiled header). Opening a model with the
@@ -45,12 +61,14 @@ status; the SysML Toolkit's reason (the missing path, a parse error) is printed 
 ## Loading a model
 
 `<sysml/classes.g.hpp>` includes the runtime (`<sysml/sdk.hpp>`, which alone has no
-metaclasses): include it, and `<sysml/toolkit.hpp>` for the SysML Toolkit.
+metaclasses): include it, `<sysml/library.hpp>` for the standard library helpers, and
+`<sysml/toolkit.hpp>` for the SysML Toolkit.
 
 Through the SysML Toolkit:
 
 ```cpp
 #include <sysml/classes.g.hpp>   // the runtime and every metaclass (always include it)
+#include <sysml/library.hpp>     // the standard library helpers
 #include <sysml/toolkit.hpp>     // the SysML Toolkit backend
 using namespace sysml;
 
@@ -58,7 +76,7 @@ int main() {
     Model model = Model::from_backend(ToolkitBackend::open(
         {"model.sysml"},           // your files
         {},                        // or in-memory sources: {{"m.sysml", text}}
-        "sysml.library"));         // the standard library directory
+        standard_library()));      // the standard library, from the initialization
     // ... your code here ...
 }
 ```
@@ -69,6 +87,7 @@ From a payload (a JSON export you have):
 #include <fstream>
 #include <sstream>
 #include <sysml/classes.g.hpp>
+#include <sysml/library.hpp>
 using namespace sysml;
 
 static std::string read_file(const std::string& path) {
@@ -79,7 +98,7 @@ static std::string read_file(const std::string& path) {
 }
 
 int main() {
-    auto library = PayloadLibrary::parse(read_file("sysml.library.full.json"));   // once; a shared_ptr to share
+    auto library = PayloadLibrary::parse(read_file(standard_library_json()));   // once; a shared_ptr to share
     Model model = Model::from_full_json(read_file("model.json"), library);
     // ... your code here ...
 }
@@ -479,8 +498,8 @@ does not vouch for. Say so in your answer when the result depends on them. `full
 the backend, so take it before handing the backend to a model:
 
 ```cpp
-auto library = PayloadLibrary::parse(read_file("sysml.library.full.json"));   // once; read_file as above
-auto backend = ToolkitBackend::open({"model.sysml"}, {}, "sysml.library");
+auto library = PayloadLibrary::parse(read_file(standard_library_json()));   // once; read_file as above
+auto backend = ToolkitBackend::open({"model.sysml"}, {}, standard_library());
 Model exported = Model::from_full_json(backend->full_json(), library);   // same element ids as the SysML Toolkit's
 Model model = Model::from_backend(std::move(backend));                    // the same session
 ```

@@ -5,7 +5,8 @@ Usage: python tools/release_notes.py <tag>
 The tag is v<version> or v<version>-<suffix> (a rehearsal such as v0.1.0-rc1). The notes are the
 section of CHANGELOG.md headed with the version. The versions checked are the ones each package
 carries: pyproject.toml (the Python packages, the jar and the C++ archive take theirs from it),
-ts/package.json and the C# project.
+ts/package.json, the C# project, and the C++ headers' sdk_version (which the standard library
+helpers name).
 """
 
 import json
@@ -33,6 +34,8 @@ def main() -> None:
     [csproj] = CS_PROJECT.glob("*.csproj")
     cs = re.search(r"<Version>([^<]+)</Version>", csproj.read_text(encoding="utf-8"))
     found[csproj.relative_to(ROOT).as_posix()] = cs.group(1) if cs else None
+    cpp = re.search(r'sdk_version = "([^"]+)"', (ROOT / "cpp" / "include" / "sysml" / "library.hpp").read_text(encoding="utf-8"))
+    found["cpp/include/sysml/library.hpp"] = cpp.group(1) if cpp else None
     wrong = {k: v for k, v in found.items() if v != version}
     if wrong:
         sys.exit(f"tag {tag} wants version {version}; these differ: {wrong}")

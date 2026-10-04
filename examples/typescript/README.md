@@ -19,12 +19,34 @@ Node 20 or newer, or a browser. Download the package from the release and instal
 npm install ./sysml-0.1.0.tgz
 ```
 
-The package carries the SysML Toolkit as WebAssembly; nothing else is needed. The same release has
-`sysml_library-0.1.0.zip`, the standard library. Unpack it anywhere: it holds `sysml.library/`
-(the library's models, for the SysML Toolkit) and `sysml.library.full.json` (the same library as
-JSON, for payloads). Type declarations are included. The code below is plain JavaScript (`.mjs`);
-in TypeScript, narrow what `resolve` returns (an element or `null`) before using it, with
+The package carries the SysML Toolkit as WebAssembly and the standard library models; nothing else
+is needed. Type declarations are included. The code below is plain JavaScript (`.mjs`); in
+TypeScript, narrow what `resolve` returns (an element or `null`) before using it, with
 `is(el, "PartDefinition")` or a non-null assertion.
+
+## First: the standard library
+
+Most models refer to the KerML and SysML standard library: `ScalarValues::Real`, `ISQ::mass`, and
+implicitly `Parts::parts` and the like. Get it once, at the start of your program, in the form your
+backend reads (Node):
+
+```js
+import { standardLibrary, standardLibraryJson } from "sysml";
+
+const libraryDir = await standardLibrary();        // the library's models the package carries, for the SysML Toolkit
+const libraryJson = await standardLibraryJson();   // the library as JSON, for payloads
+```
+
+- `standardLibraryJson()` downloads the JSON (about 11 MB) from this version's GitHub release on its
+  first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your user
+  cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache. Nothing is
+  downloaded unless you call it.
+- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+  `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
+  the same models the package carries.
+- In a browser there is no file system: serve the library's files and pass them as
+  `librarySources`, and a library JSON you host yourself to `PayloadLibrary`.
+- The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
 
 ## Read a model through the SysML Toolkit
 
@@ -33,12 +55,12 @@ Copy this, and put in your file names:
 <!-- test: toolkit -->
 ```js
 import { readFileSync, writeFileSync } from "node:fs";
-import { ToolkitBackend, Model, NotImplementedInToolkit, UnresolvedReference, elementsOfType, is } from "sysml";
+import { ToolkitBackend, Model, NotImplementedInToolkit, UnresolvedReference, elementsOfType, is, standardLibrary } from "sysml";
 
 const files = ["model.sysml"];                 // your model: one or more .sysml / .kerml files
 const model = new Model(await ToolkitBackend.open({
   sources: Object.fromEntries(files.map((f) => [f, readFileSync(f, "utf8")])),
-  libraryDir: "sysml.library",                 // the standard library, from sysml_library-0.1.0.zip
+  libraryDir: await standardLibrary(),         // the standard library
 }));
 
 // ... your code here ...
@@ -49,8 +71,7 @@ const model = new Model(await ToolkitBackend.open({
   directories, to its text) instead of `libraryDir`, and the WebAssembly module as `library: await ToolkitLibrary.load(await fetch(url))`,
   where `url` serves `sysmlv2_abi.wasm` from the package.
 - Without the library the model loads faster, but its references into the standard library
-  (`ScalarValues::Real`, `ISQ::mass`, and the implicit ones such as `Parts::parts`) do not resolve,
-  and reading one throws `UnresolvedReference`.
+  do not resolve, and reading one throws `UnresolvedReference`.
 
 ## Read a model from a JSON export
 
@@ -62,10 +83,10 @@ v2 tools. Its references into the standard library resolve against the library J
 <!-- test: payload -->
 ```js
 import { readFileSync } from "node:fs";
-import { Model, NotImplementedInToolkit, PayloadLibrary, UnresolvedReference, elementsOfType, is } from "sysml";
+import { Model, NotImplementedInToolkit, PayloadLibrary, UnresolvedReference, elementsOfType, is, standardLibraryJson } from "sysml";
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
-const library = new PayloadLibrary(readJson("sysml.library.full.json"));   // read once, share it
+const library = new PayloadLibrary(readJson(await standardLibraryJson()));   // the standard library; read once, share it
 const model = Model.fromFullJson(readJson("model.json"), { library });     // your export
 
 // ... your code here ...
@@ -169,7 +190,7 @@ tool does):
 
 <!-- test: queries toolkit -->
 ```js
-const backend = await ToolkitBackend.open({ sources: { "model.sysml": readFileSync("model.sysml", "utf8") }, libraryDir: "sysml.library" });
+const backend = await ToolkitBackend.open({ sources: { "model.sysml": readFileSync("model.sysml", "utf8") }, libraryDir: await standardLibrary() });
 writeFileSync("model.full.json", backend.fullJson());
 const exported = new Model(backend);                            // the same session, as a model
 ```

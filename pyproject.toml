@@ -7,9 +7,14 @@ name = "sysml"
 version = "0.1.0"
 description = "Spec-shaped SysML v2 SDK: generated metaclass surface over the SysML Toolkit, or over interchange payloads"
 requires-python = ">=3.10"
-readme = "README.md"
+readme = "python/PYPI.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
+
+[project.urls]
+Homepage = "https://github.com/Open-MBEE/sysml-sdk"
+Repository = "https://github.com/Open-MBEE/sysml-sdk"
+Issues = "https://github.com/Open-MBEE/sysml-sdk/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
@@ -18,9 +23,10 @@ dev = ["pytest>=7"]
 packages = ["sysml"]
 package-dir = {"" = "python"}
 
-# A platform wheel carries the binding library in _native/ (tools/package.py puts it there).
+# A platform wheel carries the binding library in _native/ and the standard library models in
+# stdlib/ (tools/package.py puts them there; the globs skip dot-files, hence the project files).
 [tool.setuptools.package-data]
-sysml = ["*.pyi", "_native/*"]
+sysml = ["*.pyi", "_native/*", "stdlib/**/*", "stdlib/**/.project.json", "stdlib/**/.meta.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]

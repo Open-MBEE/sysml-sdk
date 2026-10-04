@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0, preview
+## 0.1.0
 
 The first release.
 
@@ -37,6 +37,15 @@ The first release.
   element id. The SysML Toolkit backend reads the standard library from a directory in every
   language, and in JavaScript also from the library's files given as sources, in a browser as well.
   A model file or library directory that does not exist is named in the error.
+- The standard library at hand in every language, as the first step of a program: every package
+  carries its models (`standard_library()` in Python, `standardLibrary()` in JavaScript,
+  `StandardLibrary.directory()` in Java, `StandardLibrary.Directory()` in C#, and in C++
+  `sysml::standard_library()` for the archive's `sysml.library/` copied beside the program), and
+  `standard_library_json()` and its counterparts download the library JSON from the release on their
+  first call, check it against the SHA-256 GitHub states for it, and keep it in a cache all languages
+  share (C++ reads the cache, and downloads nothing). `SYSML_LIBRARY_JSON`, `SYSML_LIBRARY_DIR` (C++)
+  and `SYSML_CACHE_DIR` name other places. The packages that carry the models declare their license
+  as Apache-2.0 AND EPL-2.0.
 - The standard library, `sysml_library-<version>.zip`, in the two forms the backends read: the
   library models as the SysML v2 release has them (`sysml.library/`, for the SysML Toolkit), and the
   library as full-form JSON written by the SysML Toolkit under the element ids KerML 9.1 and
@@ -125,4 +134,5 @@ Platforms and packages:
   on Windows by hand.
 - On macOS a library downloaded through a web browser is quarantined; remove the attribute with
   `xattr -d com.apple.quarantine`.
-- The packages are release assets only; they are not on the language registries yet.
+- Python is on PyPI (`pip install sysml`); the other packages are release assets, not on their
+  language registries yet.

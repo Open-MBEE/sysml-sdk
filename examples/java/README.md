@@ -19,10 +19,7 @@ JDK 21 or newer; the jar has no dependencies. Download from the release:
 
 - `sysml-sdk-0.1.0.jar`, to put on the class path. It carries the binding library
   for Windows x64, Linux x64, and macOS on Apple silicon and on Intel, and copies the one for your
-  platform into the temporary directory on first use;
-- `sysml_library-0.1.0.zip`, the standard library. Unpack it anywhere: it holds `sysml.library/`
-  (the library's models, for the SysML Toolkit) and `sysml.library.full.json` (the same library as
-  JSON, for payloads).
+  platform into the temporary directory on first use. It also carries the standard library models.
 
 Compile and run against the jar. On JDK 21 the foreign function API is a preview, so add
 `--enable-preview` (and `--release 21` to `javac`); from JDK 22 on, leave both out.
@@ -32,6 +29,28 @@ Compile and run against the jar. On JDK 21 the foreign function API is a preview
 javac --enable-preview --release 21 -cp sysml-sdk-0.1.0.jar ReadModel.java
 java --enable-preview --enable-native-access=ALL-UNNAMED -cp sysml-sdk-0.1.0.jar:. ReadModel    # ; instead of : on Windows
 ```
+
+## First: the standard library
+
+Most models refer to the KerML and SysML standard library: `ScalarValues::Real`, `ISQ::mass`, and
+implicitly `Parts::parts` and the like. Get it once, at the start of your program, in the form your
+backend reads:
+
+```java
+Path libraryDir = StandardLibrary.directory();   // the library's models the jar carries, for the SysML Toolkit
+Path libraryJson = StandardLibrary.json();       // the library as JSON, for payloads
+```
+
+- `StandardLibrary.directory()` copies the models out of the jar into your user cache on its first
+  call (a session reads a directory).
+- `StandardLibrary.json()` downloads the JSON (about 11 MB) from this version's GitHub release on its
+  first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your user
+  cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache. Nothing is
+  downloaded unless you call it.
+- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+  `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
+  the same models the jar carries.
+- The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
 
 ## Read a model through the SysML Toolkit
 
@@ -51,7 +70,7 @@ public class ReadModel {
         try (ToolkitBackend toolkit = ToolkitBackend.open(ToolkitBackend.library(),   // the jar's binding library, or SYSMLV2_ABI's
                 List.of("model.sysml"),      // your model: one or more .sysml / .kerml files
                 null,                        // or in-memory sources: a Map from file name to text
-                "sysml.library")) {          // the standard library, from sysml_library-0.1.0.zip
+                StandardLibrary.directory().toString())) {   // the standard library
             Model model = new Model(toolkit);
 
             // ... your code here ...
@@ -65,8 +84,7 @@ public class ReadModel {
 - To use another build of the binding library, point the environment variable `SYSMLV2_ABI` at
   it, or name it in code: `new ToolkitBackend.Library(Path.of(...))` in place of
   `ToolkitBackend.library()`.
-- Without the standard library the model loads faster, but its references into it
-  (`ScalarValues::Real`, `ISQ::mass`, and the implicit ones such as `Parts::parts`) do not resolve,
+- Without the standard library the model loads faster, but its references into it do not resolve,
   and reading one throws `UnresolvedReferenceException`.
 
 ## Read a model from a JSON export
@@ -87,7 +105,7 @@ import org.openmbee.sysml.classes.*;
 
 public class ReadExport {
     public static void main(String[] args) throws Exception {
-        PayloadLibrary library = PayloadLibrary.fromJson(Files.readString(Path.of("sysml.library.full.json")));   // read once, share it
+        PayloadLibrary library = PayloadLibrary.fromJson(Files.readString(StandardLibrary.json()));   // the standard library; read once, share it
         Model model = Model.fromFullJson(Files.readString(Path.of("model.json")), library);                    // your export
 
         // ... your code here ...

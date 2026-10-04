@@ -167,9 +167,19 @@ p = Model.from_full_json(json.load(open({PAYLOAD!r}, encoding="utf-8")), library
 print("payload owns", ", ".join(f.declaredName for f in p.ownedFeature), "|", ", ".join(g.superclassifier.qualifiedName for g in p.ownedSubclassification))
 s = Model.from_toolkit({MODEL!r}).resolve("Vehicles::SportsCar")
 print("toolkit owns", ", ".join(f.declaredName for f in s.ownedFeature), "|", ", ".join(g.superclassifier.qualifiedName for g in s.ownedSubclassification), "|", s.effectiveName())
+from {PYTHON_MODULE} import standard_library
+from importlib.metadata import distribution
+lib = standard_library()
+assert (lib / "LICENSE").is_file() and (lib / "NOTICE").is_file(), lib
+x = Model.from_toolkit(sources={{"x.sysml": "package P {{ attribute x : ScalarValues::Real; }}"}}, library_dir=lib).resolve("P::x")
+print("bundled library types x as", x.ownedTyping[0].type.qualifiedName)
+d = distribution({S["python_dist"]!r})
+print("wheel:", d.read_text("WHEEL").split("Root-Is-Purelib: ")[1].split()[0], "|", d.metadata["License-Expression"])
 """], work, env)
     expect(out, f"payload owns {SPORTS_CAR}", "Python wheel, payload with the library JSON")
     expect(out, f"toolkit owns {SPORTS_CAR} | SportsCar", "Python wheel, SysML Toolkit read with the packaged library")
+    expect(out, "bundled library types x as ScalarValues::Real", "Python wheel, the standard library models it carries")
+    expect(out, "wheel: false | Apache-2.0 AND EPL-2.0", "Python wheel, a platform wheel with the library's license")
     guide_files(work, library_dir)
     for kind, program in guide_programs("python").items():
         (work / f"guide_{kind}.py").write_text(program, encoding="utf-8")
@@ -194,11 +204,22 @@ console.log("payload owns", p.ownedFeature.map((f) => f.declaredName).join(", ")
 const text = readFileSync({MODEL!r}, "utf8");
 const s = new Model(await ToolkitBackend.open({{ sources: {{ "vehicle.sysml": text }} }})).resolve("Vehicles::SportsCar");
 console.log("toolkit owns", s.ownedFeature.map((f) => f.declaredName).join(", "), "|", s.ownedSubclassification.map((g) => g.superclassifier.qualifiedName).join(", "), "|", s.effectiveName());
+const {{ standardLibrary }} = await import("{name}");
+const lib = await standardLibrary();
+const x = new Model(await ToolkitBackend.open({{ sources: {{ "x.sysml": "package P {{ attribute x : ScalarValues::Real; }}" }}, libraryDir: lib }})).resolve("P::x");
+console.log("bundled library types x as", x.ownedTyping[0].type.qualifiedName);
+const pkg = JSON.parse(readFileSync(new URL("./node_modules/{name}/package.json", import.meta.url), "utf8"));
+console.log("package license:", pkg.license);
 """, encoding="utf-8")
     env = {k: v for k, v in os.environ.items() if k != "SYSMLV2_ABI_WASM"}  # the package's own module
     out = run(["node", "check.mjs"], work, env)
     expect(out, f"payload owns {SPORTS_CAR}", "npm package, payload with the library JSON")
     expect(out, f"toolkit owns {SPORTS_CAR} | SportsCar", "npm package, SysML Toolkit read with the packaged module")
+    expect(out, "bundled library types x as ScalarValues::Real", "npm package, the standard library models it carries")
+    expect(out, "package license: (Apache-2.0 AND EPL-2.0)", "npm package, the library's license declared")
+    for notice in ("LICENSE", "NOTICE"):
+        if not (work / "node_modules" / name / "stdlib" / notice).is_file():
+            sys.exit(f"npm package: no stdlib/{notice}")
     guide_files(work, library_dir)
     for kind, program in guide_programs("typescript").items():
         (work / f"guide_{kind}.mjs").write_text(program, encoding="utf-8")
@@ -227,6 +248,31 @@ def check_java(dist: Path, work: Path, java_home: str | None, library_dir: Path 
     expect(payload, FIRST_LINE, f"Java jar on {version.splitlines()[0]}, payload")
     toolkit = run([java, *preview, "--enable-native-access=ALL-UNNAMED", "-cp", cp, "Tutorial", "--toolkit"], ROOT, native_env())
     expect(toolkit, FIRST_LINE, f"Java jar on {version.splitlines()[0]}, SysML Toolkit")
+    lib_src = work / "libcheck" / "LibCheck.java"
+    lib_src.parent.mkdir()
+    lib_src.write_text(f"""
+import java.nio.file.Files;
+import java.util.List;
+import java.util.Map;
+import {JAVA_PACKAGE}.*;
+import {JAVA_PACKAGE}.classes.Feature;
+
+public class LibCheck {{
+    public static void main(String[] args) {{
+        var lib = StandardLibrary.directory();
+        if (!Files.isRegularFile(lib.resolve("LICENSE")) || !Files.isRegularFile(lib.resolve("NOTICE")))
+            throw new AssertionError("no LICENSE or NOTICE in " + lib);
+        Model m = new Model(ToolkitBackend.open(ToolkitBackend.library(), List.of(),
+            Map.of("x.sysml", "package P {{ attribute x : ScalarValues::Real; }}"), lib.toString()));
+        Feature x = (Feature) m.resolve("P::x");
+        System.out.println("bundled library types x as " + x.getOwnedTyping().get(0).getType().getQualifiedName());
+    }}
+}}
+""", encoding="utf-8")
+    run([javac, *preview, "--release", release, "-cp", jar, "-d", lib_src.parent, lib_src], work)
+    lib_out = run([java, *preview, "--enable-native-access=ALL-UNNAMED", "-cp",
+                   os.pathsep.join([str(jar), str(lib_src.parent)]), "LibCheck"], work, native_env())
+    expect(lib_out, "bundled library types x as ScalarValues::Real", "Java jar, the standard library models it carries")
     guide_files(work, library_dir)
     for kind, program in guide_programs("java").items():
         main_class = re.search(r"public class (\w+)", program).group(1)
@@ -259,10 +305,22 @@ Console.WriteLine("payload owns " + string.Join(", ", fromPayload.ownedFeature.S
 using var be = ToolkitBackend.Open(@"{MODEL}");
 var fromToolkit = (PartDefinition)new Model(be).Resolve("Vehicles::SportsCar")!;
 Console.WriteLine("toolkit owns " + string.Join(", ", fromToolkit.ownedFeature.Select(f => f.declaredName)) + " | " + string.Join(", ", fromToolkit.ownedSubclassification.Select(g => g.superclassifier!.qualifiedName)) + " | " + fromToolkit.effectiveName());
+var lib = StandardLibrary.Directory();
+if (!File.Exists(Path.Combine(lib, "LICENSE")) || !File.Exists(Path.Combine(lib, "NOTICE"))) throw new Exception("no LICENSE or NOTICE in " + lib);
+using var withLibrary = ToolkitBackend.Open(ToolkitBackend.DefaultLibrary, Array.Empty<string>(),
+    new Dictionary<string, string> {{ ["x.sysml"] = "package P {{ attribute x : ScalarValues::Real; }}" }}, lib);
+var x = (Feature)new Model(withLibrary).Resolve("P::x")!;
+Console.WriteLine("bundled library types x as " + x.ownedTyping[0].type!.qualifiedName);
 """, encoding="utf-8")
     out = run(["dotnet", "run"], work / "app", env)
     expect(out, f"payload owns {SPORTS_CAR}", "NuGet package, payload")
     expect(out, f"toolkit owns {SPORTS_CAR} | SportsCar", "NuGet package, SysML Toolkit")
+    expect(out, "bundled library types x as ScalarValues::Real", "NuGet package, the standard library models it carries")
+    with zipfile.ZipFile(nupkg) as z:
+        nuspec = z.read(next(n for n in z.namelist() if n.endswith(".nuspec"))).decode("utf-8")
+    if "Apache-2.0 AND EPL-2.0" not in nuspec:
+        sys.exit("the NuGet package does not declare the library's license (Apache-2.0 AND EPL-2.0)")
+    print("ok: the NuGet package declares Apache-2.0 AND EPL-2.0")
     guide_files(work, library_dir)
     for kind, program in guide_programs("csharp").items():
         project = work / f"guide-{kind}"
@@ -294,6 +352,30 @@ def check_cpp(dist: Path, work: Path, cxx: str, library_dir: Path | None) -> Non
         shutil.copy2(carried, work / NATIVE)  # beside the programs, which are all built in work
     expect(run([exe], ROOT), FIRST_LINE, "C++ headers, payload")
     expect(run([exe, "--toolkit"], ROOT, native_env()), FIRST_LINE, "C++ headers, SysML Toolkit")
+    # The archive's sysml.library, copied beside a program as its README says, found by standard_library().
+    [archived] = glob.glob(str(work / "*" / "sysml.library"))
+    for name in ("LICENSE", "NOTICE"):
+        if not (Path(archived) / name).is_file():
+            sys.exit(f"the C++ archive's sysml.library has no {name}")
+    libcheck = work / "libcheck"
+    shutil.copytree(archived, libcheck / "sysml.library")
+    if carried:
+        shutil.copy2(carried, libcheck / NATIVE)
+    (libcheck / "libcheck.cpp").write_text("""#include <iostream>
+#include <sysml/classes.g.hpp>
+#include <sysml/library.hpp>
+using namespace sysml;
+int main() {
+    Model model = Model::from_backend(ToolkitBackend::open({}, {{"x.sysml", "package P { attribute x : ScalarValues::Real; }"}},
+                                                           standard_library()));
+    auto x = model.resolve("P::x").value().as<Feature>();
+    std::cout << "bundled library types x as " << x.getOwnedTyping().at(0).getType().value().getQualifiedName().value_or("?") << "\\n";
+}
+""", encoding="utf-8")
+    libcheck_exe = libcheck / ("libcheck.exe" if os.name == "nt" else "libcheck")
+    run([cxx, "-std=c++17", "-Wall", "-Werror", "-I", include, libcheck / "libcheck.cpp", "-o", libcheck_exe, *flags], work)
+    expect(run([libcheck_exe], work, native_env()), "bundled library types x as ScalarValues::Real",
+           "C++ archive, the standard library models it carries, beside the program")
     guide_files(work, library_dir)
     for kind, program in guide_programs("cpp").items():
         src = work / f"guide_{kind}.cpp"
@@ -317,6 +399,12 @@ def main() -> None:
     BUNDLED = a.bundled
     dist = a.dist.resolve()
     work = Path(tempfile.mkdtemp(prefix=f"sysml-check-{a.what}-"))
+    # The standard library helpers: their cache inside the check (the models the jar and the NuGet
+    # package copy out land there, not in the user's cache), and the library JSON the guides' payload
+    # programs ask for, the copy the check puts beside them (no download).
+    os.environ["SYSML_CACHE_DIR"] = str(work / "cache")
+    os.environ["SYSML_LIBRARY_JSON"] = str(work / "sysml.library.full.json")
+    os.environ.pop("SYSML_LIBRARY_DIR", None)
     try:
         if a.what == "python":
             check_python(dist, work, a.library_dir)

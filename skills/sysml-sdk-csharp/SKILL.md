@@ -41,8 +41,22 @@ a `nuget.config` beside the project:
   `ToolkitBackend.DefaultLibrary` finds it. To use another build, set `SYSMLV2_ABI` to it, or name it
   in code with `new ToolkitBackend.Library(path)` in place of `ToolkitBackend.DefaultLibrary` (one
   per process; it is not disposable).
-- The release's `sysml_library-0.1.0.zip` is the standard library: `sysml.library/` (the models,
-  for the SysML Toolkit) and `sysml.library.full.json` (for payloads).
+- The package also carries the standard library models.
+
+**Initialize first: get the standard library.** Nearly every model refers to it (`ScalarValues::Real`,
+`ISQ::mass`, and implicitly `Parts::parts`, `Items::items`, ...). Do this once, at the start of the
+program, before loading any model:
+
+```csharp
+var libraryDir = StandardLibrary.Directory();   // the models the package carries (copied out to the user cache once)
+var libraryJson = StandardLibrary.Json();       // the library as JSON, for a payload's PayloadLibrary
+```
+
+`StandardLibrary.Json()` downloads the JSON from the SDK's GitHub release on its first call (checked
+against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and throws
+`LibraryUnavailableException` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a
+copy (the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one
+the chosen backend needs.
 
 Costs: opening a model with the standard library takes one to three seconds; the SysML Toolkit's
 JSON export of a model takes a few seconds; the library JSON is about 160 MB and takes a few seconds
@@ -61,7 +75,7 @@ using SpecType = OpenMBEE.SysML.Type;      // the metaclass Type, beside System.
 using var toolkit = ToolkitBackend.Open(ToolkitBackend.DefaultLibrary,   // the package's binding library, or SYSMLV2_ABI's
     new[] { "model.sysml" },                          // your files; Array.Empty<string>() with sources
     null,                                             // or in-memory sources: new Dictionary<string, string> { ["m.sysml"] = text }
-    "sysml.library");                                 // the standard library directory
+    libraryDir);                                      // the standard library, from the initialization
 var model = new Model(toolkit);                       // the session closes when `toolkit` is disposed
 ```
 
@@ -71,7 +85,7 @@ From a payload (a JSON export you have):
 using OpenMBEE.SysML;
 using SpecType = OpenMBEE.SysML.Type;
 
-var library = PayloadLibrary.FromJson(File.ReadAllText("sysml.library.full.json"));  // once, share it
+var library = PayloadLibrary.FromJson(File.ReadAllText(libraryJson));  // once, share it
 var model = Model.FromFullJson(File.ReadAllText("model.json"), library);
 ```
 
@@ -396,7 +410,7 @@ value for every property, including the ones the checked reader refuses, which t
 does not vouch for. Say so in your answer when the result depends on them.
 
 ```csharp
-var library = PayloadLibrary.FromJson(File.ReadAllText("sysml.library.full.json"));  // once
+var library = PayloadLibrary.FromJson(File.ReadAllText(StandardLibrary.Json()));  // once
 var exported = Model.FromFullJson(toolkit.FullJson(), library);   // same element ids as the SysML Toolkit's
 ```
 

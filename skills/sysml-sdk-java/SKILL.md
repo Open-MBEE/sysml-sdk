@@ -36,8 +36,22 @@ value; read around them as described below, or report them.
   silicon and on Intel, and copies the one for the running platform into the temporary directory on
   first use. To use another build, set `SYSMLV2_ABI` to it, or name it in code with
   `new ToolkitBackend.Library(Path.of(...))` in place of `ToolkitBackend.library()`.
-- The release's `sysml_library-0.1.0.zip` is the standard library: `sysml.library/` (the models,
-  for the SysML Toolkit) and `sysml.library.full.json` (for payloads).
+- The jar also carries the standard library models.
+
+**Initialize first: get the standard library.** Nearly every model refers to it (`ScalarValues::Real`,
+`ISQ::mass`, and implicitly `Parts::parts`, `Items::items`, ...). Do this once, at the start of the
+program, before loading any model:
+
+```java
+Path libraryDir = StandardLibrary.directory();   // the models the jar carries (copied out to the user cache once)
+Path libraryJson = StandardLibrary.json();       // the library as JSON, for a payload's PayloadLibrary
+```
+
+`StandardLibrary.json()` downloads the JSON from the SDK's GitHub release on its first call (checked
+against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and throws
+`LibraryUnavailableException` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a
+copy (the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one
+the chosen backend needs.
 
 Costs: opening a model with the standard library takes one to three seconds; the SysML Toolkit's
 JSON export of a model takes a few seconds; the library JSON is about 160 MB and needs `-Xmx2g` to
@@ -58,7 +72,7 @@ import org.openmbee.sysml.classes.*;      // the metaclasses
 try (ToolkitBackend toolkit = ToolkitBackend.open(ToolkitBackend.library(),   // the jar's binding library, or SYSMLV2_ABI's
         List.of("model.sysml"),                       // your files; List.of() with sources
         null,                                         // or in-memory sources: Map.of("model.sysml", text)
-        "sysml.library")) {                           // the standard library directory
+        libraryDir.toString())) {                     // the standard library, from the initialization
     Model model = new Model(toolkit);
     // ... your code here ...
 }
@@ -67,7 +81,7 @@ try (ToolkitBackend toolkit = ToolkitBackend.open(ToolkitBackend.library(),   //
 From a payload (a JSON export you have; run with `-Xmx2g`):
 
 ```java
-PayloadLibrary library = PayloadLibrary.fromJson(Files.readString(Path.of("sysml.library.full.json")));  // once, share it
+PayloadLibrary library = PayloadLibrary.fromJson(Files.readString(libraryJson));  // once, share it
 Model model = Model.fromFullJson(Files.readString(Path.of("model.json")), library);
 ```
 
@@ -421,7 +435,7 @@ value for every property, including the ones the checked reader refuses, which t
 does not vouch for. Say so in your answer when the result depends on them. Run with `-Xmx2g`.
 
 ```java
-PayloadLibrary library = PayloadLibrary.fromJson(Files.readString(Path.of("sysml.library.full.json")));  // once
+PayloadLibrary library = PayloadLibrary.fromJson(Files.readString(StandardLibrary.json()));  // once
 Model exported = Model.fromFullJson(toolkit.fullJson(), library);   // same element ids as the SysML Toolkit's
 ```
 

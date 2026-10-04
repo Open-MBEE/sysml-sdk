@@ -2,3 +2,4 @@
 export * from "./runtime.mjs";
 export { ABSTRACT, HIERARCHY, OPS, PROPS } from "./meta.mjs";
 export { ToolkitBackend, ToolkitLibrary, ToolkitError } from "./toolkit.mjs";
+export { LibraryUnavailable, standardLibrary, standardLibraryJson } from "./library.mjs";

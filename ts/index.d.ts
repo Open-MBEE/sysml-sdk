@@ -84,6 +84,22 @@ export class ToolkitBackend implements Backend {
   call(handle: string, op: string, args: readonly unknown[]): unknown;
 }
 
+/** The standard library is not at hand: this copy carries no models, or the JSON could not be
+ * downloaded and checked. */
+export class LibraryUnavailable extends Error {}
+
+/** The directory of the standard library models the npm package carries, for `libraryDir`. Node only. */
+export function standardLibrary(): Promise<string>;
+
+/** The standard library as full-form JSON, for PayloadLibrary: the file SYSML_LIBRARY_JSON names,
+ * else the cached copy, downloaded from this version's GitHub release on the first call and checked
+ * against the SHA-256 GitHub states for it. Resolves to the file's path. Node only. */
+export function standardLibraryJson(options?: {
+  version?: string;
+  cacheDir?: string;
+  fetch?: typeof globalThis.fetch;
+}): Promise<string>;
+
 export class Model {
   constructor(backend: Backend);
   /** A model read from a full-form interchange element array. With `library`, references into the

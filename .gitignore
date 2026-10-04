@@ -18,6 +18,8 @@ python/sysml/_native/
 ts/sysmlv2_abi.wasm
 ts/LICENSE
 ts/NOTICE
+python/sysml/stdlib/
+ts/stdlib/
 
 # Query example build outputs
 examples/queries/java/out/
@@ -31,3 +33,4 @@ examples/sysml.library.full.json
 # Binding libraries tools/package.py stages for the NuGet package
 csharp/*/runtimes/
 csharp/*/THIRD-PARTY/
+csharp/*/stdlib/

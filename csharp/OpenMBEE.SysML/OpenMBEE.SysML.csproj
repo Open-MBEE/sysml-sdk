@@ -25,4 +25,15 @@
     <None Include="THIRD-PARTY\**\*" Pack="true" PackagePath="THIRD-PARTY\" />
   </ItemGroup>
 
+  <!-- The standard library models, when tools/package.py stages them here for a release package:
+       embedded (StandardLibrary copies them out), their LICENSE and NOTICE also beside the package's.
+       The models are under the Eclipse Public License 2.0, so the package's license is both. -->
+  <ItemGroup>
+    <EmbeddedResource Include="stdlib\**\*" LogicalName="stdlib/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="stdlib\LICENSE;stdlib\NOTICE" Pack="true" PackagePath="stdlib\" Condition="Exists('stdlib')" />
+  </ItemGroup>
+  <PropertyGroup Condition="Exists('stdlib')">
+    <PackageLicenseExpression>Apache-2.0 AND EPL-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
 </Project>

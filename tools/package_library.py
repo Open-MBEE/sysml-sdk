@@ -31,7 +31,7 @@ import tomllib
 import zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).absolute().parent.parent
 
 NOTICE = """The KerML and SysML standard library, as its models and as full-form interchange JSON
 
@@ -56,6 +56,27 @@ could not resolve.
 
 Both are licensed under the Eclipse Public License 2.0, as the library models are; see LICENSE. They
 are not covered by the SDK's Apache-2.0 license.
+
+Source Code: the library models are available under the Eclipse Public License 2.0 at
+{url}/tree/{release_commit}/sysml.library
+
+The release licenses its models under the EPL 2.0 by the copyright holders it lists:
+
+{holders}
+"""
+
+# The NOTICE beside the library models a package carries (write_models): the models only, no JSON.
+MODELS_NOTICE = """The KerML and SysML standard library models
+
+This directory holds the standard library models of the SysML v2 release named below, unmodified:
+the .kerml and .sysml files the release tracks in its directory sysml.library, with their project
+metadata.
+
+  {release}, {url}
+  commit {release_commit}
+
+They are licensed under the Eclipse Public License 2.0; see LICENSE. They are not covered by the
+SDK's Apache-2.0 license.
 
 Source Code: the library models are available under the Eclipse Public License 2.0 at
 {url}/tree/{release_commit}/sysml.library
@@ -120,6 +141,50 @@ def copyright_holders(readme: str) -> list[str]:
     return holders
 
 
+def release_fields(library_dir: Path) -> dict:
+    """What the NOTICE and README say about the library: the SDK's version, the SysML v2 release the
+    directory `library_dir` (its sysml.library, in a git checkout of the release) comes from, the
+    release's copyright holders, and the SysML Toolkit the SDK pins."""
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    toolkit = json.loads((ROOT / "vendor" / "sysml-toolkit" / "PIN.json").read_text(encoding="utf-8"))["toolkit"]
+    release = library_dir.absolute().parent
+    project = json.loads((library_dir / "Systems Library" / ".project.json").read_text(encoding="utf-8"))
+    holders = copyright_holders((release / "README.md").read_text(encoding="utf-8"))
+    return dict(
+        version=version, release=git(release, "describe", "--tags", "--always"),
+        release_commit=git(release, "rev-parse", "HEAD"),
+        url=git(release, "remote", "get-url", "origin").removesuffix(".git"),
+        library_version=project["version"],
+        repository=toolkit["repository"], tag=toolkit["tag"], commit=toolkit["commit"],
+        holders="\n".join(holders))
+
+
+def tracked_models(library_dir: Path) -> list[str]:
+    """The library's models as the release tracks them, as paths relative to the release (starting with
+    the directory's name); its IDE files (.project, .settings, .gitignore) stay out."""
+    library = library_dir.absolute()
+    models = [p for p in git(library.parent, "ls-files", "-z", "--", library.name).split("\0") if p]
+    models = [p for p in models if p.endswith((".kerml", ".sysml", ".project.json", ".meta.json"))]
+    if not any(p.endswith((".kerml", ".sysml")) for p in models):
+        sys.exit(f"no library models tracked under {library}")
+    return models
+
+
+def write_models(library_dir: Path, dest: Path) -> None:
+    """Write the library models into `dest`, laid out as `library_dir` is (so that `dest` is a library
+    directory a session opens), with the release's LICENSE (EPL 2.0) and a NOTICE: what an SDK
+    package carries for its standard_library helper."""
+    library = library_dir.absolute()
+    fields = release_fields(library)
+    dest.mkdir(parents=True, exist_ok=True)
+    for rel in tracked_models(library):
+        target = dest / Path(rel).relative_to(library.name)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((library.parent / rel).read_bytes())
+    (dest / "LICENSE").write_bytes((library.parent / "LICENSE").read_bytes())
+    (dest / "NOTICE").write_text(MODELS_NOTICE.format(**fields), encoding="utf-8", newline="\n")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("json", type=Path)
@@ -127,28 +192,15 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=ROOT / "dist")
     a = ap.parse_args()
 
-    version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
-    toolkit = json.loads((ROOT / "vendor" / "sysml-toolkit" / "PIN.json").read_text(encoding="utf-8"))["toolkit"]
-    release = a.library_dir.resolve().parent
-    project = json.loads((a.library_dir / "Systems Library" / ".project.json").read_text(encoding="utf-8"))
-    fields = dict(
-        version=version, release=git(release, "describe", "--tags", "--always"),
-        release_commit=git(release, "rev-parse", "HEAD"),
-        url=git(release, "remote", "get-url", "origin").removesuffix(".git"),
-        library_version=project["version"],
-        repository=toolkit["repository"], tag=toolkit["tag"], commit=toolkit["commit"])
-    holders = copyright_holders((release / "README.md").read_text(encoding="utf-8"))
-    notice = NOTICE.format(**fields, holders="\n".join(holders))
+    fields = release_fields(a.library_dir)
+    release = a.library_dir.absolute().parent
+    notice = NOTICE.format(**fields)
+    version = fields["version"]
 
     name = f"sysml_library-{version}"
     a.out.mkdir(parents=True, exist_ok=True)
     archive = a.out / f"{name}.zip"
-    # The models as the release tracks them; its IDE files (.project, .settings, .gitignore) stay out.
-    library = a.library_dir.resolve()
-    models = [p for p in git(release, "ls-files", "-z", "--", library.name).split("\0") if p]
-    models = [p for p in models if p.endswith((".kerml", ".sysml", ".project.json", ".meta.json"))]
-    if not any(p.endswith((".kerml", ".sysml")) for p in models):
-        sys.exit(f"no library models tracked under {library}")
+    models = tracked_models(a.library_dir)
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         z.write(a.json, f"{name}/sysml.library.full.json")
         for rel in sorted(models):
