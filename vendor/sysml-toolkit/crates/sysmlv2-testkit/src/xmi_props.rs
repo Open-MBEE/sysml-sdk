@@ -1,7 +1,7 @@
 //! Generated from `spec-refs/{KerML,SysML}.xmi` (normative metamodel
 //! 20250201) by `tools/xmi_props.py` — do not edit. Per-metaclass
 //! property closure (own + inherited) with the normative
-//! owned-vs-derived split, for the M5 property-audit gate.
+//! owned-vs-derived split, for the property-audit gate.
 
 /// The property is derived (`isDerived="true"` in the XMI): it
 /// belongs to the full interchange form only, never the compact form.

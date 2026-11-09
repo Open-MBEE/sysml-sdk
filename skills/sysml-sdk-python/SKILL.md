@@ -1,17 +1,22 @@
 ---
 name: sysml-sdk-python
-description: Writes Python code that reads, navigates and queries SysML v2 and KerML models with the SysML v2 SDK (import sysml), through the OpenMBEE SysML Toolkit or from a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml files or SysML v2 JSON in Python, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
+description: Writes Python code that reads, navigates and queries SysML v2 and KerML models with the SysML v2 SDK (import sysml), through the OpenMBEE SysML Toolkit, the SysML v2 Pilot Implementation, or a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml files or SysML v2 JSON in Python, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
 ---
 
 # SysML v2 SDK for Python
 
 The SDK is the OMG metamodel as Python classes: every KerML and SysML metaclass, property and
-operation, under its specification name. A model comes from one of two backends:
+operation, under its specification name. A model comes from one of three backends:
 
 - **the SysML Toolkit**, through its native binding library: reads `.sysml`/`.kerml` text, resolves
   names, computes derived properties and evaluates operations, and refuses what it cannot derive
   completely;
+- **the SysML v2 Pilot Implementation**, run in Java: reads the text too, and computes every property
+  and operation with its own code;
 - **a payload**: a full-form interchange JSON export from any SysML v2 tool, read with no native code.
+
+Besides the specification's members, the classes have `find_` convenience members (`find_parts()`,
+`find_part_defs()`, `find_value()`, ...) for what takes several steps in the specification.
 
 The SDK never guesses. A member the SysML Toolkit does not answer raises `NotImplementedInToolkit`
 with the reason the SysML Toolkit gives; a reference that does not resolve raises
@@ -41,7 +46,7 @@ library_json = standard_library_json()    # the library as JSON, for a payload's
 `standard_library_json()` downloads the JSON from the SDK's GitHub release on its first call (checked
 against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and raises
 `LibraryUnavailable` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a copy
-(the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one the
+(the `sysml.library.full.json` of the release's `sysml_library-0.2.0.zip`). Call only the one the
 chosen backend needs.
 
 Costs: opening a model with the standard library takes one to three seconds; the library JSON is
@@ -85,6 +90,29 @@ model = Model.from_full_json(json.load(open("model.json", encoding="utf-8")), li
   `elements_of_type` skip them); a qualified name is looked up in the payload first. The library
   JSON lists each library element's own members only, not what it inherits.
 
+Through the SysML v2 Pilot Implementation, which runs in this process through JPype when it is
+installed (`pip install "sysml[pilot]"`), else in a Java process:
+
+```python
+from sysml import BackendError, Model
+from sysml.classes import *
+
+model = Model.from_pilot("model.sysml")                     # files; or sources={"model.sysml": text}
+```
+
+- It needs a Java 21 or newer runtime (`JAVA_HOME`, or `java` on the path). The first use downloads
+  the Pilot (about 130 MB) into the user cache; `SYSML_PILOT_HOME` names a Pilot already at hand.
+  Opening takes seconds even for a small model.
+- It reads with its own standard library: pass no library.
+- It answers rather than refuses: the derived reads the SysML Toolkit refuses (`type`,
+  `inheritedFeature`, `connectorEnd`, ...) and the operations it does not evaluate are answered, so
+  the workarounds below are not needed. Its answers are the Pilot's own; where they differ from the
+  SysML Toolkit's, say which backend produced the result.
+- The model it reads is elaborated: it holds the implied relationships and implicit elements too
+  (more elements in `all()` than the text declares).
+- A failure inside the Pilot, an operation it lacks, or a Pilot that cannot be found or started
+  raises `BackendError`.
+
 ## The shape of the API
 
 - **Find:** `model.resolve("Pkg::Part::feature")` (a qualified name, or `None`), `model.all()`,
@@ -125,33 +153,98 @@ model = Model.from_full_json(json.load(open("model.json", encoding="utf-8")), li
   `allSupertypes`, `directionOf`, ... Catch the refusal.
 - `el.get_raw("prop")` is the backend's raw value (unresolved spellings included), for diagnosis.
 
+## Convenience members
+
+Besides the specification's members, the classes have `find_` members (312), each defined by the SDK
+over the specification's properties and operations; `sysml/classes.pyi` in the wheel has every
+signature with its definition. Use one wherever it answers: one call instead of a walk.
+
+```python
+from sysml import NotAnswered, Refused, Scope, VisibilityFilter
+
+d.find_parts()                       # the part usages d owns (a connection is a part too)
+d.find_parts_exact()                 # exactly PartUsage; d.find_part("engine"): by name, or None
+d.find_parts(Scope.ALL)              # owned, then inherited; Scope.INHERITED: inherited only
+d.find_parts_semantic()              # the features typed by a part definition
+pkg.find_part_defs()                 # the part definitions a namespace owns; find_part_def(name)
+pkg.find_part_defs_by_name()         # {name: definition}, every name and short name
+pkg.find_part_defs().find_ports()    # a list carries its elements' members: calls chain
+feature.find_declared_types()        # the types as written; t.find_declared_supertypes()
+feature.find_redefinition_root()     # the feature its written redefinitions start from
+feature.find_value()                 # the value expression (=, :=, default), or None
+expr.find_literal()                  # an int, float, bool or str (math.inf for *), a sign folded
+t.find_lower_bound(), t.find_upper_bound()   # t's own multiplicity; None without one
+```
+
+- The feature kinds (27): `find_attributes`, `find_ports`, `find_items`, `find_actions`,
+  `find_states`, `find_connections`, `find_requirements`, `find_constraints`, ... Every list takes
+  `scope`, `visibility` (`VisibilityFilter.PUBLIC`, `PROTECTED`; `ANY` by default) and `library`
+  (`True` keeps what the standard library's types contribute, left out by default). On a namespace:
+  `find_<kind>_defs()`, `find_<kind>_def(name)`, `find_<kind>_defs_by_name()`, and the usages it has
+  through any membership, `find_member_<kinds>()`.
+- Also: `find_subsetted_features()`, `find_redefined_features()`, `find_referenced_feature()`,
+  `find_effective_feature(f)`, `find_unit()` (`1500 [kg]`: `SI::kilogram`), `find_parameters()`,
+  `find_inputs()`, `find_outputs()`, `find_initial_states()`, `find_accepted_types()`,
+  `find_is_accepted_type(t)`, `find_result_expression()`, `find_path()`, `find_applied_metadata()`,
+  `find_doc_text()`.
+- `Refused` (a `NotAnswered`): the member's definition gives no answer for this element
+  (`find_literal()` of `2 * x`, or of a value with a unit). `NotAnswered`: the backend cannot answer
+  something the member reads, named in the message (`NotImplementedInToolkit` from the SysML
+  Toolkit).
+- **On the Pilot Implementation** every member answers.
+- **On the SysML Toolkit**, the members answer: every list, lookup and exact list in the owned scope;
+  the definition lists and name maps of a package; the types, supertypes, subsettings and
+  redefinitions as written; values, unsigned literals and own bounds; paths, metadata and
+  documentation. They are refused, with the reason: the inherited scope and `Scope.ALL` of feature
+  and member lists and the semantic lists (`specializes()`), `find_effective_feature`, the implied
+  supertypes, `find_parameters`, `find_inputs` and `find_outputs` (`directionOf()`), the accepted
+  types (`payloadParameter`), `find_initial_states`, `find_result_expression`, and a literal with a
+  sign or a unit (`argument`). For those, use the helpers below: `features_with_inherited`,
+  `accepted_types`, `initial_states`, `number`.
+- `find_lower_bound()`/`find_upper_bound()` read the type's own multiplicity only; for SysML's
+  default and the multiplicity a usage takes from what it redefines, use `multiplicity_of` below.
+- Outside the owned scope, a member or definition list is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+
 ## When the SysML Toolkit refuses a read (read this before writing queries)
 
 The SysML Toolkit's checked reader answers a property only where it can derive it completely. In
-this release it refuses most of what builds on inheritance, so plan for it:
+this release it answers most reads (all but 3.6 % on the specification's Annex A model), refuses a
+few properties wherever they apply, and refuses some on particular elements, so plan for it:
 
-- **refused on nearly every element:** `feature`, `inheritedFeature`, `inheritedMembership`,
-  `featureMembership`, `member`, `membership`, `importedMembership`, `endFeature`, `input`,
-  `output`, `usage`, `directedUsage`, `definition` and the kind-specific definitions
-  (`partDefinition`, `portDefinition`, `itemDefinition`, `requirementDefinition`, ...),
-  `parameter` and `featuringType`;
-- **refused on features, even with a written typing:** `type`. Assume it is refused and use
-  `types_of` below;
-- **refused on connectors, accept actions, requirements and satisfy relations:** `sourceFeature`,
-  `targetFeature`, `connectorEnd`, `relatedFeature`, `payloadParameter`, `subjectParameter`,
-  `actorParameter`, `stakeholderParameter`, `satisfyingFeature`;
-- **answered:** what the model states itself: `ownedMember`, `ownedFeature`, `ownedMembership`, the
-  owned lists (`ownedUsage`, `ownedPart`, `nestedUsage`, `nestedPart`, `nestedAttribute`,
-  `nestedState`, `nestedTransition`, ...; owned members only, so an empty `nestedPart` does not mean
-  a usage has no parts), `owner`, `owningNamespace`, `owningType`, `name`, `declaredName`,
-  `qualifiedName`, `documentation`, `multiplicity`, `direction`, `isComposite`, `isEnd`,
-  `isImplied`, `entryAction`, `isParallel`, `triggerAction`, a transition's `source` and `target`,
-  `satisfiedRequirement`, `chainingFeature`, and the specific owned relationships with their ends:
-  `ownedTyping` (`type`), `ownedSubclassification` (`superclassifier`), `ownedSpecialization`
-  (`general`), `ownedSubsetting` (`subsettedFeature`; it holds the redefinitions too),
-  `ownedRedefinition` (`redefinedFeature`), `ownedReferenceSubsetting` (`referencedFeature`), and a
-  port definition's `conjugatedPortDefinition` / `originalPortDefinition`. (`ownedMember`,
-  `ownedFeature` and `ownedMembership` are refused on a `FeatureReferenceExpression`.)
+- **refused wherever they apply (on the Annex A model):** `featuringType`, `parameter`,
+  `isModelLevelEvaluable`, `individualDefinition`, `defaultFeaturingType`, `actionDefinition`,
+  `stateDefinition`, `calculationDefinition`, `flowDefinition`, `enumerationDefinition`, a metadata
+  usage's `metadataDefinition` and `metaclass`, `actorParameter`, `stakeholderParameter`,
+  `framedConcern`, `objectiveRequirement`, `step`, `expression`, `calculation`, `interaction`,
+  `flowEnd`, `sourceOutputFeature` and `targetInputFeature`;
+- **refused on some elements:** `type`, `definition` and `behavior` on action, perform action,
+  state, exhibit state, transition, flow, accept, send, allocation and use case usages and on
+  enumeration values, and `type` on some parameters and reference usages (use `types_of` below
+  there); the inherited and imported member lists (`feature`, `inheritedFeature`,
+  `featureMembership`, `inheritedMembership`, `member`, `membership`, `importedMembership`, `input`,
+  `output` and `endFeature`) on a definition with a `public import` in its body, or one that
+  specializes it; on expressions (operator, invocation, feature reference and feature chain
+  expressions, literals) their owned lists (`ownedMember`, `ownedFeature`, `ownedMembership` and
+  `ownedElement`), `directedFeature` and a literal's `result`; `result` on some requirement,
+  constraint and case usages and on calculation, requirement and case definitions;
+  `isImpliedIncluded`; an end feature's `isConstant`; a connector's `association`; `argument` on a
+  type test (`istype`, `@`);
+- **answered:** everything else, among it the inherited and imported member lists and `type` on most
+  elements, a connector's ends (`sourceFeature`, `targetFeature`, `connectorEnd` and
+  `relatedFeature`), `payloadParameter`, `payloadType`, `subjectParameter`, `requirementDefinition`
+  and `satisfyingFeature`, and what the model states itself: `ownedMember`, `ownedFeature`,
+  `ownedMembership`, the owned lists (`ownedUsage`, `ownedPart`, `nestedUsage`, `nestedPart`,
+  `nestedAttribute`, `nestedState`, `nestedTransition`, ...; owned members only, so an empty
+  `nestedPart` does not mean a usage has no parts), `owner`, `owningNamespace`, `owningType`,
+  `name`, `declaredName`, `qualifiedName`, `documentation`, `multiplicity`, `direction`,
+  `isComposite`, `isEnd`, `isImplied`, `entryAction`, `isParallel`, `triggerAction`, a transition's
+  `source` and `target`, `satisfiedRequirement`, `chainingFeature`, and the specific owned
+  relationships with their ends: `ownedTyping` (`type`), `ownedSubclassification`
+  (`superclassifier`), `ownedSpecialization` (`general`), `ownedSubsetting` (`subsettedFeature`; it
+  holds the redefinitions too), `ownedRedefinition` (`redefinedFeature`), `ownedReferenceSubsetting`
+  (`referencedFeature`), and a port definition's `conjugatedPortDefinition` /
+  `originalPortDefinition`.
 
 The refusal's message names the member and the SysML Toolkit's reason (`property has an incomplete
 derivation`, `Type features are incomplete: IncompleteProvider`, `incomplete operation evidence`):
@@ -274,7 +367,9 @@ def multiplicity_of(usage):
     seen, todo = {usage}, [usage]
     while todo:
         u = todo.pop(0)
-        if u.multiplicity is not None:
+        # A multiplicity without bounds is the default member SysML implies (`Base::exactlyOne`):
+        # the rule below gives it.
+        if isinstance(u.multiplicity, MultiplicityRange):
             return bounds(u.multiplicity)
         generals = written_generals(u)
         if not generals:
@@ -342,21 +437,19 @@ def subject_of(requirement):
 
 
 def initial_states(machine):
-    """The states a state machine (a state usage or definition) starts in: the targets of its
-    successions from its entry action (`entry; then off;`) or from the library's `start`
-    (`first start then off;`), and of its transitions from its entry action
-    (`entry action initial; transition initial then off;`)."""
-    entry, out = machine.entryAction, []
+    """The states a state machine (a state usage or definition) starts in, as find_initial_states
+    defines them: the targets of its successions from the library's `start` (`first start then
+    off;`), and only where there are none, from its entry action (`entry; then off;`)."""
+    entry, from_start, from_entry = machine.entryAction, [], []
     for f in machine.ownedFeature:
-        if isinstance(f, TransitionUsage):
-            if entry is not None and f.source == entry and isinstance(f.target, StateUsage):
-                out.append(f.target)
-        elif isinstance(f, SuccessionAsUsage):
+        if isinstance(f, SuccessionAsUsage):
             e = ends(f)
-            if len(e) == 2 and isinstance(e[1], StateUsage) and (
-                    (entry is not None and e[0] == entry) or (e[0].isLibraryElement and e[0].name == "start")):
-                out.append(e[1])
-    return out
+            if len(e) == 2 and isinstance(e[1], StateUsage):
+                if e[0].isLibraryElement and e[0].name == "start":
+                    from_start.append(e[1])
+                elif entry is not None and e[0] == entry:
+                    from_entry.append(e[1])
+    return from_start or from_entry
 
 
 def reachable_states(machine):
@@ -384,7 +477,10 @@ def number(expr):
     if isinstance(expr, (LiteralInteger, LiteralRational)):
         return expr.value
     if isinstance(expr, OperatorExpression) and expr.operator in ("-", "+"):
-        operands = [m.value for f in expr.ownedFeature for m in f.ownedMembership if isinstance(m, FeatureValue)]
+        # The operands' parameters through the owned relationships: the SysML Toolkit refuses an
+        # operator expression's ownedFeature in this release.
+        params = [p for r in expr.ownedRelationship if isinstance(r, ParameterMembership) for p in r.ownedRelatedElement]
+        operands = [m.value for f in params for m in f.ownedMembership if isinstance(m, FeatureValue)]
         if len(operands) == 1:
             return -number(operands[0]) if expr.operator == "-" else number(operands[0])
     raise ValueError(f"not a literal number: {expr.metaclass_name}")
@@ -466,10 +562,10 @@ flow.payloadType                             # [the flowing item's definition]
 machine = model.resolve("Pkg::Controller::modes")   # an ExhibitStateUsage or StateUsage
 states = machine.nestedState                 # its own states
 machine.isParallel, machine.entryAction
-initial = initial_states(machine)            # `entry; then off;`, `first start then off;`, ...
+initial = initial_states(machine)            # `first start then off;`, else `entry; then off;`
 reachable = reachable_states(machine)        # from the initial states along the transitions
 for t in machine.nestedTransition:           # t.source, t.target: the states it leaves and enters;
-    # an initial transition (`transition init then off;`) leaves the entry action, not a state
+    # a transition from the entry action leaves an action, not a state
     signals = accepted_types(t.triggerAction[0]) if t.triggerAction else []   # [ItemDefinition, ...]
     t.guardExpression                        # [Expression]
     if t.triggerAction:

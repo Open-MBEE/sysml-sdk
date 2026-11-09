@@ -498,8 +498,10 @@ public final class Queries {
      *                 be false may hold.
      *
      * Entering a state enters every region of a parallel state, or else its initial states
-     * (initialStates) and the targets of the transitions from its entry action (the form
-     * `entry action initial; transition initial then off;`), and so on down. A transition from a
+     * (initialStates) and the targets of the transitions from its entry action, and so on down.
+     * The transitions from the entry action (`entry action initial; transition initial then
+     * off;`) are the form the specification's Annex A model uses, followed here so that
+     * model can be explored; the SDK's findInitialStates does not count them. A transition from a
      * state is taken from any of its substates too, and entering a nested target makes the states
      * enclosing it active. Regions of a parallel state are explored independently of each other.
      *
@@ -595,6 +597,19 @@ public final class Queries {
         return kind && (usage.getOwningType() instanceof Definition || usage.getOwningType() instanceof Usage);
     }
 
+    /** The multiplicity `usage` declares, or null. SysML gives a usage that declares none the default
+     * [1..1]; the SysML Toolkit and the Pilot Implementation write it as a member without bounds whose
+     * subsetting of `Base::exactlyOne` is implied. That member is no declaration (see multiplicityOf). */
+    public static Multiplicity declaredMultiplicity(Feature usage) {
+        Multiplicity multiplicity = usage.getMultiplicity();
+        if (multiplicity == null || multiplicity instanceof MultiplicityRange)
+            return multiplicity;
+        for (Subsetting subsetting : multiplicity.getOwnedSubsetting())
+            if (!Boolean.TRUE.equals(subsetting.getIsImplied()))
+                return multiplicity;
+        return null;
+    }
+
     /** What says how many instances a usage stands for, by SysML's rule for usages: its own
      * multiplicity; else that of the usages it explicitly subsets or redefines, nearest first (in a
      * valid model a redefinition only narrows what it redefines, so the nearest is the tightest);
@@ -605,8 +620,9 @@ public final class Queries {
         Deque<Feature> todo = new ArrayDeque<>(List.of(usage));
         while (!todo.isEmpty()) {
             Feature current = todo.pollFirst();
-            if (current.getMultiplicity() != null)
-                return current.getMultiplicity();
+            Multiplicity declared = declaredMultiplicity(current);
+            if (declared != null)
+                return declared;
             List<Feature> subsetted = explicitSubsettings(current);
             if (subsetted.isEmpty())
                 return hasDefaultMultiplicity(current) ? DEFAULT_ONE : null;

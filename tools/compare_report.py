@@ -1,6 +1,9 @@
 """Compare a query report read through the SysML Toolkit with the expected report.
 
-Usage: <query demo> | python tools/compare_report.py examples/queries/expected/<report>
+Usage: <query demo> | python tools/compare_report.py examples/queries/expected/<report> [--library]
+
+--library says the demo read the model with the standard library; TOOLKIT_REPORT_REFUSALS then
+applies its `<report> --library` entry where it has one.
 
 Every section (a report under its `== heading ==`) must equal the expected section, unless the
 SysML Toolkit refused a read in it: the demo then stops that report with the line
@@ -56,9 +59,14 @@ def accepted(row) -> dict[str, str]:
     return dict(row if isinstance(row, list) else [row])
 
 
-def check(actual: str, expected_path: Path) -> tuple[list[str], list[str]]:
-    """(problems, expected failures) of `actual` against the expected report at `expected_path`."""
-    listed = TOOLKIT_REPORT_REFUSALS.get(expected_path.name, {})
+def check(actual: str, expected_path: Path, library: bool = False) -> tuple[list[str], list[str]]:
+    """(problems, expected failures) of `actual` against the expected report at `expected_path`;
+    `library` when the demo read the model with the standard library."""
+    key = f"{expected_path.name} --library"
+    if library and key in TOOLKIT_REPORT_REFUSALS:
+        listed = TOOLKIT_REPORT_REFUSALS[key]
+    else:
+        listed = TOOLKIT_REPORT_REFUSALS.get(expected_path.name, {})
     expected = sections(expected_path.read_text(encoding="utf-8"))
     got = sections(actual)
     problems, stopped = [], []
@@ -93,9 +101,12 @@ def check(actual: str, expected_path: Path) -> tuple[list[str], list[str]]:
 
 
 def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: <query demo> | python tools/compare_report.py <expected report>")
-    problems, stopped = check(sys.stdin.read(), Path(sys.argv[1]))
+    args = sys.argv[1:]
+    library = "--library" in args
+    paths = [a for a in args if a != "--library"]
+    if len(paths) != 1:
+        raise SystemExit("usage: <query demo> | python tools/compare_report.py <expected report> [--library]")
+    problems, stopped = check(sys.stdin.read(), Path(paths[0]), library)
     for s in stopped:
         print(f"expected failure: {s}")
     for p in problems:

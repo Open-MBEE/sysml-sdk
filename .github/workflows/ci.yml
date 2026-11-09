@@ -108,17 +108,28 @@ jobs:
       - name: Verify vendored input pin
         run: python tools/verify_pin.py
 
+      # The specification's XMI, which the extractor downloads from the OMG and checks against
+      # the hashes in PIN.json.
+      - name: The specification's XMI, cached under its pin
+        uses: actions/cache@v4
+        with:
+          path: vendor/sysml-toolkit/spec-refs
+          key: omg-xmi-${{ hashFiles('vendor/sysml-toolkit/PIN.json') }}
+
       # The anti-drift gate: every generated artifact must be exactly what
       # the checked-in metamodel.json (and pinned inputs) produce.
       - name: Regenerate everything from pinned inputs
         run: |
           python tools/extract_metamodel.py
+          python tools/extract_convenience.py
           python tools/gen_toolkit_table.py
           python tools/gen_toolkit_table_java.py
           python tools/gen_toolkit_table_cs.py
           python tools/gen_toolkit_table_cpp.py
           python tools/gen_toolkit_table_js.py
           python tools/gen_abi.py
+          python tools/gen_abi_convenience.py
+          python tools/gen_pilot_convenience.py
           python tools/gen_classes.py
           python tools/gen_classes_ts.py
           python tools/gen_classes_cs.py
@@ -151,6 +162,7 @@ jobs:
           node examples/queries/typescript/demo.mjs --payload | diff - examples/queries/expected/report.txt
           node ts/toolkit_checks.mjs
           node ts/library_checks.mjs
+          node ts/engine_checks.mjs
 
       - name: TS strict type check
         working-directory: ts
@@ -194,6 +206,7 @@ jobs:
           java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.Checks
           java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.ToolkitChecks
           java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.LibraryChecks
+          java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.EngineChecks
           javac --enable-preview --release 21 -cp /tmp/java-out -d /tmp/java-out examples/queries/java/*.java
           java --enable-preview -cp /tmp/java-out QueriesDemo --payload | diff - examples/queries/expected/report.txt
 
@@ -211,7 +224,9 @@ jobs:
           g++ -std=c++17 -Wall -Werror -O0 -I cpp/include -I vendor \
             cpp/checks/checks.cpp cpp/checks/conformance.g.cpp -o /tmp/cpp-checks
           g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/toolkit_checks.cpp -o /tmp/cpp-toolkit-checks && /tmp/cpp-toolkit-checks
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/convenience_checks.cpp -o /tmp/cpp-convenience-checks && /tmp/cpp-convenience-checks
           g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/library_checks.cpp -o /tmp/cpp-library-checks && /tmp/cpp-library-checks
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/engine_checks.cpp -o /tmp/cpp-engine-checks -ldl && /tmp/cpp-engine-checks
           /tmp/cpp-checks
           g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/queries/cpp/demo.cpp -o /tmp/queries-demo -ldl
           /tmp/queries-demo --payload | diff - examples/queries/expected/report.txt
@@ -242,6 +257,8 @@ jobs:
           - os: macos-15-intel
             target: x86_64-apple-darwin
             deployment: "10.12"
+            # library.hpp and engine.hpp use std::filesystem, which macOS has from 10.15.
+            cpp-deployment: "10.15"
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
@@ -311,11 +328,11 @@ jobs:
             cargo build --release --locked
           fi
 
-      # The Annex A regression test reads the specification's example model and standard library
-      # from the SysML Toolkit's SysML-v2-Release submodule; one runner fetches it.
+      # The convenience checks in every language, the Annex A regression test and the wheel read the
+      # specification's example model and standard library from the SysML Toolkit's SysML-v2-Release
+      # submodule, so every runner fetches it.
       - name: The specification's example model and library
-        if: runner.os == 'Linux'
-        run: git -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
+        run: git -c core.longpaths=true -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
 
       - name: Python through the SysML Toolkit
         run: |
@@ -335,6 +352,7 @@ jobs:
           out="$RUNNER_TEMP/java-out"
           javac --enable-preview --release 21 -d "$out" $(find java/src -name '*.java')
           java --enable-preview -cp "$out" org.openmbee.sysml.checks.ToolkitChecks
+          java --enable-preview -cp "$out" org.openmbee.sysml.checks.ConvenienceChecks
           javac --enable-preview --release 21 -cp "$out" -d "$out" examples/java/Tutorial.java
           java --enable-preview -cp "$out" Tutorial --toolkit
           javac --enable-preview --release 21 -cp "$out" -d "$out" examples/queries/java/*.java
@@ -342,7 +360,7 @@ jobs:
           queries | python tools/compare_report.py examples/queries/expected/report.txt
           R=../sysml-toolkit/spec-refs/SysML-v2-Release
           if [ -d "$R/sysml.library" ]; then
-            queries --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/report.txt
+            queries --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/report.txt --library
             queries --annex-a "$R/sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml" --library "$R/sysml.library" | python tools/compare_report.py examples/queries/expected/annex-a.txt
           fi
 
@@ -364,11 +382,15 @@ jobs:
       # C++ on Windows stays a local check (MinGW); the runner's compilers are not set up for it.
       - name: C++ through the SysML Toolkit
         if: runner.os != 'Windows'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.cpp-deployment || matrix.deployment }}
         run: |
           out="$RUNNER_TEMP/cpp-out"
           mkdir -p "$out"
           c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/toolkit_checks.cpp -o "$out/toolkit_checks" -ldl
           "$out/toolkit_checks"
+          c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/convenience_checks.cpp -o "$out/convenience_checks" -ldl
+          "$out/convenience_checks"
           c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/cpp/tutorial.cpp -o "$out/tutorial" -ldl
           "$out/tutorial" --toolkit
           c++ -std=c++17 -Wall -Werror -I cpp/include -I vendor examples/queries/cpp/demo.cpp -o "$out/queries" -ldl
@@ -389,6 +411,7 @@ jobs:
           rustup target add wasm32-unknown-unknown
           (cd abi && cargo build --release --locked --target wasm32-unknown-unknown)
           node ts/toolkit_checks.mjs
+          node ts/convenience_checks.mjs
           node examples/typescript/tutorial.mjs --toolkit
           node examples/queries/typescript/demo.mjs | python tools/compare_report.py examples/queries/expected/report.txt
           R=../sysml-toolkit/spec-refs/SysML-v2-Release
@@ -401,13 +424,12 @@ jobs:
             python tools/package_abi.py wasm32-unknown-unknown --out "$RUNNER_TEMP/dist"
           fi
 
-      # The wheel carries the standard library models, so every runner fetches them here (the Linux
-      # one already has them, for the Annex A test).
+      # The wheel carries the standard library models, fetched above.
       - name: Python wheel for this platform, installed and read through
         run: |
-          git -c core.longpaths=true -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
           python -m pip install --quiet build wheel
-          python tools/package.py python --target ${{ matrix.target }} --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --out "$RUNNER_TEMP/dist"
+          python tools/package.py pilot-server --out "$RUNNER_TEMP/pilot"
+          python tools/package.py python --target ${{ matrix.target }} --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --pilot-server "$RUNNER_TEMP"/pilot/sysml-pilot-server-*.jar --out "$RUNNER_TEMP/dist"
           python tools/check_packages.py python --dist "$RUNNER_TEMP/dist"
 
       # Packages that are the same on every platform and carry no native library: built and checked
@@ -417,7 +439,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python tools/package.py sdist --out "$RUNNER_TEMP/dist"
-          python tools/package.py npm --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --out "$RUNNER_TEMP/dist"
+          python tools/package.py npm --library-dir ../sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library --pilot-server "$RUNNER_TEMP"/pilot/sysml-pilot-server-*.jar --out "$RUNNER_TEMP/dist"
           python tools/check_packages.py npm --dist "$RUNNER_TEMP/dist"
 
       - uses: actions/upload-artifact@v4
@@ -478,9 +500,11 @@ jobs:
       - name: Jar, NuGet package and C++ archive, with every platform's binding library
         run: |
           L=sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library
+          python tools/package.py pilot-server --out "$RUNNER_TEMP/pilot"
+          P=$(ls "$RUNNER_TEMP"/pilot/sysml-pilot-server-*.jar)
           python tools/package.py java --javac22 "$JAVA_HOME_25_X64/bin/javac" --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --out "$RUNNER_TEMP/dist"
-          python tools/package.py csharp --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --out "$RUNNER_TEMP/dist"
-          python tools/package.py cpp --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --out "$RUNNER_TEMP/dist"
+          python tools/package.py csharp --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --pilot-server "$P" --out "$RUNNER_TEMP/dist"
+          python tools/package.py cpp --abi-archives "$RUNNER_TEMP/abi" --library-dir "$L" --pilot-server "$P" --out "$RUNNER_TEMP/dist"
           python - <<'EOF'
           import glob, os, sys, zipfile
           libs = ("sysmlv2_abi.dll", "libsysmlv2_abi.so", "libsysmlv2_abi.dylib")
@@ -571,11 +595,166 @@ jobs:
             python tools/check_packages.py cpp --dist "$RUNNER_TEMP/dist" --bundled
           fi
 
+  # The Pilot Implementation backend in every language and over every transport, on Linux. The
+  # Pilot (about 130 MB) is downloaded once per pin and cached; SYSML_REQUIRE_PILOT makes a Pilot
+  # check that would skip itself fail instead. Runs for a version tag and when started by hand.
+  pilot:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      inputs.publishing == true ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      SYSML_REQUIRE_PILOT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: The Pilot, cached under its pin
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sysml/pilot-*
+          key: pilot-${{ hashFiles('java/src/org/openmbee/sysml/pilot/Pilot.java') }}
+      - name: The Pilot engine
+        run: |
+          python tools/package.py pilot-server --out "$RUNNER_TEMP/pilot"
+          echo "SYSML_PILOT_SERVER=$(ls "$RUNNER_TEMP"/pilot/sysml-pilot-server-*.jar)" >> "$GITHUB_ENV"
+      - name: Java, in process
+        run: |
+          javac --enable-preview --release 21 -d /tmp/java-out $(find java/src -name '*.java')
+          java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.PilotChecks
+          java --enable-preview -cp /tmp/java-out org.openmbee.sysml.checks.ConvenienceChecks
+      - name: Python, through JPype and in a Java process
+        run: |
+          python -m pip install --quiet pytest JPype1
+          python -m pytest -q python/tests/test_pilot_backend.py python/tests/test_convenience_answers.py python/tests/test_convenience_examples.py python/tests/test_convenience_lists.py
+      - name: JavaScript, in a Java process
+        run: |
+          node ts/pilot_checks.mjs
+          node ts/convenience_checks.mjs
+      - name: C#, in a Java process
+        run: dotnet run --project csharp/OpenMBEE.SysML.Checks -c Release
+      - name: C++, in a Java process and through JNI
+        run: |
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/pilot_checks.cpp -o /tmp/pilot-checks -ldl && /tmp/pilot-checks
+          g++ -std=c++17 -Wall -Werror -I cpp/include -I vendor cpp/checks/convenience_checks.cpp -o /tmp/convenience-checks -ldl && /tmp/convenience-checks
+          g++ -std=c++17 -Wall -Werror -DSYSML_PILOT_JNI -I cpp/include -I vendor -I "$JAVA_HOME/include" -I "$JAVA_HOME/include/linux" \
+            cpp/checks/pilot_checks.cpp -o /tmp/pilot-checks-jni -ldl && /tmp/pilot-checks-jni
+      # Where the repository carries the Pilot plugin's shortcut bodies (pilot-plugin/), they are
+      # checked against the engine's reference bodies on the conformance examples: in compare mode a
+      # member whose two bodies differ is refused, which the examples' test reports.
+      - name: The plugin's shortcut bodies against the reference bodies
+        if: hashFiles('pilot-plugin/build.py') != ''
+        run: |
+          python pilot-plugin/gen_dispatch.py
+          git diff --exit-code -- pilot-plugin/src
+          python pilot-plugin/build.py --pilot-home "$(ls -d ~/.cache/sysml/pilot-*/ | head -1)" --out "$RUNNER_TEMP/plugin"
+          SYSML_PILOT_PLUGIN="$(ls "$RUNNER_TEMP"/plugin/sysml-pilot-plugin-*.jar)" SYSML_PILOT_CONVENIENCE=compare \
+            python -m pytest -q python/tests/test_convenience_answers.py
+
   # A version tag publishes a draft release with every package and the changelog section as its
   # notes; the draft is made public by hand. A tag with a suffix (v0.1.0-rc1) is a prerelease.
+  # The convenience reference, a release asset: every convenience member with its signature in each
+  # language, its definition, its examples and what each backend answers on them, as one HTML page
+  # (tools/gen_reference.py). The answers need both backends, so this job builds the binding library
+  # and fetches the Pilot, as the toolkit and pilot jobs do. Runs for a version tag and when started
+  # by hand.
+  reference:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      inputs.publishing == true ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      SYSML_REQUIRE_PILOT: "1"
+    defaults:
+      run:
+        shell: bash
+        working-directory: sysml-sdk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: sysml-sdk
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Read the SysML Toolkit pin
+        id: pin
+        run: |
+          python - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          k = json.load(open("vendor/sysml-toolkit/PIN.json"))["toolkit"]
+          print("repository=" + k["repository"].removeprefix("https://github.com/"))
+          print("tag=" + k["tag"])
+          print("commit=" + k["commit"])
+          EOF
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.tag }}
+          path: sysml-toolkit
+      - name: The SysML Toolkit checkout is the pinned commit, and its library
+        run: |
+          test "$(git -C ../sysml-toolkit rev-parse HEAD)" = "${{ steps.pin.outputs.commit }}"
+          git -C ../sysml-toolkit submodule update --init --depth 1 spec-refs/SysML-v2-Release
+      - name: The binding library
+        working-directory: sysml-sdk/abi
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          cargo build --release --locked
+      - name: The Pilot, cached under its pin
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sysml/pilot-*
+          key: pilot-${{ hashFiles('sysml-sdk/java/src/org/openmbee/sysml/pilot/Pilot.java') }}
+      - name: The Pilot engine
+        run: |
+          python tools/package.py pilot-server --out "$RUNNER_TEMP/pilot"
+          echo "SYSML_PILOT_SERVER=$(ls "$RUNNER_TEMP"/pilot/sysml-pilot-server-*.jar)" >> "$GITHUB_ENV"
+      - name: Both backends' answers on the examples, and the page
+        run: |
+          python tools/convenience_outcomes.py --out "$RUNNER_TEMP/outcomes.json"
+          python - "$RUNNER_TEMP/intro.json" "${{ steps.pin.outputs.tag }}" > "$RUNNER_TEMP/version" <<'EOF'
+          import json, re, sys
+          version = json.load(open("ts/package.json"))["version"]
+          source = open("java/src/org/openmbee/sysml/pilot/Pilot.java").read()
+          pilot = (re.search(r'RELEASE = "([^"]+)"', source).group(1) + " (version "
+                   + re.search(r'VERSION = "([^"]+)"', source).group(1) + ")")
+          json.dump({"title": "SysML SDK Convenience Reference", "intro": [
+              f"The convenience members of the SysML v2 SDK {version}: every <code>find</code> member, with its "
+              "signature in each of the five languages, its definition in OCL over the specification, its "
+              "examples, and what each backend answers on them.",
+              f"Built with the SysML Toolkit {sys.argv[2]} and the SysML v2 Pilot Implementation {pilot}."]},
+              open(sys.argv[1], "w"))
+          print(version)
+          EOF
+          mkdir -p "$RUNNER_TEMP/reference"
+          python tools/gen_reference.py --standalone --outcomes "$RUNNER_TEMP/outcomes.json" --review "$RUNNER_TEMP/intro.json" \
+            --out "$RUNNER_TEMP/reference/sysml-sdk-reference-$(cat "$RUNNER_TEMP/version").html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-reference
+          path: ${{ runner.temp }}/reference/*
+
   release:
     if: startsWith(github.ref, 'refs/tags/v') && inputs.publishing != true
-    needs: [example-json, generate-and-test, csharp, java, cpp, toolkit, portable, portable-check]
+    needs: [example-json, generate-and-test, csharp, java, cpp, toolkit, portable, portable-check, pilot, reference]
     runs-on: ubuntu-latest
     permissions:
       contents: write

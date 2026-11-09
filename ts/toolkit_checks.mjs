@@ -78,9 +78,7 @@ expectRefusal("inheritedMemberships()", "its evidence is incomplete", "inherited
   const memberships = sports.inheritedMemberships([], [], false);
   check(memberships.length === 2 && memberships[0].memberName === "wheels", "inheritedMemberships");
 });
-let opRefused = false;
-try { sports.isCompatibleWith(car); } catch (e) { opRefused = e instanceof NotImplementedInToolkit && e.message.includes("isCompatibleWith"); }
-check(opRefused, "an operation the SysML Toolkit cannot answer as specified is refused");
+check(sports.isCompatibleWith(car) === true, "a specialization is compatible with its general type");
 check(be.fullJson().startsWith("["), "fullJson");
 be.close();
 

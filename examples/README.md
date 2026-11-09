@@ -31,9 +31,9 @@ printing the same report.
 
 Through the **SysML Toolkit** the SDK asks a live engine. It reads each property through the
 SysML Toolkit's checked reader, which answers only what it can derive completely: derived members
-the SysML Toolkit cannot derive yet (in this release, most of what builds on inheritance, such as
-`inheritedFeature`, and a feature's `type`) raise `NotImplementedInToolkit` with the reason the
-SysML Toolkit gives. The relationships they derive from are answered: the guides show how to read a
+the SysML Toolkit cannot derive yet (in this release a few, such as a feature's `featuringType`, and
+some on particular elements, such as `type` on action and state usages) raise
+`NotImplementedInToolkit` with the reason the SysML Toolkit gives. The relationships they derive from are answered: the guides show how to read a
 feature's types from its `ownedTyping`, and a definition's supertypes from its
 `ownedSubclassification`. Specification operations are evaluated by the SysML Toolkit
 (`effectiveName()`, `resolve`, ...). This path is available in all five languages through the same

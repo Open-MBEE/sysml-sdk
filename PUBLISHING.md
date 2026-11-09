@@ -73,4 +73,14 @@ one source distribution. Twine validates metadata, package names and versions ar
 checked, release tags must match `pyproject.toml`, and the source distribution is
 rebuilt and imported outside the checkout before publication. Source installations
 provide the payload backend; use a supported platform wheel for the bundled Toolkit
-backend. The standard library remains a separate GitHub release asset.
+backend. The standard library archive (`sysml_library-<version>.zip`) remains a separate
+GitHub release asset; the platform wheels carry the library's models (see below).
+
+## Other packages
+
+Only the Python distributions go to a registry. The jar, the npm package, the NuGet
+package and the C++ archive are assets of the GitHub release. Publishing one of them to its
+registry needs its license declared as the package carries it: a package with the standard
+library models (`stdlib/`) holds files under the Eclipse Public License 2.0 beside the SDK's
+Apache-2.0 code. The wheel, npm and NuGet metadata already say `Apache-2.0 AND EPL-2.0`;
+the jar has no metadata of its own, so a Maven POM for it lists both licenses.

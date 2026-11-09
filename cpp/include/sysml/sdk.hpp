@@ -46,15 +46,39 @@ public:
     using sdk_error::sdk_error;
 };
 
-/// A specification member the SysML Toolkit does not answer: thrown
-/// when the SysML Toolkit reports the member as not implemented.
-class not_implemented_in_toolkit final : public sdk_error {
+/// A specification member the backend does not answer for this element:
+/// the SysML Toolkit's refusals (not_implemented_in_toolkit), and an
+/// engine's.
+class not_answered : public sdk_error {
 public:
     using sdk_error::sdk_error;
 };
 
+/// A specification member the SysML Toolkit does not answer: thrown
+/// when the SysML Toolkit reports the member as not implemented.
+class not_implemented_in_toolkit final : public not_answered {
+public:
+    using not_answered::not_answered;
+};
+
+/// A convenience member that gives no answer for this element by its contract (`invalid` in its
+/// OCL): the literal of an expression that is not a literal, a bound that is an expression. Unlike
+/// the other not_answered errors, it says what the answer is, not that the backend cannot give it.
+class refused final : public not_answered {
+public:
+    using not_answered::not_answered;
+};
+
 /// The element no longer exists in the backend's current state.
 class gone final : public sdk_error {
+public:
+    using sdk_error::sdk_error;
+};
+
+/// The engine behind a backend could not answer: it failed while computing a value, or it is
+/// not available (not installed, not downloadable, or no suitable runtime). The message says
+/// which engine and why.
+class backend_error : public sdk_error {
 public:
     using sdk_error::sdk_error;
 };
@@ -94,8 +118,70 @@ struct ModelCore;
 
 class Value;
 
+// --- convenience members ----------------------------------------------------
+
+/// Which members a convenience list reads: the element's own, those it inherits (for a namespace's
+/// members, imported ones too), or both. A list of features gives its own first; a list of members or
+/// definitions, outside the owned scope, is in the backend's order.
+enum class Scope { Owned, Inherited, All };
+
+/// Which visibilities a convenience list keeps: every one, public and protected, or public only.
+enum class VisibilityFilter { Any, Protected, Public };
+
+/// The contract's literal of a scope or visibility filter ("owned", "public").
+inline const char* literal(Scope s) {
+    return s == Scope::Owned ? "owned" : s == Scope::Inherited ? "inherited" : "all";
+}
+inline const char* literal(VisibilityFilter v) {
+    return v == VisibilityFilter::Any ? "any" : v == VisibilityFilter::Protected ? "protected" : "public";
+}
+
+/// The unbounded `*` among a literal's values.
+struct Unbounded {
+    friend bool operator==(Unbounded, Unbounded) { return true; }
+    friend bool operator!=(Unbounded, Unbounded) { return false; }
+};
+
+/// A literal's value (find_literal, and the bounds' numbers, find_lower_bound and find_upper_bound): an
+/// integer, a real, a Boolean, a string, or the unbounded `*`. Read it with std::get or std::visit:
+/// `std::get<std::int64_t>(expr.find_literal())`, `std::holds_alternative<Unbounded>(*bound)`.
+using Literal = std::variant<std::int64_t, double, bool, std::string, Unbounded>;
+
+/// A convenience member as the generated structs call it (tools/naming.py, convenience_runtime): its
+/// name, its binding library symbol suffix, its parameters' names and kinds (scope, visibility, bool,
+/// str, element), and its result (elements, element, bool, int, unlimited, real, strings, literal).
+/// The int, unlimited and literal results answer a Literal.
+struct Find {
+    const char* name;
+    const char* symbol;
+    std::vector<const char*> param_names;
+    std::vector<const char*> param_kinds;
+    const char* result;
+};
+
 // The metaclass structs, declared ahead: Element's own members name them.
 #include "forward.g.hpp"
+
+/// A list of elements carrying the convenience members of its elements (defined in classes.g.hpp):
+/// `xs.find_ports()` is the elements' `find_ports()` in list order, list results concatenated
+/// (duplicates kept), absent single results dropped. A std::vector of the elements.
+template <class T>
+class ElementList;
+
+/// The answer of a name-keyed convenience member (find_part_defs_by_name): names to elements in
+/// membership order, as (name, element) pairs; find() and contains() look a name up.
+template <class T>
+class NameMap : public std::vector<std::pair<std::string, T>> {
+public:
+    /// The element under `name`, or std::nullopt.
+    std::optional<T> find(const std::string& name) const {
+        for (const auto& entry : *this)
+            if (entry.first == name) return entry.second;
+        return std::nullopt;
+    }
+    /// Whether some element is under `name`.
+    bool contains(const std::string& name) const { return find(name).has_value(); }
+};
 
 // --- Element: the single state root ---------------------------------------
 //
@@ -171,11 +257,39 @@ protected:
     /// answers or refuses; a payload refuses). Arguments are made by detail::arg.
     Value call_(std::string_view op, std::vector<nlohmann::json> args) const;
 
+    /// Every convenience member routes through here: the backend answers or refuses, and the result
+    /// is wrapped (an unbounded `*` as INT64_MAX). Arguments are made by detail::arg, a scope or
+    /// visibility filter as its literal.
+    Value find_(const Find& member, std::vector<nlohmann::json> args) const;
+    /// The backend's answer unwrapped (a literal's tagged JSON).
+    nlohmann::json find_raw_(const Find& member, std::vector<nlohmann::json> args) const;
+    /// A literal's value from its tagged JSON.
+    static Literal as_literal_(const nlohmann::json& raw);
+    /// A bound's number as a Literal from the backend's answer: none where it is null, unbounded where
+    /// it is `*` (or, from the binding library, INT64_MAX, which only an upper bound can be).
+    static std::optional<Literal> as_bound_(const nlohmann::json& raw, bool unlimited);
+
+    /// A convenience member over a list of elements (the members of ElementList): list results
+    /// concatenated in list order, single results with the absent ones dropped, as R; one backend call
+    /// per model. If the member refuses for one element, the call refuses.
+    template <class R, class T>
+    static ElementList<R> find_all_(const std::vector<T>& xs, const Find& member, std::vector<nlohmann::json> args);
+    /// The same for a member that answers strings.
+    template <class T>
+    static std::vector<std::string> find_all_strings_(const std::vector<T>& xs, const Find& member,
+                                                      std::vector<nlohmann::json> args);
+    /// The backend's answers for each element (one find_each per model), wrapped.
+    template <class T>
+    static std::vector<Value> find_each_(const std::vector<T>& xs, const Find& member, std::vector<nlohmann::json> args);
+
     // --- typed converters of a Value (generated operations call these) --
     template <class T>
     static std::vector<T> as_list_(const Value& v);
     template <class T>
     static std::optional<T> as_ref_(const Value& v);
+    /// A name-keyed map from the backend's pairs of a name and an element, in their order.
+    template <class T>
+    static NameMap<T> as_map_(const Value& v);
     static std::optional<bool> as_bool_(const Value& v);
     static std::optional<std::string> as_string_(const Value& v);
     static std::optional<std::int64_t> as_int_(const Value& v);
@@ -213,6 +327,8 @@ private:
 
     friend struct detail::ModelCore;
     friend class Model;
+    template <class>
+    friend class ElementList;
 };
 
 // --- Value: one property result -------------------------------------------
@@ -286,6 +402,27 @@ public:
         (void)args;
         throw not_implemented_in_toolkit(std::string(op) + "(): operations are not available on "
                                         "payload models; load the model through the SysML Toolkit backend");
+    }
+
+    /// A convenience member on the element `handle`, with its arguments in order, defaults filled
+    /// in (a scope or visibility filter as its literal, an element as {"@id": handle}). A backend that
+    /// cannot answer it throws not_answered; where its contract gives no answer, refused. A payload
+    /// holds property values only.
+    virtual nlohmann::json find(const std::string& handle, const Find& member, const nlohmann::json& args) const {
+        (void)handle;
+        (void)args;
+        throw not_answered(std::string(member.name) + ": the convenience members are not available on payload "
+                           "models; load the model through the SysML Toolkit or the Pilot Implementation");
+    }
+
+    /// `find` on each element, an array with a result per handle in order, for the members of an
+    /// ElementList. By default one `find` per element; a backend that can answer them together (in one
+    /// request) overrides it.
+    virtual nlohmann::json find_each(const std::vector<std::string>& handles, const Find& member,
+                                     const nlohmann::json& args) const {
+        nlohmann::json out = nlohmann::json::array();
+        for (const auto& h : handles) out.push_back(find(h, member, args));
+        return out;
     }
 };
 
@@ -537,12 +674,34 @@ public:
         return detail::ModelCore::mint(core_, std::move(handle));
     }
 
+    /// Name resolution, with visibility (KerML 8.2.3.5), from the root: the backend's resolution. A
+    /// payload model resolves its elements' own qualified names; the SysML Toolkit's lookup does not
+    /// consider visibility yet. Only names the model gives count: an unnamed element is not found under
+    /// the name of what it references. To get an element by its qualified name whatever its visibility,
+    /// use find.
     std::optional<Element> resolve(std::string_view qname) const {
         auto handle = core_->backend->resolve(qname);
         if (!handle)
             return std::nullopt;
         return element(*std::move(handle));
     }
+
+    /// Name resolution, with visibility, from a namespace: the specification's Namespace::resolve on
+    /// `context` (its member element), as the backend answers it. Throws wrong_kind when `context` is not
+    /// a namespace.
+    std::optional<Element> resolve(std::string_view name, const Element& context) const;
+
+    /// The element a qualified name names, whatever its visibility, the same on every backend: the first
+    /// segment is a top-level name; each next one a member of the namespace before it, through one of its
+    /// owned memberships (an alias's name included) or, with `inherited`, also through its inherited
+    /// memberships (its supertypes' non-private ones). Empty if a segment names nothing. Segments may be
+    /// quoted, with KerML's escapes ('~Plug').
+    std::optional<Element> find(std::string_view qualified_name, bool inherited = false) const;
+
+    /// A qualified name's segments as {written, name} (KerML 8.2.3.4.1): separated by `::`; an
+    /// unrestricted name in single quotes, its escape sequences resolved (KerML 8.2.2.3); a leading
+    /// global scope qualifier `$` dropped. Throws sdk_error on a malformed name.
+    static std::vector<std::pair<std::string, std::string>> split_qualified_name(std::string_view qualified_name);
 
     std::vector<Element> all() const {
         std::vector<Element> out;
@@ -577,6 +736,9 @@ private:
     explicit Model(std::shared_ptr<const detail::ModelCore> core)
         : core_(std::move(core)) {}
 
+    /// The member element of the first membership with this member name or short name.
+    static std::optional<Element> member_named(const Value& memberships, const std::string& name);
+
     std::shared_ptr<const detail::ModelCore> core_;
 };
 
@@ -602,11 +764,196 @@ inline Value Element::call_(std::string_view op, std::vector<nlohmann::json> arg
     return core().call(core_, handle_, op, nlohmann::json(std::move(args)));
 }
 
+inline nlohmann::json Element::find_raw_(const Find& member, std::vector<nlohmann::json> args) const {
+    return core().backend->find(handle_, member, nlohmann::json(std::move(args)));
+}
+
+inline Value Element::find_(const Find& member, std::vector<nlohmann::json> args) const {
+    nlohmann::json raw = find_raw_(member, std::move(args));
+    if (std::string_view(member.result) == "unlimited" && raw.is_string() && raw.get<std::string>() == "*")
+        raw = INT64_MAX;
+    const std::string at = std::string(member.name) + "() (element " + handle_ + ")";
+    return core().wrap(core_, &raw, true, at);
+}
+
+template <class T>
+std::vector<Value> Element::find_each_(const std::vector<T>& xs, const Find& member, std::vector<nlohmann::json> args) {
+    std::vector<Value> out;
+    if (xs.empty())
+        return out;
+    const nlohmann::json given(std::move(args));
+    const Element& first = xs.front();
+    bool one_model = true;
+    for (const Element& x : xs) one_model = one_model && x.core_ == first.core_;
+    nlohmann::json raws = nlohmann::json::array();
+    if (one_model) {
+        std::vector<std::string> handles;
+        for (const Element& x : xs) handles.push_back(x.handle_);
+        raws = first.core().backend->find_each(handles, member, given);
+    } else {
+        for (const Element& x : xs) raws.push_back(x.core().backend->find(x.handle_, member, given));
+    }
+    for (std::size_t i = 0; i < xs.size(); ++i) {
+        const Element& x = xs[i];
+        const std::string at = std::string(member.name) + "() (element " + x.handle_ + ")";
+        out.push_back(x.core().wrap(x.core_, &raws.at(i), true, at));
+    }
+    return out;
+}
+
+template <class R, class T>
+ElementList<R> Element::find_all_(const std::vector<T>& xs, const Find& member, std::vector<nlohmann::json> args) {
+    ElementList<R> out;
+    const bool single = std::string_view(member.result) == "element";
+    for (const Value& v : find_each_(xs, member, std::move(args))) {
+        if (single) {
+            if (!v.is_null()) out.push_back(v.as_element().template as<R>());
+        } else if (!v.is_null()) {
+            for (const Value& item : v.as_list()) out.push_back(item.as_element().template as<R>());
+        }
+    }
+    return out;
+}
+
+template <class T>
+std::vector<std::string> Element::find_all_strings_(const std::vector<T>& xs, const Find& member,
+                                                    std::vector<nlohmann::json> args) {
+    std::vector<std::string> out;
+    for (const Value& v : find_each_(xs, member, std::move(args)))
+        for (const std::string& s : as_string_list_(v)) out.push_back(s);
+    return out;
+}
+
+inline std::vector<std::pair<std::string, std::string>> Model::split_qualified_name(std::string_view qualified_name) {
+    const std::string qn(qualified_name);
+    std::vector<std::pair<std::string, std::string>> out;
+    std::size_t i = 0;
+    while (i < qn.size()) {
+        if (qn[i] == '\'') {
+            std::size_t j = i + 1;
+            std::string name;
+            while (j < qn.size() && qn[j] != '\'') {
+                if (qn[j] == '\\' && j + 1 < qn.size()) {
+                    const char c = qn[j + 1];
+                    name += c == 'b' ? '\b' : c == 'f' ? '\f' : c == 't' ? '\t' : c == 'n' ? '\n' : c;
+                    j += 2;
+                } else {
+                    name += qn[j++];
+                }
+            }
+            if (j >= qn.size())
+                throw sdk_error("an unterminated quoted name in " + qn);
+            out.emplace_back(qn.substr(i, j + 1 - i), name);
+            i = j + 1;
+        } else {
+            std::size_t j = qn.find("::", i);
+            if (j == std::string::npos)
+                j = qn.size();
+            out.emplace_back(qn.substr(i, j - i), qn.substr(i, j - i));
+            i = j;
+        }
+        if (i < qn.size()) {
+            if (qn.compare(i, 2, "::") != 0)
+                throw sdk_error("a name in " + qn + " is not followed by '::'");
+            i += 2;
+        }
+    }
+    if (!out.empty() && out.front().second == "$")
+        out.erase(out.begin());
+    return out;
+}
+
+inline std::optional<Element> Model::member_named(const Value& memberships, const std::string& name) {
+    if (!memberships.is_list())
+        return std::nullopt;
+    for (const Value& v : memberships.as_list()) {
+        if (!v.is_element())
+            continue;
+        const Element& m = v.as_element();
+        const Value member_name = m.read_("memberName");
+        const Value short_name = m.read_("memberShortName");
+        if ((member_name.is_string() && member_name.as_string() == name) ||
+            (short_name.is_string() && short_name.as_string() == name)) {
+            const Value e = m.read_("memberElement");
+            return e.is_element() ? std::optional<Element>(e.as_element()) : std::nullopt;
+        }
+    }
+    return std::nullopt;
+}
+
+inline std::optional<Element> Model::find(std::string_view qualified_name, bool inherited) const {
+    const std::string qn(qualified_name);
+    if (auto handle = core_->backend->resolve(qn)) {
+        Element el = element(*handle);
+        const Value own = el.read_("qualifiedName");
+        if (own.is_string() && own.as_string() == qn)
+            return el;
+    }
+    const auto segments = split_qualified_name(qn);
+    if (segments.empty())
+        return std::nullopt;
+    std::optional<Element> current;
+    if (auto handle = core_->backend->resolve(segments.front().first))
+        current = element(*handle);
+    if (!current)
+        for (const Element& root : roots()) {
+            current = member_named(root.read_("ownedMembership"), segments.front().second);
+            if (current)
+                break;
+        }
+    for (std::size_t i = 1; i < segments.size(); ++i) {
+        if (!current || !current->is_kind("Namespace"))
+            return std::nullopt;
+        auto found = member_named(current->read_("ownedMembership"), segments[i].second);
+        if (!found && inherited && current->is_kind("Type"))
+            found = member_named(current->read_("inheritedMembership"), segments[i].second);
+        current = found;
+    }
+    return current;
+}
+
+inline std::optional<Element> Model::resolve(std::string_view name, const Element& context) const {
+    if (!context.is_kind("Namespace"))
+        throw wrong_kind(context.metaclass_name() + " is not a Namespace: resolve needs a namespace as its context");
+    const Value m = context.call_("resolve", {nlohmann::json(std::string(name))});
+    if (!m.is_element())
+        return std::nullopt;
+    const Value e = m.as_element().read_("memberElement");
+    return e.is_element() ? std::optional<Element>(e.as_element()) : std::nullopt;
+}
+
+inline std::optional<Literal> Element::as_bound_(const nlohmann::json& raw, bool unlimited) {
+    if (raw.is_null())
+        return std::nullopt;
+    if (raw.is_string() && raw.get<std::string>() == "*")
+        return Literal{Unbounded{}};
+    const std::int64_t n = raw.is_number_integer() ? raw.get<std::int64_t>()
+                                                   : static_cast<std::int64_t>(raw.get<double>());
+    if (unlimited && n == INT64_MAX)
+        return Literal{Unbounded{}};
+    return Literal{n};
+}
+
+inline Literal Element::as_literal_(const nlohmann::json& raw) {
+    const nlohmann::json v = raw.is_string() ? nlohmann::json::parse(raw.get<std::string>()) : raw;
+    if (v.is_object() && v.size() == 1) {
+        const auto& [k, x] = *v.items().begin();
+        if (k == "unbounded") return Unbounded{};
+        if (k == "integer") return x.get<std::int64_t>();
+        if (k == "real") return x.get<double>();
+        if (k == "boolean") return x.get<bool>();
+        if (k == "string") return x.get<std::string>();
+    }
+    throw sdk_error("a literal value was expected, not " + raw.dump());
+}
+
 namespace detail {
 
 /// An operation argument as the backend contract carries it: an element as {"@id": handle}, a
 /// list as an array, an absent value as null.
 inline nlohmann::json arg(const Element& e) { return {{"@id", e.backend_handle()}}; }
+inline nlohmann::json arg(Scope v) { return literal(v); }
+inline nlohmann::json arg(VisibilityFilter v) { return literal(v); }
 inline nlohmann::json arg(bool v) { return v; }
 inline nlohmann::json arg(const std::string& v) { return v; }
 inline nlohmann::json arg(std::int64_t v) { return v; }
@@ -690,6 +1037,18 @@ std::optional<T> Element::as_ref_(const Value& v) {
     if (v.is_null())
         return std::nullopt;
     return v.as_element().as<T>();
+}
+
+template <class T>
+NameMap<T> Element::as_map_(const Value& v) {
+    NameMap<T> out;
+    if (v.is_null())
+        return out;
+    for (const Value& pair : v.as_list()) {
+        const List& p = pair.as_list();
+        out.emplace_back(p.at(0).as_string(), p.at(1).as_element().as<T>());
+    }
+    return out;
 }
 
 inline std::optional<bool> Element::as_bool_(const Value& v) {

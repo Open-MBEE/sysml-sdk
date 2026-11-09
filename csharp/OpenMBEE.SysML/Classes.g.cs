@@ -30,6 +30,18 @@ public partial interface IElement
     string? escapedName() => Model.AsString(this.Model.Call(this, "escapedName", System.Array.Empty<object?>()));
     Namespace? libraryNamespace() => Model.AsRef<Namespace>(this.Model.Call(this, "libraryNamespace", System.Array.Empty<object?>()));
     string? path() => Model.AsString(this.Model.Call(this, "path", System.Array.Empty<object?>()));
+    /// <summary>Metadata applied to an element by an owned annotation, or as an owned member
+    /// annotating it (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;)
+    /// is not found.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<MetadataFeature> FindAppliedMetadata() => Model.AsList<MetadataFeature>(this.Model.FindMember(this, Finds.FindAppliedMetadata));
+    /// <summary>The bodies of the element's documentation comments, in order.</summary>
+    /// <returns>The texts, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<string> FindDocText() => Model.AsList<string>(this.Model.FindMember(this, Finds.FindDocText));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -204,6 +216,18 @@ public interface AcceptActionUsage : ActionUsage
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>What an accept action accepts: its payload's types.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindAcceptedTypes() => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindAcceptedTypes));
+    /// <summary>Whether this accept action accepts a value of type: whether type specializes one of
+    /// its accepted types (findAcceptedTypes).</summary>
+    /// <param name="type">The type of what arrives: an item, a signal or an event.</param>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsAcceptedType(Type type) => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsAcceptedType, type));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -2125,6 +2149,21 @@ public interface Behavior : Class
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The directed features, scoped like the kind lists: those whose direction relative
+    /// to this behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindParameters(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindParameters, scope, visibility, library));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -6652,6 +6691,57 @@ public interface Expression : Step
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>Whether the value is written with a unit, &lt;expression&gt; [&lt;unit&gt;], a sign
+    /// allowed.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindHasUnit() => Model.AsFlag(this.Model.FindMember(this, Finds.FindHasUnit));
+    /// <summary>Whether findLiteral answers: a literal, or a sign on a number literal; a value with
+    /// a unit is not one.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsLiteral() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsLiteral));
+    /// <summary>A literal's value, a sign folded. Refused for anything else: a value with a unit
+    /// (1500 [kg]; findUnit gives the unit), an expression (2 * x), a reference (=
+    /// other).</summary>
+    /// <returns>The value as a Literal: an integer, a real, a Boolean, a string, or unbounded
+    /// (*).</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Literal FindLiteral() => (Literal)(this.Model.FindMember(this, Finds.FindLiteral)!);
+    /// <summary>A literal's value, a sign folded. Refused for anything else: a value with a unit
+    /// (1500 [kg]; findUnit gives the unit), an expression (2 * x), a reference (= other). Read as
+    /// the type given: long, int, double, bool or string, or a case of Literal.</summary>
+    /// <typeparam name="T">The type to read the value as: long, int, double, bool or string, or a
+    /// case of Literal.</typeparam>
+    /// <returns>The value as the type given.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    /// <exception cref="InvalidOperationException">Where the literal is of another kind (an integer
+    /// read as a string; unbounded read as a number).</exception>
+    T FindLiteral<T>() => FindLiteral().As<T>();
+    /// <summary>The unit a number literal is written in (1500 [kg], -5 [kg]: the element the
+    /// reference names, SI::kilogram); none for a literal without a unit; refused for anything
+    /// else, whose unit needs evaluation (3 [m/s], 2 * x). On a feature:
+    /// findValue().findUnit().</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IElement? FindUnit() => Model.AsRef<IElement>(this.Model.FindMember(this, Finds.FindUnit));
+    /// <summary>The result expression of a calculation or constraint, owned or inherited; the
+    /// specification has resultExpression only on analysis cases.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Expression? FindResultExpression() => Model.AsRef<Expression>(this.Model.FindMember(this, Finds.FindResultExpression));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -6773,6 +6863,237 @@ public interface Feature : Type
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>Whether a type of this feature conforms to Actions::Action; refused where the
+    /// model's library has no Actions::Action.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticAction() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticAction));
+    /// <summary>Whether a type of this feature conforms to Allocations::Allocation; refused where
+    /// the model's library has no Allocations::Allocation.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticAllocation() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticAllocation));
+    /// <summary>Whether a type of this feature conforms to AnalysisCases::AnalysisCase; refused
+    /// where the model's library has no AnalysisCases::AnalysisCase.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticAnalysisCase() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticAnalysisCase));
+    /// <summary>Whether a type of this feature conforms to Base::DataValue; refused where the
+    /// model's library has no Base::DataValue.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticAttribute() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticAttribute));
+    /// <summary>Whether a type of this feature conforms to Calculations::Calculation; refused where
+    /// the model's library has no Calculations::Calculation.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticCalculation() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticCalculation));
+    /// <summary>Whether a type of this feature conforms to Cases::Case; refused where the model's
+    /// library has no Cases::Case.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticCase() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticCase));
+    /// <summary>Whether a type of this feature conforms to Requirements::ConcernCheck; refused
+    /// where the model's library has no Requirements::ConcernCheck.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticConcern() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticConcern));
+    /// <summary>Whether a type of this feature conforms to Connections::Connection; refused where
+    /// the model's library has no Connections::Connection.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticConnection() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticConnection));
+    /// <summary>Whether a type of this feature conforms to Constraints::ConstraintCheck; refused
+    /// where the model's library has no Constraints::ConstraintCheck.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticConstraint() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticConstraint));
+    /// <summary>Whether a type of this feature conforms to Flows::MessageAction; refused where the
+    /// model's library has no Flows::MessageAction.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticFlow() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticFlow));
+    /// <summary>Whether a type of this feature conforms to Interfaces::Interface; refused where the
+    /// model's library has no Interfaces::Interface.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticInterface() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticInterface));
+    /// <summary>Whether a type of this feature conforms to Items::Item; refused where the model's
+    /// library has no Items::Item.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticItem() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticItem));
+    /// <summary>Whether a type of this feature conforms to Occurrences::Occurrence; refused where
+    /// the model's library has no Occurrences::Occurrence.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticOccurrence() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticOccurrence));
+    /// <summary>Whether a type of this feature conforms to Parts::Part; refused where the model's
+    /// library has no Parts::Part.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticPart() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticPart));
+    /// <summary>Whether a type of this feature conforms to Ports::Port; refused where the model's
+    /// library has no Ports::Port.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticPort() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticPort));
+    /// <summary>Whether a type of this feature conforms to Views::Rendering; refused where the
+    /// model's library has no Views::Rendering.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticRendering() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticRendering));
+    /// <summary>Whether a type of this feature conforms to Requirements::RequirementCheck; refused
+    /// where the model's library has no Requirements::RequirementCheck.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticRequirement() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticRequirement));
+    /// <summary>Whether a type of this feature conforms to States::StateAction; refused where the
+    /// model's library has no States::StateAction.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticState() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticState));
+    /// <summary>Whether a type of this feature conforms to UseCases::UseCase; refused where the
+    /// model's library has no UseCases::UseCase.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticUseCase() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticUseCase));
+    /// <summary>Whether a type of this feature conforms to VerificationCases::VerificationCase;
+    /// refused where the model's library has no VerificationCases::VerificationCase.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticVerificationCase() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticVerificationCase));
+    /// <summary>Whether a type of this feature conforms to Views::View; refused where the model's
+    /// library has no Views::View.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticView() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticView));
+    /// <summary>Whether a type of this feature conforms to Views::ViewpointCheck; refused where the
+    /// model's library has no Views::ViewpointCheck.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsSemanticViewpoint() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsSemanticViewpoint));
+    /// <summary>The types this feature is declared with.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindDeclaredTypes() => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindDeclaredTypes));
+    /// <summary>The features this feature subsets as written (redefinitions and reference
+    /// subsettings left out).</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindSubsettedFeatures() => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindSubsettedFeatures));
+    /// <summary>The features this feature redefines as written.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindRedefinedFeatures() => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindRedefinedFeatures));
+    /// <summary>The feature this feature references (::&gt;), or none.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Feature? FindReferencedFeature() => Model.AsRef<Feature>(this.Model.FindMember(this, Finds.FindReferencedFeature));
+    /// <summary>The feature a chain of written redefinitions starts from, following the first at
+    /// each step (Truck::mass to Frame::mass); itself when it redefines nothing.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Feature? FindRedefinitionRoot() => Model.AsRef<Feature>(this.Model.FindMember(this, Finds.FindRedefinitionRoot));
+    /// <summary>The value expression this feature is declared with (=, :=, default), or
+    /// none.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Expression? FindValue() => Model.AsRef<Expression>(this.Model.FindMember(this, Finds.FindValue));
+    /// <summary>Whether the value is a default (default = or default :=).</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindHasDefaultValue() => Model.AsFlag(this.Model.FindMember(this, Finds.FindHasDefaultValue));
+    /// <summary>Whether the value is an initial value (:=).</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindHasInitialValue() => Model.AsFlag(this.Model.FindMember(this, Finds.FindHasInitialValue));
+    /// <summary>Ordered: declared, or through a feature it subsets or redefines, implied ones
+    /// included, as the Pilot's FeatureUtil.checkIsOrdered.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsEffectivelyOrdered() => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsEffectivelyOrdered));
+    /// <summary>A feature chain as its features (battery.powerOut gives [battery, powerOut]); else
+    /// [self].</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindPath() => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindPath));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -8312,6 +8633,12 @@ public interface Function : Behavior
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The result expression of a calculation or constraint, owned or inherited; the
+    /// specification has resultExpression only on analysis cases.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Expression? FindResultExpression() => Model.AsRef<Expression>(this.Model.FindMember(this, Finds.FindResultExpression));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -12345,6 +12672,2056 @@ public interface Namespace : IElement
     string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The features that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindMemberFeatures(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindMemberFeatures, scope, visibility, library));
+    /// <summary>The feature that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Feature? FindMemberFeature(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<Feature>(this.Model.FindMember(this, Finds.FindMemberFeature, name, scope, visibility, library));
+    /// <summary>The usages that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Usage> FindMemberUsages(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Usage>(this.Model.FindMember(this, Finds.FindMemberUsages, scope, visibility, library));
+    /// <summary>The usage that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Usage? FindMemberUsage(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<Usage>(this.Model.FindMember(this, Finds.FindMemberUsage, name, scope, visibility, library));
+    /// <summary>The actions that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ActionUsage> FindMemberActions(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ActionUsage>(this.Model.FindMember(this, Finds.FindMemberActions, scope, visibility, library));
+    /// <summary>The action that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ActionUsage? FindMemberAction(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ActionUsage>(this.Model.FindMember(this, Finds.FindMemberAction, name, scope, visibility, library));
+    /// <summary>The allocations that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AllocationUsage> FindMemberAllocations(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AllocationUsage>(this.Model.FindMember(this, Finds.FindMemberAllocations, scope, visibility, library));
+    /// <summary>The allocation that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AllocationUsage? FindMemberAllocation(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<AllocationUsage>(this.Model.FindMember(this, Finds.FindMemberAllocation, name, scope, visibility, library));
+    /// <summary>The analysisCases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AnalysisCaseUsage> FindMemberAnalysisCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AnalysisCaseUsage>(this.Model.FindMember(this, Finds.FindMemberAnalysisCases, scope, visibility, library));
+    /// <summary>The analysisCase that is a member under this simple name (an alias's name
+    /// included), or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AnalysisCaseUsage? FindMemberAnalysisCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<AnalysisCaseUsage>(this.Model.FindMember(this, Finds.FindMemberAnalysisCase, name, scope, visibility, library));
+    /// <summary>The attributes that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AttributeUsage> FindMemberAttributes(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AttributeUsage>(this.Model.FindMember(this, Finds.FindMemberAttributes, scope, visibility, library));
+    /// <summary>The attribute that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AttributeUsage? FindMemberAttribute(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<AttributeUsage>(this.Model.FindMember(this, Finds.FindMemberAttribute, name, scope, visibility, library));
+    /// <summary>The calculations that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CalculationUsage> FindMemberCalculations(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<CalculationUsage>(this.Model.FindMember(this, Finds.FindMemberCalculations, scope, visibility, library));
+    /// <summary>The calculation that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    CalculationUsage? FindMemberCalculation(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<CalculationUsage>(this.Model.FindMember(this, Finds.FindMemberCalculation, name, scope, visibility, library));
+    /// <summary>The cases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CaseUsage> FindMemberCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<CaseUsage>(this.Model.FindMember(this, Finds.FindMemberCases, scope, visibility, library));
+    /// <summary>The case that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    CaseUsage? FindMemberCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<CaseUsage>(this.Model.FindMember(this, Finds.FindMemberCase, name, scope, visibility, library));
+    /// <summary>The concerns that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConcernUsage> FindMemberConcerns(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConcernUsage>(this.Model.FindMember(this, Finds.FindMemberConcerns, scope, visibility, library));
+    /// <summary>The concern that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConcernUsage? FindMemberConcern(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ConcernUsage>(this.Model.FindMember(this, Finds.FindMemberConcern, name, scope, visibility, library));
+    /// <summary>The connections that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConnectorAsUsage> FindMemberConnections(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConnectorAsUsage>(this.Model.FindMember(this, Finds.FindMemberConnections, scope, visibility, library));
+    /// <summary>The connection that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConnectorAsUsage? FindMemberConnection(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ConnectorAsUsage>(this.Model.FindMember(this, Finds.FindMemberConnection, name, scope, visibility, library));
+    /// <summary>The constraints that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConstraintUsage> FindMemberConstraints(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConstraintUsage>(this.Model.FindMember(this, Finds.FindMemberConstraints, scope, visibility, library));
+    /// <summary>The constraint that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConstraintUsage? FindMemberConstraint(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ConstraintUsage>(this.Model.FindMember(this, Finds.FindMemberConstraint, name, scope, visibility, library));
+    /// <summary>The enumerations that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<EnumerationUsage> FindMemberEnumerations(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<EnumerationUsage>(this.Model.FindMember(this, Finds.FindMemberEnumerations, scope, visibility, library));
+    /// <summary>The enumeration that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    EnumerationUsage? FindMemberEnumeration(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<EnumerationUsage>(this.Model.FindMember(this, Finds.FindMemberEnumeration, name, scope, visibility, library));
+    /// <summary>The flows that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<FlowUsage> FindMemberFlows(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<FlowUsage>(this.Model.FindMember(this, Finds.FindMemberFlows, scope, visibility, library));
+    /// <summary>The flow that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    FlowUsage? FindMemberFlow(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<FlowUsage>(this.Model.FindMember(this, Finds.FindMemberFlow, name, scope, visibility, library));
+    /// <summary>The interfaces that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<InterfaceUsage> FindMemberInterfaces(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<InterfaceUsage>(this.Model.FindMember(this, Finds.FindMemberInterfaces, scope, visibility, library));
+    /// <summary>The interface that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    InterfaceUsage? FindMemberInterface(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<InterfaceUsage>(this.Model.FindMember(this, Finds.FindMemberInterface, name, scope, visibility, library));
+    /// <summary>The items that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ItemUsage> FindMemberItems(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ItemUsage>(this.Model.FindMember(this, Finds.FindMemberItems, scope, visibility, library));
+    /// <summary>The item that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ItemUsage? FindMemberItem(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ItemUsage>(this.Model.FindMember(this, Finds.FindMemberItem, name, scope, visibility, library));
+    /// <summary>The occurrences that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<OccurrenceUsage> FindMemberOccurrences(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<OccurrenceUsage>(this.Model.FindMember(this, Finds.FindMemberOccurrences, scope, visibility, library));
+    /// <summary>The occurrence that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    OccurrenceUsage? FindMemberOccurrence(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<OccurrenceUsage>(this.Model.FindMember(this, Finds.FindMemberOccurrence, name, scope, visibility, library));
+    /// <summary>The parts that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PartUsage> FindMemberParts(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<PartUsage>(this.Model.FindMember(this, Finds.FindMemberParts, scope, visibility, library));
+    /// <summary>The part that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    PartUsage? FindMemberPart(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<PartUsage>(this.Model.FindMember(this, Finds.FindMemberPart, name, scope, visibility, library));
+    /// <summary>The ports that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PortUsage> FindMemberPorts(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<PortUsage>(this.Model.FindMember(this, Finds.FindMemberPorts, scope, visibility, library));
+    /// <summary>The port that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    PortUsage? FindMemberPort(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<PortUsage>(this.Model.FindMember(this, Finds.FindMemberPort, name, scope, visibility, library));
+    /// <summary>The references that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ReferenceUsage> FindMemberReferences(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ReferenceUsage>(this.Model.FindMember(this, Finds.FindMemberReferences, scope, visibility, library));
+    /// <summary>The reference that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ReferenceUsage? FindMemberReference(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ReferenceUsage>(this.Model.FindMember(this, Finds.FindMemberReference, name, scope, visibility, library));
+    /// <summary>The renderings that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RenderingUsage> FindMemberRenderings(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<RenderingUsage>(this.Model.FindMember(this, Finds.FindMemberRenderings, scope, visibility, library));
+    /// <summary>The rendering that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    RenderingUsage? FindMemberRendering(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<RenderingUsage>(this.Model.FindMember(this, Finds.FindMemberRendering, name, scope, visibility, library));
+    /// <summary>The requirements that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RequirementUsage> FindMemberRequirements(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<RequirementUsage>(this.Model.FindMember(this, Finds.FindMemberRequirements, scope, visibility, library));
+    /// <summary>The requirement that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    RequirementUsage? FindMemberRequirement(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<RequirementUsage>(this.Model.FindMember(this, Finds.FindMemberRequirement, name, scope, visibility, library));
+    /// <summary>The states that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<StateUsage> FindMemberStates(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<StateUsage>(this.Model.FindMember(this, Finds.FindMemberStates, scope, visibility, library));
+    /// <summary>The state that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    StateUsage? FindMemberState(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<StateUsage>(this.Model.FindMember(this, Finds.FindMemberState, name, scope, visibility, library));
+    /// <summary>The transitions that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<TransitionUsage> FindMemberTransitions(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<TransitionUsage>(this.Model.FindMember(this, Finds.FindMemberTransitions, scope, visibility, library));
+    /// <summary>The transition that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    TransitionUsage? FindMemberTransition(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<TransitionUsage>(this.Model.FindMember(this, Finds.FindMemberTransition, name, scope, visibility, library));
+    /// <summary>The useCases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<UseCaseUsage> FindMemberUseCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<UseCaseUsage>(this.Model.FindMember(this, Finds.FindMemberUseCases, scope, visibility, library));
+    /// <summary>The useCase that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    UseCaseUsage? FindMemberUseCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<UseCaseUsage>(this.Model.FindMember(this, Finds.FindMemberUseCase, name, scope, visibility, library));
+    /// <summary>The verificationCases that are members of this namespace through any membership
+    /// (owned, aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<VerificationCaseUsage> FindMemberVerificationCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<VerificationCaseUsage>(this.Model.FindMember(this, Finds.FindMemberVerificationCases, scope, visibility, library));
+    /// <summary>The verificationCase that is a member under this simple name (an alias's name
+    /// included), or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    VerificationCaseUsage? FindMemberVerificationCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<VerificationCaseUsage>(this.Model.FindMember(this, Finds.FindMemberVerificationCase, name, scope, visibility, library));
+    /// <summary>The views that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ViewUsage> FindMemberViews(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ViewUsage>(this.Model.FindMember(this, Finds.FindMemberViews, scope, visibility, library));
+    /// <summary>The view that is a member under this simple name (an alias's name included), or
+    /// none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ViewUsage? FindMemberView(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ViewUsage>(this.Model.FindMember(this, Finds.FindMemberView, name, scope, visibility, library));
+    /// <summary>The viewpoints that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ViewpointUsage> FindMemberViewpoints(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ViewpointUsage>(this.Model.FindMember(this, Finds.FindMemberViewpoints, scope, visibility, library));
+    /// <summary>The viewpoint that is a member under this simple name (an alias's name included),
+    /// or none.</summary>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ViewpointUsage? FindMemberViewpoint(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ViewpointUsage>(this.Model.FindMember(this, Finds.FindMemberViewpoint, name, scope, visibility, library));
+    /// <summary>The definitions of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Definition> FindDefinitions(Scope scope = Scope.Owned) => Model.AsList<Definition>(this.Model.FindMember(this, Finds.FindDefinitions, scope));
+    /// <summary>The definition with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Definition? FindDefinition(string name, Scope scope = Scope.Owned) => Model.AsRef<Definition>(this.Model.FindMember(this, Finds.FindDefinition, name, scope));
+    /// <summary>The definitions of this namespace by name: each under every name and short name it
+    /// is a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different definitions,
+    /// naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, Definition> FindDefinitionsByName(Scope scope = Scope.Owned) => Model.AsMap<Definition>(this.Model.FindMember(this, Finds.FindDefinitionsByName, scope));
+    /// <summary>The actionDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ActionDefinition> FindActionDefs(Scope scope = Scope.Owned) => Model.AsList<ActionDefinition>(this.Model.FindMember(this, Finds.FindActionDefs, scope));
+    /// <summary>The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ActionDefinition> FindActionDefsExact(Scope scope = Scope.Owned) => Model.AsList<ActionDefinition>(this.Model.FindMember(this, Finds.FindActionDefsExact, scope));
+    /// <summary>The types that specialize Actions::Action; refused where the model's library has no
+    /// Actions::Action.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindActionDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindActionDefsSemantic, scope));
+    /// <summary>The actionDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ActionDefinition? FindActionDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ActionDefinition>(this.Model.FindMember(this, Finds.FindActionDef, name, scope));
+    /// <summary>The actionDefs of this namespace by name: each under every name and short name it
+    /// is a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different actionDefs,
+    /// naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ActionDefinition> FindActionDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ActionDefinition>(this.Model.FindMember(this, Finds.FindActionDefsByName, scope));
+    /// <summary>The allocationDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AllocationDefinition> FindAllocationDefs(Scope scope = Scope.Owned) => Model.AsList<AllocationDefinition>(this.Model.FindMember(this, Finds.FindAllocationDefs, scope));
+    /// <summary>The types that specialize Allocations::Allocation; refused where the model's
+    /// library has no Allocations::Allocation.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindAllocationDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindAllocationDefsSemantic, scope));
+    /// <summary>The allocationDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AllocationDefinition? FindAllocationDef(string name, Scope scope = Scope.Owned) => Model.AsRef<AllocationDefinition>(this.Model.FindMember(this, Finds.FindAllocationDef, name, scope));
+    /// <summary>The allocationDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// allocationDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, AllocationDefinition> FindAllocationDefsByName(Scope scope = Scope.Owned) => Model.AsMap<AllocationDefinition>(this.Model.FindMember(this, Finds.FindAllocationDefsByName, scope));
+    /// <summary>The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AnalysisCaseDefinition> FindAnalysisCaseDefs(Scope scope = Scope.Owned) => Model.AsList<AnalysisCaseDefinition>(this.Model.FindMember(this, Finds.FindAnalysisCaseDefs, scope));
+    /// <summary>The types that specialize AnalysisCases::AnalysisCase; refused where the model's
+    /// library has no AnalysisCases::AnalysisCase.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindAnalysisCaseDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindAnalysisCaseDefsSemantic, scope));
+    /// <summary>The analysisCaseDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AnalysisCaseDefinition? FindAnalysisCaseDef(string name, Scope scope = Scope.Owned) => Model.AsRef<AnalysisCaseDefinition>(this.Model.FindMember(this, Finds.FindAnalysisCaseDef, name, scope));
+    /// <summary>The analysisCaseDefs of this namespace by name: each under every name and short
+    /// name it is a member by (an alias's included). The order is the backend's: the specification
+    /// does not define the order of membership. Refused where one name names two different
+    /// analysisCaseDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, AnalysisCaseDefinition> FindAnalysisCaseDefsByName(Scope scope = Scope.Owned) => Model.AsMap<AnalysisCaseDefinition>(this.Model.FindMember(this, Finds.FindAnalysisCaseDefsByName, scope));
+    /// <summary>The attributeDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AttributeDefinition> FindAttributeDefs(Scope scope = Scope.Owned) => Model.AsList<AttributeDefinition>(this.Model.FindMember(this, Finds.FindAttributeDefs, scope));
+    /// <summary>The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AttributeDefinition> FindAttributeDefsExact(Scope scope = Scope.Owned) => Model.AsList<AttributeDefinition>(this.Model.FindMember(this, Finds.FindAttributeDefsExact, scope));
+    /// <summary>The types that specialize Base::DataValue; refused where the model's library has no
+    /// Base::DataValue.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindAttributeDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindAttributeDefsSemantic, scope));
+    /// <summary>The attributeDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AttributeDefinition? FindAttributeDef(string name, Scope scope = Scope.Owned) => Model.AsRef<AttributeDefinition>(this.Model.FindMember(this, Finds.FindAttributeDef, name, scope));
+    /// <summary>The attributeDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// attributeDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, AttributeDefinition> FindAttributeDefsByName(Scope scope = Scope.Owned) => Model.AsMap<AttributeDefinition>(this.Model.FindMember(this, Finds.FindAttributeDefsByName, scope));
+    /// <summary>The calculationDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CalculationDefinition> FindCalculationDefs(Scope scope = Scope.Owned) => Model.AsList<CalculationDefinition>(this.Model.FindMember(this, Finds.FindCalculationDefs, scope));
+    /// <summary>The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds
+    /// left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CalculationDefinition> FindCalculationDefsExact(Scope scope = Scope.Owned) => Model.AsList<CalculationDefinition>(this.Model.FindMember(this, Finds.FindCalculationDefsExact, scope));
+    /// <summary>The types that specialize Calculations::Calculation; refused where the model's
+    /// library has no Calculations::Calculation.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindCalculationDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindCalculationDefsSemantic, scope));
+    /// <summary>The calculationDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    CalculationDefinition? FindCalculationDef(string name, Scope scope = Scope.Owned) => Model.AsRef<CalculationDefinition>(this.Model.FindMember(this, Finds.FindCalculationDef, name, scope));
+    /// <summary>The calculationDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// calculationDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, CalculationDefinition> FindCalculationDefsByName(Scope scope = Scope.Owned) => Model.AsMap<CalculationDefinition>(this.Model.FindMember(this, Finds.FindCalculationDefsByName, scope));
+    /// <summary>The caseDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CaseDefinition> FindCaseDefs(Scope scope = Scope.Owned) => Model.AsList<CaseDefinition>(this.Model.FindMember(this, Finds.FindCaseDefs, scope));
+    /// <summary>The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CaseDefinition> FindCaseDefsExact(Scope scope = Scope.Owned) => Model.AsList<CaseDefinition>(this.Model.FindMember(this, Finds.FindCaseDefsExact, scope));
+    /// <summary>The types that specialize Cases::Case; refused where the model's library has no
+    /// Cases::Case.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindCaseDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindCaseDefsSemantic, scope));
+    /// <summary>The caseDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    CaseDefinition? FindCaseDef(string name, Scope scope = Scope.Owned) => Model.AsRef<CaseDefinition>(this.Model.FindMember(this, Finds.FindCaseDef, name, scope));
+    /// <summary>The caseDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different caseDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, CaseDefinition> FindCaseDefsByName(Scope scope = Scope.Owned) => Model.AsMap<CaseDefinition>(this.Model.FindMember(this, Finds.FindCaseDefsByName, scope));
+    /// <summary>The concernDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConcernDefinition> FindConcernDefs(Scope scope = Scope.Owned) => Model.AsList<ConcernDefinition>(this.Model.FindMember(this, Finds.FindConcernDefs, scope));
+    /// <summary>The types that specialize Requirements::ConcernCheck; refused where the model's
+    /// library has no Requirements::ConcernCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindConcernDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindConcernDefsSemantic, scope));
+    /// <summary>The concernDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConcernDefinition? FindConcernDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ConcernDefinition>(this.Model.FindMember(this, Finds.FindConcernDef, name, scope));
+    /// <summary>The concernDefs of this namespace by name: each under every name and short name it
+    /// is a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different concernDefs,
+    /// naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ConcernDefinition> FindConcernDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ConcernDefinition>(this.Model.FindMember(this, Finds.FindConcernDefsByName, scope));
+    /// <summary>The connectionDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConnectionDefinition> FindConnectionDefs(Scope scope = Scope.Owned) => Model.AsList<ConnectionDefinition>(this.Model.FindMember(this, Finds.FindConnectionDefs, scope));
+    /// <summary>The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds
+    /// left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConnectionDefinition> FindConnectionDefsExact(Scope scope = Scope.Owned) => Model.AsList<ConnectionDefinition>(this.Model.FindMember(this, Finds.FindConnectionDefsExact, scope));
+    /// <summary>The types that specialize Connections::Connection; refused where the model's
+    /// library has no Connections::Connection.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindConnectionDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindConnectionDefsSemantic, scope));
+    /// <summary>The connectionDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConnectionDefinition? FindConnectionDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ConnectionDefinition>(this.Model.FindMember(this, Finds.FindConnectionDef, name, scope));
+    /// <summary>The connectionDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// connectionDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ConnectionDefinition> FindConnectionDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ConnectionDefinition>(this.Model.FindMember(this, Finds.FindConnectionDefsByName, scope));
+    /// <summary>The constraintDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConstraintDefinition> FindConstraintDefs(Scope scope = Scope.Owned) => Model.AsList<ConstraintDefinition>(this.Model.FindMember(this, Finds.FindConstraintDefs, scope));
+    /// <summary>The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds
+    /// left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConstraintDefinition> FindConstraintDefsExact(Scope scope = Scope.Owned) => Model.AsList<ConstraintDefinition>(this.Model.FindMember(this, Finds.FindConstraintDefsExact, scope));
+    /// <summary>The types that specialize Constraints::ConstraintCheck; refused where the model's
+    /// library has no Constraints::ConstraintCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindConstraintDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindConstraintDefsSemantic, scope));
+    /// <summary>The constraintDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConstraintDefinition? FindConstraintDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ConstraintDefinition>(this.Model.FindMember(this, Finds.FindConstraintDef, name, scope));
+    /// <summary>The constraintDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// constraintDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ConstraintDefinition> FindConstraintDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ConstraintDefinition>(this.Model.FindMember(this, Finds.FindConstraintDefsByName, scope));
+    /// <summary>The enumerationDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<EnumerationDefinition> FindEnumerationDefs(Scope scope = Scope.Owned) => Model.AsList<EnumerationDefinition>(this.Model.FindMember(this, Finds.FindEnumerationDefs, scope));
+    /// <summary>The enumerationDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    EnumerationDefinition? FindEnumerationDef(string name, Scope scope = Scope.Owned) => Model.AsRef<EnumerationDefinition>(this.Model.FindMember(this, Finds.FindEnumerationDef, name, scope));
+    /// <summary>The enumerationDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// enumerationDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, EnumerationDefinition> FindEnumerationDefsByName(Scope scope = Scope.Owned) => Model.AsMap<EnumerationDefinition>(this.Model.FindMember(this, Finds.FindEnumerationDefsByName, scope));
+    /// <summary>The flowDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<FlowDefinition> FindFlowDefs(Scope scope = Scope.Owned) => Model.AsList<FlowDefinition>(this.Model.FindMember(this, Finds.FindFlowDefs, scope));
+    /// <summary>The types that specialize Flows::MessageAction; refused where the model's library
+    /// has no Flows::MessageAction.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindFlowDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindFlowDefsSemantic, scope));
+    /// <summary>The flowDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    FlowDefinition? FindFlowDef(string name, Scope scope = Scope.Owned) => Model.AsRef<FlowDefinition>(this.Model.FindMember(this, Finds.FindFlowDef, name, scope));
+    /// <summary>The flowDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different flowDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, FlowDefinition> FindFlowDefsByName(Scope scope = Scope.Owned) => Model.AsMap<FlowDefinition>(this.Model.FindMember(this, Finds.FindFlowDefsByName, scope));
+    /// <summary>The interfaceDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<InterfaceDefinition> FindInterfaceDefs(Scope scope = Scope.Owned) => Model.AsList<InterfaceDefinition>(this.Model.FindMember(this, Finds.FindInterfaceDefs, scope));
+    /// <summary>The types that specialize Interfaces::Interface; refused where the model's library
+    /// has no Interfaces::Interface.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindInterfaceDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindInterfaceDefsSemantic, scope));
+    /// <summary>The interfaceDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    InterfaceDefinition? FindInterfaceDef(string name, Scope scope = Scope.Owned) => Model.AsRef<InterfaceDefinition>(this.Model.FindMember(this, Finds.FindInterfaceDef, name, scope));
+    /// <summary>The interfaceDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// interfaceDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, InterfaceDefinition> FindInterfaceDefsByName(Scope scope = Scope.Owned) => Model.AsMap<InterfaceDefinition>(this.Model.FindMember(this, Finds.FindInterfaceDefsByName, scope));
+    /// <summary>The itemDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ItemDefinition> FindItemDefs(Scope scope = Scope.Owned) => Model.AsList<ItemDefinition>(this.Model.FindMember(this, Finds.FindItemDefs, scope));
+    /// <summary>The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ItemDefinition> FindItemDefsExact(Scope scope = Scope.Owned) => Model.AsList<ItemDefinition>(this.Model.FindMember(this, Finds.FindItemDefsExact, scope));
+    /// <summary>The types that specialize Items::Item; refused where the model's library has no
+    /// Items::Item.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindItemDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindItemDefsSemantic, scope));
+    /// <summary>The itemDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ItemDefinition? FindItemDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ItemDefinition>(this.Model.FindMember(this, Finds.FindItemDef, name, scope));
+    /// <summary>The itemDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different itemDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ItemDefinition> FindItemDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ItemDefinition>(this.Model.FindMember(this, Finds.FindItemDefsByName, scope));
+    /// <summary>The metadataDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<MetadataDefinition> FindMetadataDefs(Scope scope = Scope.Owned) => Model.AsList<MetadataDefinition>(this.Model.FindMember(this, Finds.FindMetadataDefs, scope));
+    /// <summary>The metadataDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    MetadataDefinition? FindMetadataDef(string name, Scope scope = Scope.Owned) => Model.AsRef<MetadataDefinition>(this.Model.FindMember(this, Finds.FindMetadataDef, name, scope));
+    /// <summary>The metadataDefs of this namespace by name: each under every name and short name it
+    /// is a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different metadataDefs,
+    /// naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, MetadataDefinition> FindMetadataDefsByName(Scope scope = Scope.Owned) => Model.AsMap<MetadataDefinition>(this.Model.FindMember(this, Finds.FindMetadataDefsByName, scope));
+    /// <summary>The occurrenceDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<OccurrenceDefinition> FindOccurrenceDefs(Scope scope = Scope.Owned) => Model.AsList<OccurrenceDefinition>(this.Model.FindMember(this, Finds.FindOccurrenceDefs, scope));
+    /// <summary>The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds
+    /// left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<OccurrenceDefinition> FindOccurrenceDefsExact(Scope scope = Scope.Owned) => Model.AsList<OccurrenceDefinition>(this.Model.FindMember(this, Finds.FindOccurrenceDefsExact, scope));
+    /// <summary>The types that specialize Occurrences::Occurrence; refused where the model's
+    /// library has no Occurrences::Occurrence.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindOccurrenceDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindOccurrenceDefsSemantic, scope));
+    /// <summary>The occurrenceDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    OccurrenceDefinition? FindOccurrenceDef(string name, Scope scope = Scope.Owned) => Model.AsRef<OccurrenceDefinition>(this.Model.FindMember(this, Finds.FindOccurrenceDef, name, scope));
+    /// <summary>The occurrenceDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// occurrenceDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, OccurrenceDefinition> FindOccurrenceDefsByName(Scope scope = Scope.Owned) => Model.AsMap<OccurrenceDefinition>(this.Model.FindMember(this, Finds.FindOccurrenceDefsByName, scope));
+    /// <summary>The partDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PartDefinition> FindPartDefs(Scope scope = Scope.Owned) => Model.AsList<PartDefinition>(this.Model.FindMember(this, Finds.FindPartDefs, scope));
+    /// <summary>The partDefs whose metaclass is exactly PartDefinition, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PartDefinition> FindPartDefsExact(Scope scope = Scope.Owned) => Model.AsList<PartDefinition>(this.Model.FindMember(this, Finds.FindPartDefsExact, scope));
+    /// <summary>The types that specialize Parts::Part; refused where the model's library has no
+    /// Parts::Part.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindPartDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindPartDefsSemantic, scope));
+    /// <summary>The partDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    PartDefinition? FindPartDef(string name, Scope scope = Scope.Owned) => Model.AsRef<PartDefinition>(this.Model.FindMember(this, Finds.FindPartDef, name, scope));
+    /// <summary>The partDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different partDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, PartDefinition> FindPartDefsByName(Scope scope = Scope.Owned) => Model.AsMap<PartDefinition>(this.Model.FindMember(this, Finds.FindPartDefsByName, scope));
+    /// <summary>The portDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PortDefinition> FindPortDefs(Scope scope = Scope.Owned) => Model.AsList<PortDefinition>(this.Model.FindMember(this, Finds.FindPortDefs, scope));
+    /// <summary>The portDefs whose metaclass is exactly PortDefinition, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PortDefinition> FindPortDefsExact(Scope scope = Scope.Owned) => Model.AsList<PortDefinition>(this.Model.FindMember(this, Finds.FindPortDefsExact, scope));
+    /// <summary>The types that specialize Ports::Port; refused where the model's library has no
+    /// Ports::Port.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindPortDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindPortDefsSemantic, scope));
+    /// <summary>The portDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    PortDefinition? FindPortDef(string name, Scope scope = Scope.Owned) => Model.AsRef<PortDefinition>(this.Model.FindMember(this, Finds.FindPortDef, name, scope));
+    /// <summary>The portDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different portDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, PortDefinition> FindPortDefsByName(Scope scope = Scope.Owned) => Model.AsMap<PortDefinition>(this.Model.FindMember(this, Finds.FindPortDefsByName, scope));
+    /// <summary>The renderingDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RenderingDefinition> FindRenderingDefs(Scope scope = Scope.Owned) => Model.AsList<RenderingDefinition>(this.Model.FindMember(this, Finds.FindRenderingDefs, scope));
+    /// <summary>The types that specialize Views::Rendering; refused where the model's library has
+    /// no Views::Rendering.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindRenderingDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindRenderingDefsSemantic, scope));
+    /// <summary>The renderingDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    RenderingDefinition? FindRenderingDef(string name, Scope scope = Scope.Owned) => Model.AsRef<RenderingDefinition>(this.Model.FindMember(this, Finds.FindRenderingDef, name, scope));
+    /// <summary>The renderingDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// renderingDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, RenderingDefinition> FindRenderingDefsByName(Scope scope = Scope.Owned) => Model.AsMap<RenderingDefinition>(this.Model.FindMember(this, Finds.FindRenderingDefsByName, scope));
+    /// <summary>The requirementDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RequirementDefinition> FindRequirementDefs(Scope scope = Scope.Owned) => Model.AsList<RequirementDefinition>(this.Model.FindMember(this, Finds.FindRequirementDefs, scope));
+    /// <summary>The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds
+    /// left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RequirementDefinition> FindRequirementDefsExact(Scope scope = Scope.Owned) => Model.AsList<RequirementDefinition>(this.Model.FindMember(this, Finds.FindRequirementDefsExact, scope));
+    /// <summary>The types that specialize Requirements::RequirementCheck; refused where the model's
+    /// library has no Requirements::RequirementCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindRequirementDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindRequirementDefsSemantic, scope));
+    /// <summary>The requirementDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    RequirementDefinition? FindRequirementDef(string name, Scope scope = Scope.Owned) => Model.AsRef<RequirementDefinition>(this.Model.FindMember(this, Finds.FindRequirementDef, name, scope));
+    /// <summary>The requirementDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// requirementDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, RequirementDefinition> FindRequirementDefsByName(Scope scope = Scope.Owned) => Model.AsMap<RequirementDefinition>(this.Model.FindMember(this, Finds.FindRequirementDefsByName, scope));
+    /// <summary>The stateDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<StateDefinition> FindStateDefs(Scope scope = Scope.Owned) => Model.AsList<StateDefinition>(this.Model.FindMember(this, Finds.FindStateDefs, scope));
+    /// <summary>The types that specialize States::StateAction; refused where the model's library
+    /// has no States::StateAction.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindStateDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindStateDefsSemantic, scope));
+    /// <summary>The stateDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    StateDefinition? FindStateDef(string name, Scope scope = Scope.Owned) => Model.AsRef<StateDefinition>(this.Model.FindMember(this, Finds.FindStateDef, name, scope));
+    /// <summary>The stateDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different stateDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, StateDefinition> FindStateDefsByName(Scope scope = Scope.Owned) => Model.AsMap<StateDefinition>(this.Model.FindMember(this, Finds.FindStateDefsByName, scope));
+    /// <summary>The useCaseDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<UseCaseDefinition> FindUseCaseDefs(Scope scope = Scope.Owned) => Model.AsList<UseCaseDefinition>(this.Model.FindMember(this, Finds.FindUseCaseDefs, scope));
+    /// <summary>The types that specialize UseCases::UseCase; refused where the model's library has
+    /// no UseCases::UseCase.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindUseCaseDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindUseCaseDefsSemantic, scope));
+    /// <summary>The useCaseDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    UseCaseDefinition? FindUseCaseDef(string name, Scope scope = Scope.Owned) => Model.AsRef<UseCaseDefinition>(this.Model.FindMember(this, Finds.FindUseCaseDef, name, scope));
+    /// <summary>The useCaseDefs of this namespace by name: each under every name and short name it
+    /// is a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different useCaseDefs,
+    /// naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, UseCaseDefinition> FindUseCaseDefsByName(Scope scope = Scope.Owned) => Model.AsMap<UseCaseDefinition>(this.Model.FindMember(this, Finds.FindUseCaseDefsByName, scope));
+    /// <summary>The verificationCaseDefs of this namespace: owned, imported (and inherited) only,
+    /// or both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<VerificationCaseDefinition> FindVerificationCaseDefs(Scope scope = Scope.Owned) => Model.AsList<VerificationCaseDefinition>(this.Model.FindMember(this, Finds.FindVerificationCaseDefs, scope));
+    /// <summary>The types that specialize VerificationCases::VerificationCase; refused where the
+    /// model's library has no VerificationCases::VerificationCase.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindVerificationCaseDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindVerificationCaseDefsSemantic, scope));
+    /// <summary>The verificationCaseDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    VerificationCaseDefinition? FindVerificationCaseDef(string name, Scope scope = Scope.Owned) => Model.AsRef<VerificationCaseDefinition>(this.Model.FindMember(this, Finds.FindVerificationCaseDef, name, scope));
+    /// <summary>The verificationCaseDefs of this namespace by name: each under every name and short
+    /// name it is a member by (an alias's included). The order is the backend's: the specification
+    /// does not define the order of membership. Refused where one name names two different
+    /// verificationCaseDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, VerificationCaseDefinition> FindVerificationCaseDefsByName(Scope scope = Scope.Owned) => Model.AsMap<VerificationCaseDefinition>(this.Model.FindMember(this, Finds.FindVerificationCaseDefsByName, scope));
+    /// <summary>The viewDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ViewDefinition> FindViewDefs(Scope scope = Scope.Owned) => Model.AsList<ViewDefinition>(this.Model.FindMember(this, Finds.FindViewDefs, scope));
+    /// <summary>The types that specialize Views::View; refused where the model's library has no
+    /// Views::View.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindViewDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindViewDefsSemantic, scope));
+    /// <summary>The viewDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ViewDefinition? FindViewDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ViewDefinition>(this.Model.FindMember(this, Finds.FindViewDef, name, scope));
+    /// <summary>The viewDefs of this namespace by name: each under every name and short name it is
+    /// a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different viewDefs, naming
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ViewDefinition> FindViewDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ViewDefinition>(this.Model.FindMember(this, Finds.FindViewDefsByName, scope));
+    /// <summary>The viewpointDefs of this namespace: owned, imported (and inherited) only, or
+    /// both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ViewpointDefinition> FindViewpointDefs(Scope scope = Scope.Owned) => Model.AsList<ViewpointDefinition>(this.Model.FindMember(this, Finds.FindViewpointDefs, scope));
+    /// <summary>The types that specialize Views::ViewpointCheck; refused where the model's library
+    /// has no Views::ViewpointCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindViewpointDefsSemantic(Scope scope = Scope.Owned) => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindViewpointDefsSemantic, scope));
+    /// <summary>The viewpointDef with this simple (effective) name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ViewpointDefinition? FindViewpointDef(string name, Scope scope = Scope.Owned) => Model.AsRef<ViewpointDefinition>(this.Model.FindMember(this, Finds.FindViewpointDef, name, scope));
+    /// <summary>The viewpointDefs of this namespace by name: each under every name and short name
+    /// it is a member by (an alias's included). The order is the backend's: the specification does
+    /// not define the order of membership. Refused where one name names two different
+    /// viewpointDefs, naming both.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The names and the element each names, in membership order; an empty map where there
+    /// are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyDictionary<string, ViewpointDefinition> FindViewpointDefsByName(Scope scope = Scope.Owned) => Model.AsMap<ViewpointDefinition>(this.Model.FindMember(this, Finds.FindViewpointDefsByName, scope));
+    /// <summary>The packages this namespace owns.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Package> FindPackages() => Model.AsList<Package>(this.Model.FindMember(this, Finds.FindPackages));
+    /// <summary>The owned package with this simple name, or none.</summary>
+    /// <param name="name">The simple name to look for.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Package? FindPackage(string name) => Model.AsRef<Package>(this.Model.FindMember(this, Finds.FindPackage, name));
+    /// <summary>The metadata usages this namespace owns, whatever they annotate (metadata M about
+    /// other; included). Owned only: metadata is about the element that owns it, so it is never
+    /// read through inheritance or imports.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<MetadataUsage> FindMemberMetadata() => Model.AsList<MetadataUsage>(this.Model.FindMember(this, Finds.FindMemberMetadata));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -13016,6 +15393,12 @@ public interface OperatorExpression : InvocationExpression
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@
+    /// T, x as T, m meta T give T): the grammar puts it in the second owned feature.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Type? FindTypeArgument() => Model.AsRef<Type>(this.Model.FindMember(this, Finds.FindTypeArgument));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -15912,6 +18295,13 @@ public interface StateDefinition : ActionDefinition
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>Initial states, by a priority chain over the notation's forms: first start then
+    /// off; and, only if that gives none, entry; then off; (the Annex A form, an entry action with
+    /// a transition from it, is not recognized).</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<StateUsage> FindInitialStates() => Model.AsList<StateUsage>(this.Model.FindMember(this, Finds.FindInitialStates));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -16137,6 +18527,13 @@ public interface StateUsage : ActionUsage
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>Initial states, by a priority chain over the notation's forms: first start then
+    /// off; and, only if that gives none, entry; then off; (the Annex A form, an entry action with
+    /// a transition from it, is not recognized).</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<StateUsage> FindInitialStates() => Model.AsList<StateUsage>(this.Model.FindMember(this, Finds.FindInitialStates));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -16260,6 +18657,21 @@ public interface Step : Feature
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The directed features, scoped like the kind lists: those whose direction relative
+    /// to this behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindParameters(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindParameters, scope, visibility, library));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -17540,6 +19952,18 @@ public interface TransitionUsage : ActionUsage
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>What a transition's triggers accept.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindAcceptedTypes() => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindAcceptedTypes));
+    /// <summary>Whether this transition's triggers accept a value of type: whether type specializes
+    /// one of their accepted types (findAcceptedTypes).</summary>
+    /// <param name="type">The type of what arrives: an item, a signal or an event.</param>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindIsAcceptedType(Type type) => Model.AsFlag(this.Model.FindMember(this, Finds.FindIsAcceptedType, type));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -17755,6 +20179,1414 @@ public interface Type : Namespace
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The features of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindFeatures(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindFeatures, scope, visibility, library));
+    /// <summary>The feature with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Feature? FindFeature(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<Feature>(this.Model.FindMember(this, Finds.FindFeature, name, scope, visibility, library));
+    /// <summary>The usages of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Usage> FindUsages(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Usage>(this.Model.FindMember(this, Finds.FindUsages, scope, visibility, library));
+    /// <summary>The usage with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Usage? FindUsage(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<Usage>(this.Model.FindMember(this, Finds.FindUsage, name, scope, visibility, library));
+    /// <summary>The actions of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ActionUsage> FindActions(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ActionUsage>(this.Model.FindMember(this, Finds.FindActions, scope, visibility, library));
+    /// <summary>The actions whose metaclass is exactly ActionUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ActionUsage> FindActionsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ActionUsage>(this.Model.FindMember(this, Finds.FindActionsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Actions::Action, as the Pilot navigation API's
+    /// semanticActions; refused where the model's library has no Actions::Action.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindActionsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindActionsSemantic, scope, visibility, library));
+    /// <summary>The action with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ActionUsage? FindAction(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ActionUsage>(this.Model.FindMember(this, Finds.FindAction, name, scope, visibility, library));
+    /// <summary>The allocations of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AllocationUsage> FindAllocations(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AllocationUsage>(this.Model.FindMember(this, Finds.FindAllocations, scope, visibility, library));
+    /// <summary>The features whose type conforms to Allocations::Allocation, as the Pilot
+    /// navigation API's semanticAllocations; refused where the model's library has no
+    /// Allocations::Allocation.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindAllocationsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindAllocationsSemantic, scope, visibility, library));
+    /// <summary>The allocation with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AllocationUsage? FindAllocation(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<AllocationUsage>(this.Model.FindMember(this, Finds.FindAllocation, name, scope, visibility, library));
+    /// <summary>The analysisCases of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AnalysisCaseUsage> FindAnalysisCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AnalysisCaseUsage>(this.Model.FindMember(this, Finds.FindAnalysisCases, scope, visibility, library));
+    /// <summary>The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot
+    /// navigation API's semanticAnalysisCases; refused where the model's library has no
+    /// AnalysisCases::AnalysisCase.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindAnalysisCasesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindAnalysisCasesSemantic, scope, visibility, library));
+    /// <summary>The analysisCase with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AnalysisCaseUsage? FindAnalysisCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<AnalysisCaseUsage>(this.Model.FindMember(this, Finds.FindAnalysisCase, name, scope, visibility, library));
+    /// <summary>The attributes of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AttributeUsage> FindAttributes(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AttributeUsage>(this.Model.FindMember(this, Finds.FindAttributes, scope, visibility, library));
+    /// <summary>The attributes whose metaclass is exactly AttributeUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<AttributeUsage> FindAttributesExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<AttributeUsage>(this.Model.FindMember(this, Finds.FindAttributesExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+    /// semanticAttributes; refused where the model's library has no Base::DataValue.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindAttributesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindAttributesSemantic, scope, visibility, library));
+    /// <summary>The attribute with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    AttributeUsage? FindAttribute(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<AttributeUsage>(this.Model.FindMember(this, Finds.FindAttribute, name, scope, visibility, library));
+    /// <summary>The calculations of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CalculationUsage> FindCalculations(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<CalculationUsage>(this.Model.FindMember(this, Finds.FindCalculations, scope, visibility, library));
+    /// <summary>The calculations whose metaclass is exactly CalculationUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CalculationUsage> FindCalculationsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<CalculationUsage>(this.Model.FindMember(this, Finds.FindCalculationsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Calculations::Calculation, as the Pilot
+    /// navigation API's semanticCalculations; refused where the model's library has no
+    /// Calculations::Calculation.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindCalculationsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindCalculationsSemantic, scope, visibility, library));
+    /// <summary>The calculation with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    CalculationUsage? FindCalculation(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<CalculationUsage>(this.Model.FindMember(this, Finds.FindCalculation, name, scope, visibility, library));
+    /// <summary>The cases of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CaseUsage> FindCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<CaseUsage>(this.Model.FindMember(this, Finds.FindCases, scope, visibility, library));
+    /// <summary>The cases whose metaclass is exactly CaseUsage, its subkinds left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<CaseUsage> FindCasesExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<CaseUsage>(this.Model.FindMember(this, Finds.FindCasesExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Cases::Case, as the Pilot navigation API's
+    /// semanticCases; refused where the model's library has no Cases::Case.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindCasesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindCasesSemantic, scope, visibility, library));
+    /// <summary>The case with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    CaseUsage? FindCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<CaseUsage>(this.Model.FindMember(this, Finds.FindCase, name, scope, visibility, library));
+    /// <summary>The concerns of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConcernUsage> FindConcerns(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConcernUsage>(this.Model.FindMember(this, Finds.FindConcerns, scope, visibility, library));
+    /// <summary>The features whose type conforms to Requirements::ConcernCheck, as the Pilot
+    /// navigation API's semanticConcerns; refused where the model's library has no
+    /// Requirements::ConcernCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindConcernsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindConcernsSemantic, scope, visibility, library));
+    /// <summary>The concern with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConcernUsage? FindConcern(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ConcernUsage>(this.Model.FindMember(this, Finds.FindConcern, name, scope, visibility, library));
+    /// <summary>The connections of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConnectorAsUsage> FindConnections(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConnectorAsUsage>(this.Model.FindMember(this, Finds.FindConnections, scope, visibility, library));
+    /// <summary>The connections whose metaclass is exactly ConnectionUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConnectionUsage> FindConnectionsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConnectionUsage>(this.Model.FindMember(this, Finds.FindConnectionsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Connections::Connection, as the Pilot
+    /// navigation API's semanticConnections; refused where the model's library has no
+    /// Connections::Connection.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindConnectionsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindConnectionsSemantic, scope, visibility, library));
+    /// <summary>The connection with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConnectorAsUsage? FindConnection(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ConnectorAsUsage>(this.Model.FindMember(this, Finds.FindConnection, name, scope, visibility, library));
+    /// <summary>The constraints of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConstraintUsage> FindConstraints(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConstraintUsage>(this.Model.FindMember(this, Finds.FindConstraints, scope, visibility, library));
+    /// <summary>The constraints whose metaclass is exactly ConstraintUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ConstraintUsage> FindConstraintsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ConstraintUsage>(this.Model.FindMember(this, Finds.FindConstraintsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Constraints::ConstraintCheck, as the Pilot
+    /// navigation API's semanticConstraints; refused where the model's library has no
+    /// Constraints::ConstraintCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindConstraintsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindConstraintsSemantic, scope, visibility, library));
+    /// <summary>The constraint with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ConstraintUsage? FindConstraint(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ConstraintUsage>(this.Model.FindMember(this, Finds.FindConstraint, name, scope, visibility, library));
+    /// <summary>The enumerations of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<EnumerationUsage> FindEnumerations(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<EnumerationUsage>(this.Model.FindMember(this, Finds.FindEnumerations, scope, visibility, library));
+    /// <summary>The enumeration with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    EnumerationUsage? FindEnumeration(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<EnumerationUsage>(this.Model.FindMember(this, Finds.FindEnumeration, name, scope, visibility, library));
+    /// <summary>The flows of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<FlowUsage> FindFlows(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<FlowUsage>(this.Model.FindMember(this, Finds.FindFlows, scope, visibility, library));
+    /// <summary>The flows whose metaclass is exactly FlowUsage, its subkinds left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<FlowUsage> FindFlowsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<FlowUsage>(this.Model.FindMember(this, Finds.FindFlowsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Flows::MessageAction, as the Pilot navigation
+    /// API's semanticFlows; refused where the model's library has no
+    /// Flows::MessageAction.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindFlowsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindFlowsSemantic, scope, visibility, library));
+    /// <summary>The flow with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    FlowUsage? FindFlow(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<FlowUsage>(this.Model.FindMember(this, Finds.FindFlow, name, scope, visibility, library));
+    /// <summary>The interfaces of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<InterfaceUsage> FindInterfaces(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<InterfaceUsage>(this.Model.FindMember(this, Finds.FindInterfaces, scope, visibility, library));
+    /// <summary>The features whose type conforms to Interfaces::Interface, as the Pilot navigation
+    /// API's semanticInterfaces; refused where the model's library has no
+    /// Interfaces::Interface.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindInterfacesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindInterfacesSemantic, scope, visibility, library));
+    /// <summary>The interface with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    InterfaceUsage? FindInterface(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<InterfaceUsage>(this.Model.FindMember(this, Finds.FindInterface, name, scope, visibility, library));
+    /// <summary>The items of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ItemUsage> FindItems(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ItemUsage>(this.Model.FindMember(this, Finds.FindItems, scope, visibility, library));
+    /// <summary>The items whose metaclass is exactly ItemUsage, its subkinds left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ItemUsage> FindItemsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ItemUsage>(this.Model.FindMember(this, Finds.FindItemsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Items::Item, as the Pilot navigation API's
+    /// semanticItems; refused where the model's library has no Items::Item.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindItemsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindItemsSemantic, scope, visibility, library));
+    /// <summary>The item with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ItemUsage? FindItem(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ItemUsage>(this.Model.FindMember(this, Finds.FindItem, name, scope, visibility, library));
+    /// <summary>The occurrences of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<OccurrenceUsage> FindOccurrences(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<OccurrenceUsage>(this.Model.FindMember(this, Finds.FindOccurrences, scope, visibility, library));
+    /// <summary>The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<OccurrenceUsage> FindOccurrencesExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<OccurrenceUsage>(this.Model.FindMember(this, Finds.FindOccurrencesExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Occurrences::Occurrence, as the Pilot
+    /// navigation API's semanticOccurrences; refused where the model's library has no
+    /// Occurrences::Occurrence.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindOccurrencesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindOccurrencesSemantic, scope, visibility, library));
+    /// <summary>The occurrence with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    OccurrenceUsage? FindOccurrence(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<OccurrenceUsage>(this.Model.FindMember(this, Finds.FindOccurrence, name, scope, visibility, library));
+    /// <summary>The parts of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PartUsage> FindParts(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<PartUsage>(this.Model.FindMember(this, Finds.FindParts, scope, visibility, library));
+    /// <summary>The parts whose metaclass is exactly PartUsage, its subkinds left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PartUsage> FindPartsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<PartUsage>(this.Model.FindMember(this, Finds.FindPartsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Parts::Part, as the Pilot navigation API's
+    /// semanticParts; refused where the model's library has no Parts::Part.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindPartsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindPartsSemantic, scope, visibility, library));
+    /// <summary>The part with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    PartUsage? FindPart(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<PartUsage>(this.Model.FindMember(this, Finds.FindPart, name, scope, visibility, library));
+    /// <summary>The ports of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<PortUsage> FindPorts(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<PortUsage>(this.Model.FindMember(this, Finds.FindPorts, scope, visibility, library));
+    /// <summary>The features whose type conforms to Ports::Port, as the Pilot navigation API's
+    /// semanticPorts; refused where the model's library has no Ports::Port.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindPortsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindPortsSemantic, scope, visibility, library));
+    /// <summary>The port with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    PortUsage? FindPort(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<PortUsage>(this.Model.FindMember(this, Finds.FindPort, name, scope, visibility, library));
+    /// <summary>The references of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ReferenceUsage> FindReferences(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ReferenceUsage>(this.Model.FindMember(this, Finds.FindReferences, scope, visibility, library));
+    /// <summary>The reference with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ReferenceUsage? FindReference(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ReferenceUsage>(this.Model.FindMember(this, Finds.FindReference, name, scope, visibility, library));
+    /// <summary>The renderings of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RenderingUsage> FindRenderings(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<RenderingUsage>(this.Model.FindMember(this, Finds.FindRenderings, scope, visibility, library));
+    /// <summary>The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+    /// semanticRenderings; refused where the model's library has no Views::Rendering.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindRenderingsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindRenderingsSemantic, scope, visibility, library));
+    /// <summary>The rendering with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    RenderingUsage? FindRendering(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<RenderingUsage>(this.Model.FindMember(this, Finds.FindRendering, name, scope, visibility, library));
+    /// <summary>The requirements of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RequirementUsage> FindRequirements(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<RequirementUsage>(this.Model.FindMember(this, Finds.FindRequirements, scope, visibility, library));
+    /// <summary>The requirements whose metaclass is exactly RequirementUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<RequirementUsage> FindRequirementsExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<RequirementUsage>(this.Model.FindMember(this, Finds.FindRequirementsExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to Requirements::RequirementCheck, as the Pilot
+    /// navigation API's semanticRequirements; refused where the model's library has no
+    /// Requirements::RequirementCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindRequirementsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindRequirementsSemantic, scope, visibility, library));
+    /// <summary>The requirement with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    RequirementUsage? FindRequirement(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<RequirementUsage>(this.Model.FindMember(this, Finds.FindRequirement, name, scope, visibility, library));
+    /// <summary>The states of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<StateUsage> FindStates(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<StateUsage>(this.Model.FindMember(this, Finds.FindStates, scope, visibility, library));
+    /// <summary>The states whose metaclass is exactly StateUsage, its subkinds left out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<StateUsage> FindStatesExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<StateUsage>(this.Model.FindMember(this, Finds.FindStatesExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to States::StateAction, as the Pilot navigation
+    /// API's semanticStates; refused where the model's library has no
+    /// States::StateAction.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindStatesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindStatesSemantic, scope, visibility, library));
+    /// <summary>The state with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    StateUsage? FindState(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<StateUsage>(this.Model.FindMember(this, Finds.FindState, name, scope, visibility, library));
+    /// <summary>The transitions of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<TransitionUsage> FindTransitions(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<TransitionUsage>(this.Model.FindMember(this, Finds.FindTransitions, scope, visibility, library));
+    /// <summary>The transition with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    TransitionUsage? FindTransition(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<TransitionUsage>(this.Model.FindMember(this, Finds.FindTransition, name, scope, visibility, library));
+    /// <summary>The useCases of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<UseCaseUsage> FindUseCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<UseCaseUsage>(this.Model.FindMember(this, Finds.FindUseCases, scope, visibility, library));
+    /// <summary>The useCases whose metaclass is exactly UseCaseUsage, its subkinds left
+    /// out.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<UseCaseUsage> FindUseCasesExact(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<UseCaseUsage>(this.Model.FindMember(this, Finds.FindUseCasesExact, scope, visibility, library));
+    /// <summary>The features whose type conforms to UseCases::UseCase, as the Pilot navigation
+    /// API's semanticUseCases; refused where the model's library has no
+    /// UseCases::UseCase.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindUseCasesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindUseCasesSemantic, scope, visibility, library));
+    /// <summary>The useCase with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    UseCaseUsage? FindUseCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<UseCaseUsage>(this.Model.FindMember(this, Finds.FindUseCase, name, scope, visibility, library));
+    /// <summary>The verificationCases of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<VerificationCaseUsage> FindVerificationCases(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<VerificationCaseUsage>(this.Model.FindMember(this, Finds.FindVerificationCases, scope, visibility, library));
+    /// <summary>The features whose type conforms to VerificationCases::VerificationCase, as the
+    /// Pilot navigation API's semanticVerificationCases; refused where the model's library has no
+    /// VerificationCases::VerificationCase.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindVerificationCasesSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindVerificationCasesSemantic, scope, visibility, library));
+    /// <summary>The verificationCase with this simple (effective) name, or none: part :&gt;&gt;
+    /// wheels is found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    VerificationCaseUsage? FindVerificationCase(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<VerificationCaseUsage>(this.Model.FindMember(this, Finds.FindVerificationCase, name, scope, visibility, library));
+    /// <summary>The views of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ViewUsage> FindViews(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ViewUsage>(this.Model.FindMember(this, Finds.FindViews, scope, visibility, library));
+    /// <summary>The features whose type conforms to Views::View, as the Pilot navigation API's
+    /// semanticViews; refused where the model's library has no Views::View.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindViewsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindViewsSemantic, scope, visibility, library));
+    /// <summary>The view with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ViewUsage? FindView(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ViewUsage>(this.Model.FindMember(this, Finds.FindView, name, scope, visibility, library));
+    /// <summary>The viewpoints of this type.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<ViewpointUsage> FindViewpoints(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<ViewpointUsage>(this.Model.FindMember(this, Finds.FindViewpoints, scope, visibility, library));
+    /// <summary>The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation
+    /// API's semanticViewpoints; refused where the model's library has no
+    /// Views::ViewpointCheck.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindViewpointsSemantic(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindViewpointsSemantic, scope, visibility, library));
+    /// <summary>The viewpoint with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels.</summary>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    ViewpointUsage? FindViewpoint(string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsRef<ViewpointUsage>(this.Model.FindMember(this, Finds.FindViewpoint, name, scope, visibility, library));
+    /// <summary>Direct supertypes as written: supertypes(true). A conjugated type's only supertype
+    /// is its original type; a feature chain's last feature is a supertype of the chain.</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindDeclaredSupertypes() => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindDeclaredSupertypes));
+    /// <summary>Direct supertypes the backend adds by the language's rules (Parts::Part for a part
+    /// definition).</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindImpliedSupertypes() => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindImpliedSupertypes));
+    /// <summary>Direct supertypes, written and implied: supertypes(false).</summary>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Type> FindDeclaredAndImpliedSupertypes() => Model.AsList<Type>(this.Model.FindMember(this, Finds.FindDeclaredAndImpliedSupertypes));
+    /// <summary>The feature in effect here for feature: itself where inherited as it is, else the
+    /// one redefining it; none where this type does not have it.</summary>
+    /// <param name="feature">The feature as declared, on this type or on a type it
+    /// specializes.</param>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Feature? FindEffectiveFeature(Feature feature) => Model.AsRef<Feature>(this.Model.FindMember(this, Finds.FindEffectiveFeature, feature));
+    /// <summary>The lower bound as a number; none where the type has no multiplicity; refused where
+    /// the bound is an expression ([rotorCount]).</summary>
+    /// <returns>The number as a Literal, an integer; null where there is none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Literal? FindLowerBound() => (Literal?)(this.Model.FindMember(this, Finds.FindLowerBound));
+    /// <summary>The upper bound as a number or * (unbounded); none where the type has no
+    /// multiplicity; refused where the bound is an expression.</summary>
+    /// <returns>The number as a Literal, an integer or unbounded (*); null where there is
+    /// none.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Literal? FindUpperBound() => (Literal?)(this.Model.FindMember(this, Finds.FindUpperBound));
+    /// <summary>The lower bound's expression; none where there is none (no multiplicity, the lower
+    /// bound of [*], a multiplicity without a range).</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Expression? FindLowerBoundExpr() => Model.AsRef<Expression>(this.Model.FindMember(this, Finds.FindLowerBoundExpr));
+    /// <summary>The upper bound's expression; none where there is none.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Expression? FindUpperBoundExpr() => Model.AsRef<Expression>(this.Model.FindMember(this, Finds.FindUpperBoundExpr));
+    /// <summary>Whether the type has a multiplicity whose lower bound is a literal (findLowerBound
+    /// then answers with a number).</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindHasLiteralLowerBound() => Model.AsFlag(this.Model.FindMember(this, Finds.FindHasLiteralLowerBound));
+    /// <summary>Whether the type has a multiplicity whose upper bound is a literal.</summary>
+    /// <returns>true or false.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    bool FindHasLiteralUpperBound() => Model.AsFlag(this.Model.FindMember(this, Finds.FindHasLiteralUpperBound));
+    /// <summary>The features directed in or inout relative to this type, directionOf taking
+    /// conjugation into account (a conjugated port's out items are its inputs), scoped like the
+    /// kind lists. With scope all and library true, the specification's input.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindInputs(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindInputs, scope, visibility, library));
+    /// <summary>The features directed out or inout relative to this type, directionOf taking
+    /// conjugation into account (a conjugated port's in items are its outputs), scoped like the
+    /// kind lists. With scope all and library true, the specification's output.</summary>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindOutputs(Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindOutputs, scope, visibility, library));
+    /// <summary>The features of this type that are, or specialize, feature (the wheels among a
+    /// vehicle's parts), scoped.</summary>
+    /// <param name="feature">The feature the answers are or specialize.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order; an empty list where there are none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    IReadOnlyList<Feature> FindSubsettingFeaturesOf(Feature feature, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.AsList<Feature>(this.Model.FindMember(this, Finds.FindSubsettingFeaturesOf, feature, scope, visibility, library));
 }
 
 /// <summary>concrete — KerML 20250201.</summary>
@@ -17987,6 +21819,13 @@ public interface Usage : Feature
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+    /// <summary>The variation a variant belongs to (variation part def V { variant part a; }: a
+    /// gives V; an enumeration's values give the enumeration); none for a usage that is not a
+    /// variant.</summary>
+    /// <returns>The element, or null where there is none.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it.</exception>
+    Type? FindVariation() => Model.AsRef<Type>(this.Model.FindMember(this, Finds.FindVariation));
 }
 
 /// <summary>concrete — SysML 20250201.</summary>
@@ -19480,6 +23319,4309 @@ public interface WhileLoopActionUsage : LoopActionUsage
     new string? unqualifiedNameOf(string? qualifiedName) => Model.AsString(this.Model.Call(this, "unqualifiedNameOf", new object?[] { qualifiedName }));
     new string? visibilityOf(Membership? mem) => Model.AsString(this.Model.Call(this, "visibilityOf", new object?[] { mem }));
     new IReadOnlyList<Membership> visibleMemberships(IReadOnlyList<Namespace> excluded, bool? isRecursive, bool? includeAll) => Model.AsList<Membership>(this.Model.Call(this, "visibleMemberships", new object?[] { excluded, isRecursive, includeAll }));
+}
+
+/// <summary>The convenience members' descriptors (convenience.json), one per member name.</summary>
+public static class Finds
+{
+    public static readonly Find FindAcceptedTypes = new("findAcceptedTypes", "find_accepted_types", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindAction = new("findAction", "find_action", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindActionDef = new("findActionDef", "find_action_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindActionDefs = new("findActionDefs", "find_action_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindActionDefsByName = new("findActionDefsByName", "find_action_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindActionDefsExact = new("findActionDefsExact", "find_action_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindActionDefsSemantic = new("findActionDefsSemantic", "find_action_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindActions = new("findActions", "find_actions", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindActionsExact = new("findActionsExact", "find_actions_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindActionsSemantic = new("findActionsSemantic", "find_actions_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAllocation = new("findAllocation", "find_allocation", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindAllocationDef = new("findAllocationDef", "find_allocation_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindAllocationDefs = new("findAllocationDefs", "find_allocation_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAllocationDefsByName = new("findAllocationDefsByName", "find_allocation_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindAllocationDefsSemantic = new("findAllocationDefsSemantic", "find_allocation_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAllocations = new("findAllocations", "find_allocations", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAllocationsSemantic = new("findAllocationsSemantic", "find_allocations_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAnalysisCase = new("findAnalysisCase", "find_analysis_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindAnalysisCaseDef = new("findAnalysisCaseDef", "find_analysis_case_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindAnalysisCaseDefs = new("findAnalysisCaseDefs", "find_analysis_case_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAnalysisCaseDefsByName = new("findAnalysisCaseDefsByName", "find_analysis_case_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindAnalysisCaseDefsSemantic = new("findAnalysisCaseDefsSemantic", "find_analysis_case_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAnalysisCases = new("findAnalysisCases", "find_analysis_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAnalysisCasesSemantic = new("findAnalysisCasesSemantic", "find_analysis_cases_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAppliedMetadata = new("findAppliedMetadata", "find_applied_metadata", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindAttribute = new("findAttribute", "find_attribute", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindAttributeDef = new("findAttributeDef", "find_attribute_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindAttributeDefs = new("findAttributeDefs", "find_attribute_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAttributeDefsByName = new("findAttributeDefsByName", "find_attribute_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindAttributeDefsExact = new("findAttributeDefsExact", "find_attribute_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAttributeDefsSemantic = new("findAttributeDefsSemantic", "find_attribute_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindAttributes = new("findAttributes", "find_attributes", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAttributesExact = new("findAttributesExact", "find_attributes_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindAttributesSemantic = new("findAttributesSemantic", "find_attributes_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindCalculation = new("findCalculation", "find_calculation", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindCalculationDef = new("findCalculationDef", "find_calculation_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindCalculationDefs = new("findCalculationDefs", "find_calculation_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindCalculationDefsByName = new("findCalculationDefsByName", "find_calculation_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindCalculationDefsExact = new("findCalculationDefsExact", "find_calculation_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindCalculationDefsSemantic = new("findCalculationDefsSemantic", "find_calculation_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindCalculations = new("findCalculations", "find_calculations", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindCalculationsExact = new("findCalculationsExact", "find_calculations_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindCalculationsSemantic = new("findCalculationsSemantic", "find_calculations_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindCase = new("findCase", "find_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindCaseDef = new("findCaseDef", "find_case_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindCaseDefs = new("findCaseDefs", "find_case_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindCaseDefsByName = new("findCaseDefsByName", "find_case_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindCaseDefsExact = new("findCaseDefsExact", "find_case_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindCaseDefsSemantic = new("findCaseDefsSemantic", "find_case_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindCases = new("findCases", "find_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindCasesExact = new("findCasesExact", "find_cases_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindCasesSemantic = new("findCasesSemantic", "find_cases_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConcern = new("findConcern", "find_concern", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindConcernDef = new("findConcernDef", "find_concern_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindConcernDefs = new("findConcernDefs", "find_concern_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConcernDefsByName = new("findConcernDefsByName", "find_concern_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindConcernDefsSemantic = new("findConcernDefsSemantic", "find_concern_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConcerns = new("findConcerns", "find_concerns", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConcernsSemantic = new("findConcernsSemantic", "find_concerns_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConnection = new("findConnection", "find_connection", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindConnectionDef = new("findConnectionDef", "find_connection_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindConnectionDefs = new("findConnectionDefs", "find_connection_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConnectionDefsByName = new("findConnectionDefsByName", "find_connection_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindConnectionDefsExact = new("findConnectionDefsExact", "find_connection_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConnectionDefsSemantic = new("findConnectionDefsSemantic", "find_connection_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConnections = new("findConnections", "find_connections", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConnectionsExact = new("findConnectionsExact", "find_connections_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConnectionsSemantic = new("findConnectionsSemantic", "find_connections_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConstraint = new("findConstraint", "find_constraint", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindConstraintDef = new("findConstraintDef", "find_constraint_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindConstraintDefs = new("findConstraintDefs", "find_constraint_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConstraintDefsByName = new("findConstraintDefsByName", "find_constraint_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindConstraintDefsExact = new("findConstraintDefsExact", "find_constraint_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConstraintDefsSemantic = new("findConstraintDefsSemantic", "find_constraint_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindConstraints = new("findConstraints", "find_constraints", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConstraintsExact = new("findConstraintsExact", "find_constraints_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindConstraintsSemantic = new("findConstraintsSemantic", "find_constraints_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindDeclaredAndImpliedSupertypes = new("findDeclaredAndImpliedSupertypes", "find_declared_and_implied_supertypes", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindDeclaredSupertypes = new("findDeclaredSupertypes", "find_declared_supertypes", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindDeclaredTypes = new("findDeclaredTypes", "find_declared_types", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindDefinition = new("findDefinition", "find_definition", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindDefinitions = new("findDefinitions", "find_definitions", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindDefinitionsByName = new("findDefinitionsByName", "find_definitions_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindDocText = new("findDocText", "find_doc_text", new string[] {  }, new string[] {  }, "strings");
+    public static readonly Find FindEffectiveFeature = new("findEffectiveFeature", "find_effective_feature", new string[] { "feature" }, new string[] { "element" }, "element");
+    public static readonly Find FindEnumeration = new("findEnumeration", "find_enumeration", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindEnumerationDef = new("findEnumerationDef", "find_enumeration_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindEnumerationDefs = new("findEnumerationDefs", "find_enumeration_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindEnumerationDefsByName = new("findEnumerationDefsByName", "find_enumeration_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindEnumerations = new("findEnumerations", "find_enumerations", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindFeature = new("findFeature", "find_feature", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindFeatures = new("findFeatures", "find_features", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindFlow = new("findFlow", "find_flow", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindFlowDef = new("findFlowDef", "find_flow_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindFlowDefs = new("findFlowDefs", "find_flow_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindFlowDefsByName = new("findFlowDefsByName", "find_flow_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindFlowDefsSemantic = new("findFlowDefsSemantic", "find_flow_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindFlows = new("findFlows", "find_flows", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindFlowsExact = new("findFlowsExact", "find_flows_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindFlowsSemantic = new("findFlowsSemantic", "find_flows_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindHasDefaultValue = new("findHasDefaultValue", "find_has_default_value", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindHasInitialValue = new("findHasInitialValue", "find_has_initial_value", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindHasLiteralLowerBound = new("findHasLiteralLowerBound", "find_has_literal_lower_bound", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindHasLiteralUpperBound = new("findHasLiteralUpperBound", "find_has_literal_upper_bound", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindHasUnit = new("findHasUnit", "find_has_unit", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindImpliedSupertypes = new("findImpliedSupertypes", "find_implied_supertypes", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindInitialStates = new("findInitialStates", "find_initial_states", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindInputs = new("findInputs", "find_inputs", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindInterface = new("findInterface", "find_interface", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindInterfaceDef = new("findInterfaceDef", "find_interface_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindInterfaceDefs = new("findInterfaceDefs", "find_interface_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindInterfaceDefsByName = new("findInterfaceDefsByName", "find_interface_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindInterfaceDefsSemantic = new("findInterfaceDefsSemantic", "find_interface_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindInterfaces = new("findInterfaces", "find_interfaces", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindInterfacesSemantic = new("findInterfacesSemantic", "find_interfaces_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindIsAcceptedType = new("findIsAcceptedType", "find_is_accepted_type", new string[] { "type" }, new string[] { "element" }, "bool");
+    public static readonly Find FindIsEffectivelyOrdered = new("findIsEffectivelyOrdered", "find_is_effectively_ordered", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsLiteral = new("findIsLiteral", "find_is_literal", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticAction = new("findIsSemanticAction", "find_is_semantic_action", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticAllocation = new("findIsSemanticAllocation", "find_is_semantic_allocation", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticAnalysisCase = new("findIsSemanticAnalysisCase", "find_is_semantic_analysis_case", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticAttribute = new("findIsSemanticAttribute", "find_is_semantic_attribute", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticCalculation = new("findIsSemanticCalculation", "find_is_semantic_calculation", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticCase = new("findIsSemanticCase", "find_is_semantic_case", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticConcern = new("findIsSemanticConcern", "find_is_semantic_concern", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticConnection = new("findIsSemanticConnection", "find_is_semantic_connection", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticConstraint = new("findIsSemanticConstraint", "find_is_semantic_constraint", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticFlow = new("findIsSemanticFlow", "find_is_semantic_flow", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticInterface = new("findIsSemanticInterface", "find_is_semantic_interface", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticItem = new("findIsSemanticItem", "find_is_semantic_item", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticOccurrence = new("findIsSemanticOccurrence", "find_is_semantic_occurrence", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticPart = new("findIsSemanticPart", "find_is_semantic_part", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticPort = new("findIsSemanticPort", "find_is_semantic_port", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticRendering = new("findIsSemanticRendering", "find_is_semantic_rendering", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticRequirement = new("findIsSemanticRequirement", "find_is_semantic_requirement", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticState = new("findIsSemanticState", "find_is_semantic_state", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticUseCase = new("findIsSemanticUseCase", "find_is_semantic_use_case", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticVerificationCase = new("findIsSemanticVerificationCase", "find_is_semantic_verification_case", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticView = new("findIsSemanticView", "find_is_semantic_view", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindIsSemanticViewpoint = new("findIsSemanticViewpoint", "find_is_semantic_viewpoint", new string[] {  }, new string[] {  }, "bool");
+    public static readonly Find FindItem = new("findItem", "find_item", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindItemDef = new("findItemDef", "find_item_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindItemDefs = new("findItemDefs", "find_item_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindItemDefsByName = new("findItemDefsByName", "find_item_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindItemDefsExact = new("findItemDefsExact", "find_item_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindItemDefsSemantic = new("findItemDefsSemantic", "find_item_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindItems = new("findItems", "find_items", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindItemsExact = new("findItemsExact", "find_items_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindItemsSemantic = new("findItemsSemantic", "find_items_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindLiteral = new("findLiteral", "find_literal", new string[] {  }, new string[] {  }, "literal");
+    public static readonly Find FindLowerBound = new("findLowerBound", "find_lower_bound", new string[] {  }, new string[] {  }, "int");
+    public static readonly Find FindLowerBoundExpr = new("findLowerBoundExpr", "find_lower_bound_expr", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindMemberAction = new("findMemberAction", "find_member_action", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberActions = new("findMemberActions", "find_member_actions", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberAllocation = new("findMemberAllocation", "find_member_allocation", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberAllocations = new("findMemberAllocations", "find_member_allocations", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberAnalysisCase = new("findMemberAnalysisCase", "find_member_analysis_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberAnalysisCases = new("findMemberAnalysisCases", "find_member_analysis_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberAttribute = new("findMemberAttribute", "find_member_attribute", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberAttributes = new("findMemberAttributes", "find_member_attributes", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberCalculation = new("findMemberCalculation", "find_member_calculation", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberCalculations = new("findMemberCalculations", "find_member_calculations", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberCase = new("findMemberCase", "find_member_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberCases = new("findMemberCases", "find_member_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberConcern = new("findMemberConcern", "find_member_concern", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberConcerns = new("findMemberConcerns", "find_member_concerns", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberConnection = new("findMemberConnection", "find_member_connection", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberConnections = new("findMemberConnections", "find_member_connections", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberConstraint = new("findMemberConstraint", "find_member_constraint", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberConstraints = new("findMemberConstraints", "find_member_constraints", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberEnumeration = new("findMemberEnumeration", "find_member_enumeration", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberEnumerations = new("findMemberEnumerations", "find_member_enumerations", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberFeature = new("findMemberFeature", "find_member_feature", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberFeatures = new("findMemberFeatures", "find_member_features", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberFlow = new("findMemberFlow", "find_member_flow", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberFlows = new("findMemberFlows", "find_member_flows", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberInterface = new("findMemberInterface", "find_member_interface", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberInterfaces = new("findMemberInterfaces", "find_member_interfaces", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberItem = new("findMemberItem", "find_member_item", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberItems = new("findMemberItems", "find_member_items", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberMetadata = new("findMemberMetadata", "find_member_metadata", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindMemberOccurrence = new("findMemberOccurrence", "find_member_occurrence", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberOccurrences = new("findMemberOccurrences", "find_member_occurrences", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberPart = new("findMemberPart", "find_member_part", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberParts = new("findMemberParts", "find_member_parts", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberPort = new("findMemberPort", "find_member_port", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberPorts = new("findMemberPorts", "find_member_ports", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberReference = new("findMemberReference", "find_member_reference", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberReferences = new("findMemberReferences", "find_member_references", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberRendering = new("findMemberRendering", "find_member_rendering", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberRenderings = new("findMemberRenderings", "find_member_renderings", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberRequirement = new("findMemberRequirement", "find_member_requirement", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberRequirements = new("findMemberRequirements", "find_member_requirements", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberState = new("findMemberState", "find_member_state", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberStates = new("findMemberStates", "find_member_states", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberTransition = new("findMemberTransition", "find_member_transition", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberTransitions = new("findMemberTransitions", "find_member_transitions", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberUsage = new("findMemberUsage", "find_member_usage", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberUsages = new("findMemberUsages", "find_member_usages", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberUseCase = new("findMemberUseCase", "find_member_use_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberUseCases = new("findMemberUseCases", "find_member_use_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberVerificationCase = new("findMemberVerificationCase", "find_member_verification_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberVerificationCases = new("findMemberVerificationCases", "find_member_verification_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberView = new("findMemberView", "find_member_view", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberViewpoint = new("findMemberViewpoint", "find_member_viewpoint", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindMemberViewpoints = new("findMemberViewpoints", "find_member_viewpoints", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMemberViews = new("findMemberViews", "find_member_views", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindMetadataDef = new("findMetadataDef", "find_metadata_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindMetadataDefs = new("findMetadataDefs", "find_metadata_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindMetadataDefsByName = new("findMetadataDefsByName", "find_metadata_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindOccurrence = new("findOccurrence", "find_occurrence", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindOccurrenceDef = new("findOccurrenceDef", "find_occurrence_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindOccurrenceDefs = new("findOccurrenceDefs", "find_occurrence_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindOccurrenceDefsByName = new("findOccurrenceDefsByName", "find_occurrence_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindOccurrenceDefsExact = new("findOccurrenceDefsExact", "find_occurrence_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindOccurrenceDefsSemantic = new("findOccurrenceDefsSemantic", "find_occurrence_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindOccurrences = new("findOccurrences", "find_occurrences", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindOccurrencesExact = new("findOccurrencesExact", "find_occurrences_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindOccurrencesSemantic = new("findOccurrencesSemantic", "find_occurrences_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindOutputs = new("findOutputs", "find_outputs", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindPackage = new("findPackage", "find_package", new string[] { "name" }, new string[] { "str" }, "element");
+    public static readonly Find FindPackages = new("findPackages", "find_packages", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindParameters = new("findParameters", "find_parameters", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindPart = new("findPart", "find_part", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindPartDef = new("findPartDef", "find_part_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindPartDefs = new("findPartDefs", "find_part_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindPartDefsByName = new("findPartDefsByName", "find_part_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindPartDefsExact = new("findPartDefsExact", "find_part_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindPartDefsSemantic = new("findPartDefsSemantic", "find_part_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindParts = new("findParts", "find_parts", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindPartsExact = new("findPartsExact", "find_parts_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindPartsSemantic = new("findPartsSemantic", "find_parts_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindPath = new("findPath", "find_path", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindPort = new("findPort", "find_port", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindPortDef = new("findPortDef", "find_port_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindPortDefs = new("findPortDefs", "find_port_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindPortDefsByName = new("findPortDefsByName", "find_port_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindPortDefsExact = new("findPortDefsExact", "find_port_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindPortDefsSemantic = new("findPortDefsSemantic", "find_port_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindPorts = new("findPorts", "find_ports", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindPortsSemantic = new("findPortsSemantic", "find_ports_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindRedefinedFeatures = new("findRedefinedFeatures", "find_redefined_features", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindRedefinitionRoot = new("findRedefinitionRoot", "find_redefinition_root", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindReference = new("findReference", "find_reference", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindReferencedFeature = new("findReferencedFeature", "find_referenced_feature", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindReferences = new("findReferences", "find_references", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindRendering = new("findRendering", "find_rendering", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindRenderingDef = new("findRenderingDef", "find_rendering_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindRenderingDefs = new("findRenderingDefs", "find_rendering_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindRenderingDefsByName = new("findRenderingDefsByName", "find_rendering_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindRenderingDefsSemantic = new("findRenderingDefsSemantic", "find_rendering_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindRenderings = new("findRenderings", "find_renderings", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindRenderingsSemantic = new("findRenderingsSemantic", "find_renderings_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindRequirement = new("findRequirement", "find_requirement", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindRequirementDef = new("findRequirementDef", "find_requirement_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindRequirementDefs = new("findRequirementDefs", "find_requirement_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindRequirementDefsByName = new("findRequirementDefsByName", "find_requirement_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindRequirementDefsExact = new("findRequirementDefsExact", "find_requirement_defs_exact", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindRequirementDefsSemantic = new("findRequirementDefsSemantic", "find_requirement_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindRequirements = new("findRequirements", "find_requirements", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindRequirementsExact = new("findRequirementsExact", "find_requirements_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindRequirementsSemantic = new("findRequirementsSemantic", "find_requirements_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindResultExpression = new("findResultExpression", "find_result_expression", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindState = new("findState", "find_state", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindStateDef = new("findStateDef", "find_state_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindStateDefs = new("findStateDefs", "find_state_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindStateDefsByName = new("findStateDefsByName", "find_state_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindStateDefsSemantic = new("findStateDefsSemantic", "find_state_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindStates = new("findStates", "find_states", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindStatesExact = new("findStatesExact", "find_states_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindStatesSemantic = new("findStatesSemantic", "find_states_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindSubsettedFeatures = new("findSubsettedFeatures", "find_subsetted_features", new string[] {  }, new string[] {  }, "elements");
+    public static readonly Find FindSubsettingFeaturesOf = new("findSubsettingFeaturesOf", "find_subsetting_features_of", new string[] { "feature", "scope", "visibility", "library" }, new string[] { "element", "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindTransition = new("findTransition", "find_transition", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindTransitions = new("findTransitions", "find_transitions", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindTypeArgument = new("findTypeArgument", "find_type_argument", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindUnit = new("findUnit", "find_unit", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindUpperBound = new("findUpperBound", "find_upper_bound", new string[] {  }, new string[] {  }, "unlimited");
+    public static readonly Find FindUpperBoundExpr = new("findUpperBoundExpr", "find_upper_bound_expr", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindUsage = new("findUsage", "find_usage", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindUsages = new("findUsages", "find_usages", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindUseCase = new("findUseCase", "find_use_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindUseCaseDef = new("findUseCaseDef", "find_use_case_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindUseCaseDefs = new("findUseCaseDefs", "find_use_case_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindUseCaseDefsByName = new("findUseCaseDefsByName", "find_use_case_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindUseCaseDefsSemantic = new("findUseCaseDefsSemantic", "find_use_case_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindUseCases = new("findUseCases", "find_use_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindUseCasesExact = new("findUseCasesExact", "find_use_cases_exact", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindUseCasesSemantic = new("findUseCasesSemantic", "find_use_cases_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindValue = new("findValue", "find_value", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindVariation = new("findVariation", "find_variation", new string[] {  }, new string[] {  }, "element");
+    public static readonly Find FindVerificationCase = new("findVerificationCase", "find_verification_case", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindVerificationCaseDef = new("findVerificationCaseDef", "find_verification_case_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindVerificationCaseDefs = new("findVerificationCaseDefs", "find_verification_case_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindVerificationCaseDefsByName = new("findVerificationCaseDefsByName", "find_verification_case_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindVerificationCaseDefsSemantic = new("findVerificationCaseDefsSemantic", "find_verification_case_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindVerificationCases = new("findVerificationCases", "find_verification_cases", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindVerificationCasesSemantic = new("findVerificationCasesSemantic", "find_verification_cases_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindView = new("findView", "find_view", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindViewDef = new("findViewDef", "find_view_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindViewDefs = new("findViewDefs", "find_view_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindViewDefsByName = new("findViewDefsByName", "find_view_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindViewDefsSemantic = new("findViewDefsSemantic", "find_view_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindViewpoint = new("findViewpoint", "find_viewpoint", new string[] { "name", "scope", "visibility", "library" }, new string[] { "str", "scope", "visibility", "bool" }, "element");
+    public static readonly Find FindViewpointDef = new("findViewpointDef", "find_viewpoint_def", new string[] { "name", "scope" }, new string[] { "str", "scope" }, "element");
+    public static readonly Find FindViewpointDefs = new("findViewpointDefs", "find_viewpoint_defs", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindViewpointDefsByName = new("findViewpointDefsByName", "find_viewpoint_defs_by_name", new string[] { "scope" }, new string[] { "scope" }, "map");
+    public static readonly Find FindViewpointDefsSemantic = new("findViewpointDefsSemantic", "find_viewpoint_defs_semantic", new string[] { "scope" }, new string[] { "scope" }, "elements");
+    public static readonly Find FindViewpoints = new("findViewpoints", "find_viewpoints", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindViewpointsSemantic = new("findViewpointsSemantic", "find_viewpoints_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindViews = new("findViews", "find_views", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+    public static readonly Find FindViewsSemantic = new("findViewsSemantic", "find_views_semantic", new string[] { "scope", "visibility", "library" }, new string[] { "scope", "visibility", "bool" }, "elements");
+}
+
+/// <summary>The convenience members over lists of elements: <c>xs.FindPorts()</c> is the elements'
+/// <c>FindPorts()</c> in list order, list results concatenated (duplicates kept), absent single
+/// results dropped. If the member refuses for one element, the call refuses. Members that answer a
+/// Boolean, a number or a literal stay on the elements.</summary>
+public static class ElementLists
+{
+    /// <summary>The features of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindFeatures(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindFeatures, scope, visibility, library);
+    /// <summary>The feature with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindFeature(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindFeature, name, scope, visibility, library);
+    /// <summary>The usages of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Usage> FindUsages(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Usage>(elements, Finds.FindUsages, scope, visibility, library);
+    /// <summary>The usage with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Usage> FindUsage(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Usage>(elements, Finds.FindUsage, name, scope, visibility, library);
+    /// <summary>The actions of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionUsage> FindActions(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ActionUsage>(elements, Finds.FindActions, scope, visibility, library);
+    /// <summary>The actions whose metaclass is exactly ActionUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionUsage> FindActionsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ActionUsage>(elements, Finds.FindActionsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Actions::Action, as the Pilot navigation API's
+    /// semanticActions; refused where the model's library has no Actions::Action. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindActionsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindActionsSemantic, scope, visibility, library);
+    /// <summary>The action with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionUsage> FindAction(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ActionUsage>(elements, Finds.FindAction, name, scope, visibility, library);
+    /// <summary>The allocations of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AllocationUsage> FindAllocations(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AllocationUsage>(elements, Finds.FindAllocations, scope, visibility, library);
+    /// <summary>The features whose type conforms to Allocations::Allocation, as the Pilot
+    /// navigation API's semanticAllocations; refused where the model's library has no
+    /// Allocations::Allocation. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindAllocationsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindAllocationsSemantic, scope, visibility, library);
+    /// <summary>The allocation with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AllocationUsage> FindAllocation(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AllocationUsage>(elements, Finds.FindAllocation, name, scope, visibility, library);
+    /// <summary>The analysisCases of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AnalysisCaseUsage> FindAnalysisCases(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AnalysisCaseUsage>(elements, Finds.FindAnalysisCases, scope, visibility, library);
+    /// <summary>The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot
+    /// navigation API's semanticAnalysisCases; refused where the model's library has no
+    /// AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindAnalysisCasesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindAnalysisCasesSemantic, scope, visibility, library);
+    /// <summary>The analysisCase with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AnalysisCaseUsage> FindAnalysisCase(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AnalysisCaseUsage>(elements, Finds.FindAnalysisCase, name, scope, visibility, library);
+    /// <summary>The attributes of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeUsage> FindAttributes(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AttributeUsage>(elements, Finds.FindAttributes, scope, visibility, library);
+    /// <summary>The attributes whose metaclass is exactly AttributeUsage, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeUsage> FindAttributesExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AttributeUsage>(elements, Finds.FindAttributesExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+    /// semanticAttributes; refused where the model's library has no Base::DataValue. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindAttributesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindAttributesSemantic, scope, visibility, library);
+    /// <summary>The attribute with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeUsage> FindAttribute(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AttributeUsage>(elements, Finds.FindAttribute, name, scope, visibility, library);
+    /// <summary>The calculations of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationUsage> FindCalculations(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CalculationUsage>(elements, Finds.FindCalculations, scope, visibility, library);
+    /// <summary>The calculations whose metaclass is exactly CalculationUsage, its subkinds left
+    /// out. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationUsage> FindCalculationsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CalculationUsage>(elements, Finds.FindCalculationsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Calculations::Calculation, as the Pilot
+    /// navigation API's semanticCalculations; refused where the model's library has no
+    /// Calculations::Calculation. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindCalculationsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindCalculationsSemantic, scope, visibility, library);
+    /// <summary>The calculation with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationUsage> FindCalculation(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CalculationUsage>(elements, Finds.FindCalculation, name, scope, visibility, library);
+    /// <summary>The cases of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseUsage> FindCases(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CaseUsage>(elements, Finds.FindCases, scope, visibility, library);
+    /// <summary>The cases whose metaclass is exactly CaseUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseUsage> FindCasesExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CaseUsage>(elements, Finds.FindCasesExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Cases::Case, as the Pilot navigation API's
+    /// semanticCases; refused where the model's library has no Cases::Case. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindCasesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindCasesSemantic, scope, visibility, library);
+    /// <summary>The case with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseUsage> FindCase(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CaseUsage>(elements, Finds.FindCase, name, scope, visibility, library);
+    /// <summary>The concerns of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConcernUsage> FindConcerns(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConcernUsage>(elements, Finds.FindConcerns, scope, visibility, library);
+    /// <summary>The features whose type conforms to Requirements::ConcernCheck, as the Pilot
+    /// navigation API's semanticConcerns; refused where the model's library has no
+    /// Requirements::ConcernCheck. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindConcernsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindConcernsSemantic, scope, visibility, library);
+    /// <summary>The concern with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConcernUsage> FindConcern(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConcernUsage>(elements, Finds.FindConcern, name, scope, visibility, library);
+    /// <summary>The connections of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectorAsUsage> FindConnections(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConnectorAsUsage>(elements, Finds.FindConnections, scope, visibility, library);
+    /// <summary>The connections whose metaclass is exactly ConnectionUsage, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectionUsage> FindConnectionsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConnectionUsage>(elements, Finds.FindConnectionsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Connections::Connection, as the Pilot
+    /// navigation API's semanticConnections; refused where the model's library has no
+    /// Connections::Connection. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindConnectionsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindConnectionsSemantic, scope, visibility, library);
+    /// <summary>The connection with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectorAsUsage> FindConnection(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConnectorAsUsage>(elements, Finds.FindConnection, name, scope, visibility, library);
+    /// <summary>The constraints of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintUsage> FindConstraints(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConstraintUsage>(elements, Finds.FindConstraints, scope, visibility, library);
+    /// <summary>The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintUsage> FindConstraintsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConstraintUsage>(elements, Finds.FindConstraintsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Constraints::ConstraintCheck, as the Pilot
+    /// navigation API's semanticConstraints; refused where the model's library has no
+    /// Constraints::ConstraintCheck. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindConstraintsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindConstraintsSemantic, scope, visibility, library);
+    /// <summary>The constraint with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintUsage> FindConstraint(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConstraintUsage>(elements, Finds.FindConstraint, name, scope, visibility, library);
+    /// <summary>The enumerations of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<EnumerationUsage> FindEnumerations(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<EnumerationUsage>(elements, Finds.FindEnumerations, scope, visibility, library);
+    /// <summary>The enumeration with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<EnumerationUsage> FindEnumeration(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<EnumerationUsage>(elements, Finds.FindEnumeration, name, scope, visibility, library);
+    /// <summary>The flows of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowUsage> FindFlows(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<FlowUsage>(elements, Finds.FindFlows, scope, visibility, library);
+    /// <summary>The flows whose metaclass is exactly FlowUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowUsage> FindFlowsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<FlowUsage>(elements, Finds.FindFlowsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Flows::MessageAction, as the Pilot navigation
+    /// API's semanticFlows; refused where the model's library has no Flows::MessageAction. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindFlowsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindFlowsSemantic, scope, visibility, library);
+    /// <summary>The flow with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowUsage> FindFlow(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<FlowUsage>(elements, Finds.FindFlow, name, scope, visibility, library);
+    /// <summary>The interfaces of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<InterfaceUsage> FindInterfaces(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<InterfaceUsage>(elements, Finds.FindInterfaces, scope, visibility, library);
+    /// <summary>The features whose type conforms to Interfaces::Interface, as the Pilot navigation
+    /// API's semanticInterfaces; refused where the model's library has no Interfaces::Interface.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindInterfacesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindInterfacesSemantic, scope, visibility, library);
+    /// <summary>The interface with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<InterfaceUsage> FindInterface(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<InterfaceUsage>(elements, Finds.FindInterface, name, scope, visibility, library);
+    /// <summary>The items of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemUsage> FindItems(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ItemUsage>(elements, Finds.FindItems, scope, visibility, library);
+    /// <summary>The items whose metaclass is exactly ItemUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemUsage> FindItemsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ItemUsage>(elements, Finds.FindItemsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Items::Item, as the Pilot navigation API's
+    /// semanticItems; refused where the model's library has no Items::Item. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindItemsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindItemsSemantic, scope, visibility, library);
+    /// <summary>The item with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemUsage> FindItem(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ItemUsage>(elements, Finds.FindItem, name, scope, visibility, library);
+    /// <summary>The occurrences of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceUsage> FindOccurrences(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<OccurrenceUsage>(elements, Finds.FindOccurrences, scope, visibility, library);
+    /// <summary>The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceUsage> FindOccurrencesExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<OccurrenceUsage>(elements, Finds.FindOccurrencesExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Occurrences::Occurrence, as the Pilot
+    /// navigation API's semanticOccurrences; refused where the model's library has no
+    /// Occurrences::Occurrence. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindOccurrencesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindOccurrencesSemantic, scope, visibility, library);
+    /// <summary>The occurrence with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceUsage> FindOccurrence(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<OccurrenceUsage>(elements, Finds.FindOccurrence, name, scope, visibility, library);
+    /// <summary>The parts of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartUsage> FindParts(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PartUsage>(elements, Finds.FindParts, scope, visibility, library);
+    /// <summary>The parts whose metaclass is exactly PartUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartUsage> FindPartsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PartUsage>(elements, Finds.FindPartsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Parts::Part, as the Pilot navigation API's
+    /// semanticParts; refused where the model's library has no Parts::Part. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindPartsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindPartsSemantic, scope, visibility, library);
+    /// <summary>The part with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartUsage> FindPart(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PartUsage>(elements, Finds.FindPart, name, scope, visibility, library);
+    /// <summary>The ports of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortUsage> FindPorts(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PortUsage>(elements, Finds.FindPorts, scope, visibility, library);
+    /// <summary>The features whose type conforms to Ports::Port, as the Pilot navigation API's
+    /// semanticPorts; refused where the model's library has no Ports::Port. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindPortsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindPortsSemantic, scope, visibility, library);
+    /// <summary>The port with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortUsage> FindPort(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PortUsage>(elements, Finds.FindPort, name, scope, visibility, library);
+    /// <summary>The references of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ReferenceUsage> FindReferences(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ReferenceUsage>(elements, Finds.FindReferences, scope, visibility, library);
+    /// <summary>The reference with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ReferenceUsage> FindReference(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ReferenceUsage>(elements, Finds.FindReference, name, scope, visibility, library);
+    /// <summary>The renderings of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RenderingUsage> FindRenderings(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RenderingUsage>(elements, Finds.FindRenderings, scope, visibility, library);
+    /// <summary>The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+    /// semanticRenderings; refused where the model's library has no Views::Rendering. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindRenderingsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindRenderingsSemantic, scope, visibility, library);
+    /// <summary>The rendering with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RenderingUsage> FindRendering(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RenderingUsage>(elements, Finds.FindRendering, name, scope, visibility, library);
+    /// <summary>The requirements of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementUsage> FindRequirements(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RequirementUsage>(elements, Finds.FindRequirements, scope, visibility, library);
+    /// <summary>The requirements whose metaclass is exactly RequirementUsage, its subkinds left
+    /// out. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementUsage> FindRequirementsExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RequirementUsage>(elements, Finds.FindRequirementsExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to Requirements::RequirementCheck, as the Pilot
+    /// navigation API's semanticRequirements; refused where the model's library has no
+    /// Requirements::RequirementCheck. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindRequirementsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindRequirementsSemantic, scope, visibility, library);
+    /// <summary>The requirement with this simple (effective) name, or none: part :&gt;&gt; wheels
+    /// is found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementUsage> FindRequirement(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RequirementUsage>(elements, Finds.FindRequirement, name, scope, visibility, library);
+    /// <summary>The states of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindStates(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<StateUsage>(elements, Finds.FindStates, scope, visibility, library);
+    /// <summary>The states whose metaclass is exactly StateUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindStatesExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<StateUsage>(elements, Finds.FindStatesExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to States::StateAction, as the Pilot navigation
+    /// API's semanticStates; refused where the model's library has no States::StateAction. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindStatesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindStatesSemantic, scope, visibility, library);
+    /// <summary>The state with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindState(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<StateUsage>(elements, Finds.FindState, name, scope, visibility, library);
+    /// <summary>The transitions of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<TransitionUsage> FindTransitions(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<TransitionUsage>(elements, Finds.FindTransitions, scope, visibility, library);
+    /// <summary>The transition with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<TransitionUsage> FindTransition(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<TransitionUsage>(elements, Finds.FindTransition, name, scope, visibility, library);
+    /// <summary>The useCases of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseUsage> FindUseCases(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<UseCaseUsage>(elements, Finds.FindUseCases, scope, visibility, library);
+    /// <summary>The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseUsage> FindUseCasesExact(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<UseCaseUsage>(elements, Finds.FindUseCasesExact, scope, visibility, library);
+    /// <summary>The features whose type conforms to UseCases::UseCase, as the Pilot navigation
+    /// API's semanticUseCases; refused where the model's library has no UseCases::UseCase. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindUseCasesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindUseCasesSemantic, scope, visibility, library);
+    /// <summary>The useCase with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseUsage> FindUseCase(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<UseCaseUsage>(elements, Finds.FindUseCase, name, scope, visibility, library);
+    /// <summary>The verificationCases of this type. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<VerificationCaseUsage> FindVerificationCases(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<VerificationCaseUsage>(elements, Finds.FindVerificationCases, scope, visibility, library);
+    /// <summary>The features whose type conforms to VerificationCases::VerificationCase, as the
+    /// Pilot navigation API's semanticVerificationCases; refused where the model's library has no
+    /// VerificationCases::VerificationCase. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindVerificationCasesSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindVerificationCasesSemantic, scope, visibility, library);
+    /// <summary>The verificationCase with this simple (effective) name, or none: part :&gt;&gt;
+    /// wheels is found as wheels. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<VerificationCaseUsage> FindVerificationCase(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<VerificationCaseUsage>(elements, Finds.FindVerificationCase, name, scope, visibility, library);
+    /// <summary>The views of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewUsage> FindViews(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewUsage>(elements, Finds.FindViews, scope, visibility, library);
+    /// <summary>The features whose type conforms to Views::View, as the Pilot navigation API's
+    /// semanticViews; refused where the model's library has no Views::View. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindViewsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindViewsSemantic, scope, visibility, library);
+    /// <summary>The view with this simple (effective) name, or none: part :&gt;&gt; wheels is found
+    /// as wheels. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewUsage> FindView(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewUsage>(elements, Finds.FindView, name, scope, visibility, library);
+    /// <summary>The viewpoints of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewpointUsage> FindViewpoints(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewpointUsage>(elements, Finds.FindViewpoints, scope, visibility, library);
+    /// <summary>The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation
+    /// API's semanticViewpoints; refused where the model's library has no Views::ViewpointCheck.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindViewpointsSemantic(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindViewpointsSemantic, scope, visibility, library);
+    /// <summary>The viewpoint with this simple (effective) name, or none: part :&gt;&gt; wheels is
+    /// found as wheels. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for, a feature's effective name.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewpointUsage> FindViewpoint(this IEnumerable<Type> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewpointUsage>(elements, Finds.FindViewpoint, name, scope, visibility, library);
+    /// <summary>The features that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindMemberFeatures(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindMemberFeatures, scope, visibility, library);
+    /// <summary>The feature that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindMemberFeature(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindMemberFeature, name, scope, visibility, library);
+    /// <summary>The usages that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Usage> FindMemberUsages(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Usage>(elements, Finds.FindMemberUsages, scope, visibility, library);
+    /// <summary>The usage that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Usage> FindMemberUsage(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Usage>(elements, Finds.FindMemberUsage, name, scope, visibility, library);
+    /// <summary>The actions that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionUsage> FindMemberActions(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ActionUsage>(elements, Finds.FindMemberActions, scope, visibility, library);
+    /// <summary>The action that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionUsage> FindMemberAction(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ActionUsage>(elements, Finds.FindMemberAction, name, scope, visibility, library);
+    /// <summary>The allocations that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AllocationUsage> FindMemberAllocations(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AllocationUsage>(elements, Finds.FindMemberAllocations, scope, visibility, library);
+    /// <summary>The allocation that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AllocationUsage> FindMemberAllocation(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AllocationUsage>(elements, Finds.FindMemberAllocation, name, scope, visibility, library);
+    /// <summary>The analysisCases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AnalysisCaseUsage> FindMemberAnalysisCases(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AnalysisCaseUsage>(elements, Finds.FindMemberAnalysisCases, scope, visibility, library);
+    /// <summary>The analysisCase that is a member under this simple name (an alias's name
+    /// included), or none. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AnalysisCaseUsage> FindMemberAnalysisCase(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AnalysisCaseUsage>(elements, Finds.FindMemberAnalysisCase, name, scope, visibility, library);
+    /// <summary>The attributes that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeUsage> FindMemberAttributes(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AttributeUsage>(elements, Finds.FindMemberAttributes, scope, visibility, library);
+    /// <summary>The attribute that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeUsage> FindMemberAttribute(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<AttributeUsage>(elements, Finds.FindMemberAttribute, name, scope, visibility, library);
+    /// <summary>The calculations that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationUsage> FindMemberCalculations(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CalculationUsage>(elements, Finds.FindMemberCalculations, scope, visibility, library);
+    /// <summary>The calculation that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationUsage> FindMemberCalculation(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CalculationUsage>(elements, Finds.FindMemberCalculation, name, scope, visibility, library);
+    /// <summary>The cases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseUsage> FindMemberCases(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CaseUsage>(elements, Finds.FindMemberCases, scope, visibility, library);
+    /// <summary>The case that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseUsage> FindMemberCase(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<CaseUsage>(elements, Finds.FindMemberCase, name, scope, visibility, library);
+    /// <summary>The concerns that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConcernUsage> FindMemberConcerns(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConcernUsage>(elements, Finds.FindMemberConcerns, scope, visibility, library);
+    /// <summary>The concern that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConcernUsage> FindMemberConcern(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConcernUsage>(elements, Finds.FindMemberConcern, name, scope, visibility, library);
+    /// <summary>The connections that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectorAsUsage> FindMemberConnections(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConnectorAsUsage>(elements, Finds.FindMemberConnections, scope, visibility, library);
+    /// <summary>The connection that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectorAsUsage> FindMemberConnection(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConnectorAsUsage>(elements, Finds.FindMemberConnection, name, scope, visibility, library);
+    /// <summary>The constraints that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintUsage> FindMemberConstraints(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConstraintUsage>(elements, Finds.FindMemberConstraints, scope, visibility, library);
+    /// <summary>The constraint that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintUsage> FindMemberConstraint(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ConstraintUsage>(elements, Finds.FindMemberConstraint, name, scope, visibility, library);
+    /// <summary>The enumerations that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<EnumerationUsage> FindMemberEnumerations(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<EnumerationUsage>(elements, Finds.FindMemberEnumerations, scope, visibility, library);
+    /// <summary>The enumeration that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<EnumerationUsage> FindMemberEnumeration(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<EnumerationUsage>(elements, Finds.FindMemberEnumeration, name, scope, visibility, library);
+    /// <summary>The flows that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowUsage> FindMemberFlows(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<FlowUsage>(elements, Finds.FindMemberFlows, scope, visibility, library);
+    /// <summary>The flow that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowUsage> FindMemberFlow(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<FlowUsage>(elements, Finds.FindMemberFlow, name, scope, visibility, library);
+    /// <summary>The interfaces that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<InterfaceUsage> FindMemberInterfaces(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<InterfaceUsage>(elements, Finds.FindMemberInterfaces, scope, visibility, library);
+    /// <summary>The interface that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<InterfaceUsage> FindMemberInterface(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<InterfaceUsage>(elements, Finds.FindMemberInterface, name, scope, visibility, library);
+    /// <summary>The items that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemUsage> FindMemberItems(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ItemUsage>(elements, Finds.FindMemberItems, scope, visibility, library);
+    /// <summary>The item that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemUsage> FindMemberItem(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ItemUsage>(elements, Finds.FindMemberItem, name, scope, visibility, library);
+    /// <summary>The occurrences that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceUsage> FindMemberOccurrences(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<OccurrenceUsage>(elements, Finds.FindMemberOccurrences, scope, visibility, library);
+    /// <summary>The occurrence that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceUsage> FindMemberOccurrence(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<OccurrenceUsage>(elements, Finds.FindMemberOccurrence, name, scope, visibility, library);
+    /// <summary>The parts that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartUsage> FindMemberParts(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PartUsage>(elements, Finds.FindMemberParts, scope, visibility, library);
+    /// <summary>The part that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartUsage> FindMemberPart(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PartUsage>(elements, Finds.FindMemberPart, name, scope, visibility, library);
+    /// <summary>The ports that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortUsage> FindMemberPorts(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PortUsage>(elements, Finds.FindMemberPorts, scope, visibility, library);
+    /// <summary>The port that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortUsage> FindMemberPort(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<PortUsage>(elements, Finds.FindMemberPort, name, scope, visibility, library);
+    /// <summary>The references that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ReferenceUsage> FindMemberReferences(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ReferenceUsage>(elements, Finds.FindMemberReferences, scope, visibility, library);
+    /// <summary>The reference that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ReferenceUsage> FindMemberReference(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ReferenceUsage>(elements, Finds.FindMemberReference, name, scope, visibility, library);
+    /// <summary>The renderings that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RenderingUsage> FindMemberRenderings(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RenderingUsage>(elements, Finds.FindMemberRenderings, scope, visibility, library);
+    /// <summary>The rendering that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RenderingUsage> FindMemberRendering(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RenderingUsage>(elements, Finds.FindMemberRendering, name, scope, visibility, library);
+    /// <summary>The requirements that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementUsage> FindMemberRequirements(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RequirementUsage>(elements, Finds.FindMemberRequirements, scope, visibility, library);
+    /// <summary>The requirement that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementUsage> FindMemberRequirement(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<RequirementUsage>(elements, Finds.FindMemberRequirement, name, scope, visibility, library);
+    /// <summary>The states that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindMemberStates(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<StateUsage>(elements, Finds.FindMemberStates, scope, visibility, library);
+    /// <summary>The state that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindMemberState(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<StateUsage>(elements, Finds.FindMemberState, name, scope, visibility, library);
+    /// <summary>The transitions that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<TransitionUsage> FindMemberTransitions(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<TransitionUsage>(elements, Finds.FindMemberTransitions, scope, visibility, library);
+    /// <summary>The transition that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<TransitionUsage> FindMemberTransition(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<TransitionUsage>(elements, Finds.FindMemberTransition, name, scope, visibility, library);
+    /// <summary>The useCases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseUsage> FindMemberUseCases(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<UseCaseUsage>(elements, Finds.FindMemberUseCases, scope, visibility, library);
+    /// <summary>The useCase that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseUsage> FindMemberUseCase(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<UseCaseUsage>(elements, Finds.FindMemberUseCase, name, scope, visibility, library);
+    /// <summary>The verificationCases that are members of this namespace through any membership
+    /// (owned, aliased, imported, inherited), each once. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<VerificationCaseUsage> FindMemberVerificationCases(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<VerificationCaseUsage>(elements, Finds.FindMemberVerificationCases, scope, visibility, library);
+    /// <summary>The verificationCase that is a member under this simple name (an alias's name
+    /// included), or none. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<VerificationCaseUsage> FindMemberVerificationCase(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<VerificationCaseUsage>(elements, Finds.FindMemberVerificationCase, name, scope, visibility, library);
+    /// <summary>The views that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewUsage> FindMemberViews(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewUsage>(elements, Finds.FindMemberViews, scope, visibility, library);
+    /// <summary>The view that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewUsage> FindMemberView(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewUsage>(elements, Finds.FindMemberView, name, scope, visibility, library);
+    /// <summary>The viewpoints that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewpointUsage> FindMemberViewpoints(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewpointUsage>(elements, Finds.FindMemberViewpoints, scope, visibility, library);
+    /// <summary>The viewpoint that is a member under this simple name (an alias's name included),
+    /// or none. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The member name to look for, an alias's name included.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewpointUsage> FindMemberViewpoint(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<ViewpointUsage>(elements, Finds.FindMemberViewpoint, name, scope, visibility, library);
+    /// <summary>The definitions of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Definition> FindDefinitions(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Definition>(elements, Finds.FindDefinitions, scope);
+    /// <summary>The definition with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Definition> FindDefinition(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<Definition>(elements, Finds.FindDefinition, name, scope);
+    /// <summary>The actionDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionDefinition> FindActionDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ActionDefinition>(elements, Finds.FindActionDefs, scope);
+    /// <summary>The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionDefinition> FindActionDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ActionDefinition>(elements, Finds.FindActionDefsExact, scope);
+    /// <summary>The types that specialize Actions::Action; refused where the model's library has no
+    /// Actions::Action. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindActionDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindActionDefsSemantic, scope);
+    /// <summary>The actionDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ActionDefinition> FindActionDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ActionDefinition>(elements, Finds.FindActionDef, name, scope);
+    /// <summary>The allocationDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AllocationDefinition> FindAllocationDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<AllocationDefinition>(elements, Finds.FindAllocationDefs, scope);
+    /// <summary>The types that specialize Allocations::Allocation; refused where the model's
+    /// library has no Allocations::Allocation. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindAllocationDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindAllocationDefsSemantic, scope);
+    /// <summary>The allocationDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AllocationDefinition> FindAllocationDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<AllocationDefinition>(elements, Finds.FindAllocationDef, name, scope);
+    /// <summary>The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AnalysisCaseDefinition> FindAnalysisCaseDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<AnalysisCaseDefinition>(elements, Finds.FindAnalysisCaseDefs, scope);
+    /// <summary>The types that specialize AnalysisCases::AnalysisCase; refused where the model's
+    /// library has no AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindAnalysisCaseDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindAnalysisCaseDefsSemantic, scope);
+    /// <summary>The analysisCaseDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AnalysisCaseDefinition> FindAnalysisCaseDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<AnalysisCaseDefinition>(elements, Finds.FindAnalysisCaseDef, name, scope);
+    /// <summary>The attributeDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeDefinition> FindAttributeDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<AttributeDefinition>(elements, Finds.FindAttributeDefs, scope);
+    /// <summary>The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left
+    /// out. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeDefinition> FindAttributeDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<AttributeDefinition>(elements, Finds.FindAttributeDefsExact, scope);
+    /// <summary>The types that specialize Base::DataValue; refused where the model's library has no
+    /// Base::DataValue. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindAttributeDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindAttributeDefsSemantic, scope);
+    /// <summary>The attributeDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<AttributeDefinition> FindAttributeDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<AttributeDefinition>(elements, Finds.FindAttributeDef, name, scope);
+    /// <summary>The calculationDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationDefinition> FindCalculationDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<CalculationDefinition>(elements, Finds.FindCalculationDefs, scope);
+    /// <summary>The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds
+    /// left out. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationDefinition> FindCalculationDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<CalculationDefinition>(elements, Finds.FindCalculationDefsExact, scope);
+    /// <summary>The types that specialize Calculations::Calculation; refused where the model's
+    /// library has no Calculations::Calculation. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindCalculationDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindCalculationDefsSemantic, scope);
+    /// <summary>The calculationDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CalculationDefinition> FindCalculationDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<CalculationDefinition>(elements, Finds.FindCalculationDef, name, scope);
+    /// <summary>The caseDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseDefinition> FindCaseDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<CaseDefinition>(elements, Finds.FindCaseDefs, scope);
+    /// <summary>The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseDefinition> FindCaseDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<CaseDefinition>(elements, Finds.FindCaseDefsExact, scope);
+    /// <summary>The types that specialize Cases::Case; refused where the model's library has no
+    /// Cases::Case. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindCaseDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindCaseDefsSemantic, scope);
+    /// <summary>The caseDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<CaseDefinition> FindCaseDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<CaseDefinition>(elements, Finds.FindCaseDef, name, scope);
+    /// <summary>The concernDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConcernDefinition> FindConcernDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ConcernDefinition>(elements, Finds.FindConcernDefs, scope);
+    /// <summary>The types that specialize Requirements::ConcernCheck; refused where the model's
+    /// library has no Requirements::ConcernCheck. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindConcernDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindConcernDefsSemantic, scope);
+    /// <summary>The concernDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConcernDefinition> FindConcernDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ConcernDefinition>(elements, Finds.FindConcernDef, name, scope);
+    /// <summary>The connectionDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectionDefinition> FindConnectionDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ConnectionDefinition>(elements, Finds.FindConnectionDefs, scope);
+    /// <summary>The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds
+    /// left out. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectionDefinition> FindConnectionDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ConnectionDefinition>(elements, Finds.FindConnectionDefsExact, scope);
+    /// <summary>The types that specialize Connections::Connection; refused where the model's
+    /// library has no Connections::Connection. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindConnectionDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindConnectionDefsSemantic, scope);
+    /// <summary>The connectionDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConnectionDefinition> FindConnectionDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ConnectionDefinition>(elements, Finds.FindConnectionDef, name, scope);
+    /// <summary>The constraintDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintDefinition> FindConstraintDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ConstraintDefinition>(elements, Finds.FindConstraintDefs, scope);
+    /// <summary>The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds
+    /// left out. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintDefinition> FindConstraintDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ConstraintDefinition>(elements, Finds.FindConstraintDefsExact, scope);
+    /// <summary>The types that specialize Constraints::ConstraintCheck; refused where the model's
+    /// library has no Constraints::ConstraintCheck. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindConstraintDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindConstraintDefsSemantic, scope);
+    /// <summary>The constraintDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ConstraintDefinition> FindConstraintDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ConstraintDefinition>(elements, Finds.FindConstraintDef, name, scope);
+    /// <summary>The enumerationDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<EnumerationDefinition> FindEnumerationDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<EnumerationDefinition>(elements, Finds.FindEnumerationDefs, scope);
+    /// <summary>The enumerationDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<EnumerationDefinition> FindEnumerationDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<EnumerationDefinition>(elements, Finds.FindEnumerationDef, name, scope);
+    /// <summary>The flowDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowDefinition> FindFlowDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<FlowDefinition>(elements, Finds.FindFlowDefs, scope);
+    /// <summary>The types that specialize Flows::MessageAction; refused where the model's library
+    /// has no Flows::MessageAction. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindFlowDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindFlowDefsSemantic, scope);
+    /// <summary>The flowDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<FlowDefinition> FindFlowDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<FlowDefinition>(elements, Finds.FindFlowDef, name, scope);
+    /// <summary>The interfaceDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<InterfaceDefinition> FindInterfaceDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<InterfaceDefinition>(elements, Finds.FindInterfaceDefs, scope);
+    /// <summary>The types that specialize Interfaces::Interface; refused where the model's library
+    /// has no Interfaces::Interface. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindInterfaceDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindInterfaceDefsSemantic, scope);
+    /// <summary>The interfaceDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<InterfaceDefinition> FindInterfaceDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<InterfaceDefinition>(elements, Finds.FindInterfaceDef, name, scope);
+    /// <summary>The itemDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemDefinition> FindItemDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ItemDefinition>(elements, Finds.FindItemDefs, scope);
+    /// <summary>The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemDefinition> FindItemDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ItemDefinition>(elements, Finds.FindItemDefsExact, scope);
+    /// <summary>The types that specialize Items::Item; refused where the model's library has no
+    /// Items::Item. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindItemDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindItemDefsSemantic, scope);
+    /// <summary>The itemDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ItemDefinition> FindItemDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ItemDefinition>(elements, Finds.FindItemDef, name, scope);
+    /// <summary>The metadataDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<MetadataDefinition> FindMetadataDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<MetadataDefinition>(elements, Finds.FindMetadataDefs, scope);
+    /// <summary>The metadataDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<MetadataDefinition> FindMetadataDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<MetadataDefinition>(elements, Finds.FindMetadataDef, name, scope);
+    /// <summary>The occurrenceDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceDefinition> FindOccurrenceDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<OccurrenceDefinition>(elements, Finds.FindOccurrenceDefs, scope);
+    /// <summary>The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds
+    /// left out. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceDefinition> FindOccurrenceDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<OccurrenceDefinition>(elements, Finds.FindOccurrenceDefsExact, scope);
+    /// <summary>The types that specialize Occurrences::Occurrence; refused where the model's
+    /// library has no Occurrences::Occurrence. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindOccurrenceDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindOccurrenceDefsSemantic, scope);
+    /// <summary>The occurrenceDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<OccurrenceDefinition> FindOccurrenceDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<OccurrenceDefinition>(elements, Finds.FindOccurrenceDef, name, scope);
+    /// <summary>The partDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartDefinition> FindPartDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<PartDefinition>(elements, Finds.FindPartDefs, scope);
+    /// <summary>The partDefs whose metaclass is exactly PartDefinition, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartDefinition> FindPartDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<PartDefinition>(elements, Finds.FindPartDefsExact, scope);
+    /// <summary>The types that specialize Parts::Part; refused where the model's library has no
+    /// Parts::Part. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindPartDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindPartDefsSemantic, scope);
+    /// <summary>The partDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PartDefinition> FindPartDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<PartDefinition>(elements, Finds.FindPartDef, name, scope);
+    /// <summary>The portDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortDefinition> FindPortDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<PortDefinition>(elements, Finds.FindPortDefs, scope);
+    /// <summary>The portDefs whose metaclass is exactly PortDefinition, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortDefinition> FindPortDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<PortDefinition>(elements, Finds.FindPortDefsExact, scope);
+    /// <summary>The types that specialize Ports::Port; refused where the model's library has no
+    /// Ports::Port. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindPortDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindPortDefsSemantic, scope);
+    /// <summary>The portDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<PortDefinition> FindPortDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<PortDefinition>(elements, Finds.FindPortDef, name, scope);
+    /// <summary>The renderingDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RenderingDefinition> FindRenderingDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<RenderingDefinition>(elements, Finds.FindRenderingDefs, scope);
+    /// <summary>The types that specialize Views::Rendering; refused where the model's library has
+    /// no Views::Rendering. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindRenderingDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindRenderingDefsSemantic, scope);
+    /// <summary>The renderingDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RenderingDefinition> FindRenderingDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<RenderingDefinition>(elements, Finds.FindRenderingDef, name, scope);
+    /// <summary>The requirementDefs of this namespace: owned, imported (and inherited) only, or
+    /// both. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementDefinition> FindRequirementDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<RequirementDefinition>(elements, Finds.FindRequirementDefs, scope);
+    /// <summary>The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds
+    /// left out. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementDefinition> FindRequirementDefsExact(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<RequirementDefinition>(elements, Finds.FindRequirementDefsExact, scope);
+    /// <summary>The types that specialize Requirements::RequirementCheck; refused where the model's
+    /// library has no Requirements::RequirementCheck. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindRequirementDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindRequirementDefsSemantic, scope);
+    /// <summary>The requirementDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<RequirementDefinition> FindRequirementDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<RequirementDefinition>(elements, Finds.FindRequirementDef, name, scope);
+    /// <summary>The stateDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateDefinition> FindStateDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<StateDefinition>(elements, Finds.FindStateDefs, scope);
+    /// <summary>The types that specialize States::StateAction; refused where the model's library
+    /// has no States::StateAction. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindStateDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindStateDefsSemantic, scope);
+    /// <summary>The stateDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateDefinition> FindStateDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<StateDefinition>(elements, Finds.FindStateDef, name, scope);
+    /// <summary>The useCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseDefinition> FindUseCaseDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<UseCaseDefinition>(elements, Finds.FindUseCaseDefs, scope);
+    /// <summary>The types that specialize UseCases::UseCase; refused where the model's library has
+    /// no UseCases::UseCase. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindUseCaseDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindUseCaseDefsSemantic, scope);
+    /// <summary>The useCaseDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<UseCaseDefinition> FindUseCaseDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<UseCaseDefinition>(elements, Finds.FindUseCaseDef, name, scope);
+    /// <summary>The verificationCaseDefs of this namespace: owned, imported (and inherited) only,
+    /// or both. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<VerificationCaseDefinition> FindVerificationCaseDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<VerificationCaseDefinition>(elements, Finds.FindVerificationCaseDefs, scope);
+    /// <summary>The types that specialize VerificationCases::VerificationCase; refused where the
+    /// model's library has no VerificationCases::VerificationCase. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindVerificationCaseDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindVerificationCaseDefsSemantic, scope);
+    /// <summary>The verificationCaseDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<VerificationCaseDefinition> FindVerificationCaseDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<VerificationCaseDefinition>(elements, Finds.FindVerificationCaseDef, name, scope);
+    /// <summary>The viewDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewDefinition> FindViewDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ViewDefinition>(elements, Finds.FindViewDefs, scope);
+    /// <summary>The types that specialize Views::View; refused where the model's library has no
+    /// Views::View. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindViewDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindViewDefsSemantic, scope);
+    /// <summary>The viewDef with this simple (effective) name, or none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewDefinition> FindViewDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ViewDefinition>(elements, Finds.FindViewDef, name, scope);
+    /// <summary>The viewpointDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewpointDefinition> FindViewpointDefs(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<ViewpointDefinition>(elements, Finds.FindViewpointDefs, scope);
+    /// <summary>The types that specialize Views::ViewpointCheck; refused where the model's library
+    /// has no Views::ViewpointCheck. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindViewpointDefsSemantic(this IEnumerable<Namespace> elements, Scope scope = Scope.Owned) => Model.FindAll<Type>(elements, Finds.FindViewpointDefsSemantic, scope);
+    /// <summary>The viewpointDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<ViewpointDefinition> FindViewpointDef(this IEnumerable<Namespace> elements, string name, Scope scope = Scope.Owned) => Model.FindAll<ViewpointDefinition>(elements, Finds.FindViewpointDef, name, scope);
+    /// <summary>The packages this namespace owns. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Package> FindPackages(this IEnumerable<Namespace> elements) => Model.FindAll<Package>(elements, Finds.FindPackages);
+    /// <summary>The owned package with this simple name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="name">The simple name to look for.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Package> FindPackage(this IEnumerable<Namespace> elements, string name) => Model.FindAll<Package>(elements, Finds.FindPackage, name);
+    /// <summary>The types this feature is declared with. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindDeclaredTypes(this IEnumerable<Feature> elements) => Model.FindAll<Type>(elements, Finds.FindDeclaredTypes);
+    /// <summary>Direct supertypes as written: supertypes(true). A conjugated type's only supertype
+    /// is its original type; a feature chain's last feature is a supertype of the chain. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindDeclaredSupertypes(this IEnumerable<Type> elements) => Model.FindAll<Type>(elements, Finds.FindDeclaredSupertypes);
+    /// <summary>Direct supertypes the backend adds by the language's rules (Parts::Part for a part
+    /// definition). Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindImpliedSupertypes(this IEnumerable<Type> elements) => Model.FindAll<Type>(elements, Finds.FindImpliedSupertypes);
+    /// <summary>Direct supertypes, written and implied: supertypes(false). Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindDeclaredAndImpliedSupertypes(this IEnumerable<Type> elements) => Model.FindAll<Type>(elements, Finds.FindDeclaredAndImpliedSupertypes);
+    /// <summary>The features this feature subsets as written (redefinitions and reference
+    /// subsettings left out). Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindSubsettedFeatures(this IEnumerable<Feature> elements) => Model.FindAll<Feature>(elements, Finds.FindSubsettedFeatures);
+    /// <summary>The features this feature redefines as written. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindRedefinedFeatures(this IEnumerable<Feature> elements) => Model.FindAll<Feature>(elements, Finds.FindRedefinedFeatures);
+    /// <summary>The feature this feature references (::&gt;), or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindReferencedFeature(this IEnumerable<Feature> elements) => Model.FindAll<Feature>(elements, Finds.FindReferencedFeature);
+    /// <summary>The feature a chain of written redefinitions starts from, following the first at
+    /// each step (Truck::mass to Frame::mass); itself when it redefines nothing. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindRedefinitionRoot(this IEnumerable<Feature> elements) => Model.FindAll<Feature>(elements, Finds.FindRedefinitionRoot);
+    /// <summary>The feature in effect here for feature: itself where inherited as it is, else the
+    /// one redefining it; none where this type does not have it. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="feature">The feature as declared, on this type or on a type it
+    /// specializes.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindEffectiveFeature(this IEnumerable<Type> elements, Feature feature) => Model.FindAll<Feature>(elements, Finds.FindEffectiveFeature, feature);
+    /// <summary>The value expression this feature is declared with (=, :=, default), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Expression> FindValue(this IEnumerable<Feature> elements) => Model.FindAll<Expression>(elements, Finds.FindValue);
+    /// <summary>The unit a number literal is written in (1500 [kg], -5 [kg]: the element the
+    /// reference names, SI::kilogram); none for a literal without a unit; refused for anything
+    /// else, whose unit needs evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit().
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="RefusedException">Where the definition gives no answer for this element, as
+    /// described above.</exception>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<IElement> FindUnit(this IEnumerable<Expression> elements) => Model.FindAll<IElement>(elements, Finds.FindUnit);
+    /// <summary>The lower bound's expression; none where there is none (no multiplicity, the lower
+    /// bound of [*], a multiplicity without a range). Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Expression> FindLowerBoundExpr(this IEnumerable<Type> elements) => Model.FindAll<Expression>(elements, Finds.FindLowerBoundExpr);
+    /// <summary>The upper bound's expression; none where there is none. Over the list's elements,
+    /// in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Expression> FindUpperBoundExpr(this IEnumerable<Type> elements) => Model.FindAll<Expression>(elements, Finds.FindUpperBoundExpr);
+    /// <summary>The directed features, scoped like the kind lists: those whose direction relative
+    /// to this behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindParameters(this IEnumerable<Behavior> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindParameters, scope, visibility, library);
+    /// <summary>The directed features, scoped like the kind lists: those whose direction relative
+    /// to this behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindParameters(this IEnumerable<Step> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindParameters, scope, visibility, library);
+    /// <summary>The features directed in or inout relative to this type, directionOf taking
+    /// conjugation into account (a conjugated port's out items are its inputs), scoped like the
+    /// kind lists. With scope all and library true, the specification's input. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindInputs(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindInputs, scope, visibility, library);
+    /// <summary>The features directed out or inout relative to this type, directionOf taking
+    /// conjugation into account (a conjugated port's in items are its outputs), scoped like the
+    /// kind lists. With scope all and library true, the specification's output. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindOutputs(this IEnumerable<Type> elements, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindOutputs, scope, visibility, library);
+    /// <summary>The features of this type that are, or specialize, feature (the wheels among a
+    /// vehicle's parts), scoped. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <param name="feature">The feature the answers are or specialize.</param>
+    /// <param name="scope">Which members a list reads: the type's own, those it inherits, or both.
+    /// A list of features gives its own first; a list of members or definitions, outside the owned
+    /// scope, is in the backend's order. For a namespace's members, inherited includes imported.
+    /// Default: Scope.Owned.</param>
+    /// <param name="visibility">Which visibilities a list keeps: every one, public and protected,
+    /// or public only. Default: VisibilityFilter.Any.</param>
+    /// <param name="library">Whether members inherited from the standard library's types are kept
+    /// (a user's library package counts as model). Default: false.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindSubsettingFeaturesOf(this IEnumerable<Type> elements, Feature feature, Scope scope = Scope.Owned, VisibilityFilter visibility = VisibilityFilter.Any, bool library = false) => Model.FindAll<Feature>(elements, Finds.FindSubsettingFeaturesOf, feature, scope, visibility, library);
+    /// <summary>The result expression of a calculation or constraint, owned or inherited; the
+    /// specification has resultExpression only on analysis cases. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Expression> FindResultExpression(this IEnumerable<Function> elements) => Model.FindAll<Expression>(elements, Finds.FindResultExpression);
+    /// <summary>The result expression of a calculation or constraint, owned or inherited; the
+    /// specification has resultExpression only on analysis cases. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Expression> FindResultExpression(this IEnumerable<Expression> elements) => Model.FindAll<Expression>(elements, Finds.FindResultExpression);
+    /// <summary>The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@
+    /// T, x as T, m meta T give T): the grammar puts it in the second owned feature. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindTypeArgument(this IEnumerable<OperatorExpression> elements) => Model.FindAll<Type>(elements, Finds.FindTypeArgument);
+    /// <summary>Initial states, by a priority chain over the notation's forms: first start then
+    /// off; and, only if that gives none, entry; then off; (the Annex A form, an entry action with
+    /// a transition from it, is not recognized). Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindInitialStates(this IEnumerable<StateUsage> elements) => Model.FindAll<StateUsage>(elements, Finds.FindInitialStates);
+    /// <summary>Initial states, by a priority chain over the notation's forms: first start then
+    /// off; and, only if that gives none, entry; then off; (the Annex A form, an entry action with
+    /// a transition from it, is not recognized). Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<StateUsage> FindInitialStates(this IEnumerable<StateDefinition> elements) => Model.FindAll<StateUsage>(elements, Finds.FindInitialStates);
+    /// <summary>What an accept action accepts: its payload's types. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindAcceptedTypes(this IEnumerable<AcceptActionUsage> elements) => Model.FindAll<Type>(elements, Finds.FindAcceptedTypes);
+    /// <summary>What a transition's triggers accept. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindAcceptedTypes(this IEnumerable<TransitionUsage> elements) => Model.FindAll<Type>(elements, Finds.FindAcceptedTypes);
+    /// <summary>A feature chain as its features (battery.powerOut gives [battery, powerOut]); else
+    /// [self]. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Feature> FindPath(this IEnumerable<Feature> elements) => Model.FindAll<Feature>(elements, Finds.FindPath);
+    /// <summary>The variation a variant belongs to (variation part def V { variant part a; }: a
+    /// gives V; an enumeration's values give the enumeration); none for a usage that is not a
+    /// variant. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<Type> FindVariation(this IEnumerable<Usage> elements) => Model.FindAll<Type>(elements, Finds.FindVariation);
+    /// <summary>Metadata applied to an element by an owned annotation, or as an owned member
+    /// annotating it (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;)
+    /// is not found. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<MetadataFeature> FindAppliedMetadata(this IEnumerable<IElement> elements) => Model.FindAll<MetadataFeature>(elements, Finds.FindAppliedMetadata);
+    /// <summary>The metadata usages this namespace owns, whatever they annotate (metadata M about
+    /// other; included). Owned only: metadata is about the element that owns it, so it is never
+    /// read through inheritance or imports. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The elements, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<MetadataUsage> FindMemberMetadata(this IEnumerable<Namespace> elements) => Model.FindAll<MetadataUsage>(elements, Finds.FindMemberMetadata);
+    /// <summary>The bodies of the element's documentation comments, in order. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.</summary>
+    /// <param name="elements">The elements to ask.</param>
+    /// <returns>The texts, in order.</returns>
+    /// <exception cref="NotAnsweredException">Where the backend cannot answer a property or
+    /// operation this member reads; the message names it. If the member refuses for one element,
+    /// the call refuses.</exception>
+    public static IReadOnlyList<string> FindDocText(this IEnumerable<IElement> elements) => Model.FindAll<string>(elements, Finds.FindDocText);
 }
 
 internal sealed class AcceptActionUsageEl : El, AcceptActionUsage

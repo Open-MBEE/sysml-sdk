@@ -477,8 +477,10 @@ using Paths = std::unordered_map<std::string, std::vector<std::string>>;
 /// false may hold.
 ///
 /// Entering a state enters every region of a parallel state, or else its initial states
-/// (initial_states) and the targets of the transitions from its entry action (the form
-/// `entry action initial; transition initial then off;`), and so on down. A transition from a state
+/// (initial_states) and the targets of the transitions from its entry action, and so on down.
+/// The transitions from the entry action (`entry action initial; transition initial then
+/// off;`) are the form the specification's Annex A model uses, followed here so that
+/// model can be explored; the SDK's find_initial_states does not count them. A transition from a state
 /// is taken from any of its substates too, and entering a nested target makes the states enclosing
 /// it active. Regions of a parallel state are explored independently of each other.
 ///
@@ -575,6 +577,17 @@ inline bool has_default_multiplicity(const Feature& usage) {
     return kind && owner && (owner->is_a<Definition>() || owner->is_a<Usage>());
 }
 
+/// The multiplicity `usage` declares, if any. SysML gives a usage that declares none the default
+/// [1..1]; the SysML Toolkit and the Pilot Implementation write it as a member without bounds whose
+/// subsetting of `Base::exactlyOne` is implied. That member is no declaration (see multiplicity_of).
+inline std::optional<Multiplicity> declared_multiplicity(const Feature& usage) {
+    std::optional<Multiplicity> multiplicity = usage.getMultiplicity();
+    if (!multiplicity || multiplicity->is_a<MultiplicityRange>()) return multiplicity;
+    for (const Subsetting& subsetting : multiplicity->getOwnedSubsetting())
+        if (subsetting.getIsImplied() != true) return multiplicity;
+    return std::nullopt;
+}
+
 /// What says how many instances a usage stands for, by SysML's rule for usages: its own
 /// multiplicity; else that of the usages it explicitly subsets or redefines, nearest first (in a
 /// valid model a redefinition only narrows what it redefines, so the nearest is the tightest); else
@@ -585,7 +598,7 @@ inline FoundMultiplicity multiplicity_of(const Feature& usage) {
     while (!todo.empty()) {
         Feature current = todo.front();
         todo.pop_front();
-        if (std::optional<Multiplicity> multiplicity = current.getMultiplicity()) return *multiplicity;
+        if (std::optional<Multiplicity> multiplicity = declared_multiplicity(current)) return *multiplicity;
         std::vector<Feature> subsetted = explicit_subsettings(current);
         if (subsetted.empty()) {
             if (has_default_multiplicity(current)) return DefaultOne{};

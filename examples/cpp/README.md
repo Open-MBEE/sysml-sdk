@@ -6,10 +6,12 @@ converts. Properties are read through getters, `get` and the specification name
 (`getOwnedFeature()`, `getQualifiedName()`, and for Booleans `getIsAbstract()`); operations keep
 their specification names (`effectiveName()`).
 
-A model is read through one of two backends, with the same structs over both:
+A model is read through one of three backends, with the same structs over all of them:
 
 - **the OpenMBEE SysML Toolkit** reads your `.sysml` and `.kerml` files, resolves names and
   computes derived properties, through the binding library (a native library, loaded at run time);
+- **the SysML v2 Pilot Implementation** reads them too, in a Java process (or in your process
+  through JNI), and computes every value with its own code;
 - **a payload** is a model exported as full-form interchange JSON by any SysML v2 tool, read in
   plain C++ (with the bundled nlohmann/json).
 
@@ -17,15 +19,19 @@ A model is read through one of two backends, with the same structs over both:
 
 A C++17 compiler. Download from the release:
 
-- `sysml-sdk-cpp-0.1.0.zip`, and put its `include/` on your include path. For the SysML Toolkit,
+- `sysml-sdk-cpp-0.2.0.zip`, and put its `include/` on your include path. For the SysML Toolkit,
   its `lib/<target>/` holds the binding library for Windows x64, Linux x64, and macOS on Apple
   silicon and on Intel: copy the one for your platform (`sysmlv2_abi.dll`, `libsysmlv2_abi.so` or
   `libsysmlv2_abi.dylib`) beside your executable. Its `sysml.library/` holds the standard library
   models: copy that directory beside your executable too.
 
 ```sh
-g++ -std=c++17 -I sysml-sdk-cpp-0.1.0/include read_model.cpp -o read_model    # add -ldl on Linux, -static with MinGW
+g++ -std=c++17 -I sysml-sdk-cpp-0.2.0/include read_model.cpp -o read_model    # add -ldl on Linux, -static with MinGW
 ```
+
+On macOS on Intel, `sysml/library.hpp` (the standard library at hand) and `sysml/engine.hpp` (the Pilot
+Implementation and other engines) use `std::filesystem`, which needs macOS 10.15 or later: compile with
+`-mmacosx-version-min=10.15`. The SysML Toolkit backend alone builds for 10.12.
 
 ## First: the standard library
 
@@ -44,7 +50,7 @@ std::string library_json = sysml::standard_library_json();   // the library as J
   environment variable `SYSML_LIBRARY_DIR` names.
 - `standard_library_json()` is the file `SYSML_LIBRARY_JSON` names, else the copy in your user cache
   that the other SDK languages download (`SYSML_CACHE_DIR` moves it). C++ downloads nothing: get it
-  once with another SDK language, or download `sysml_library-0.1.0.zip` from the release, unpack it,
+  once with another SDK language, or download `sysml_library-0.2.0.zip` from the release, unpack it,
   and set `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds.
 - The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
 
@@ -121,6 +127,48 @@ int main() {
 A payload answers with what its writer wrote and nothing else. Operations need the SysML Toolkit:
 on a payload they throw `not_implemented_in_toolkit`.
 
+## Read a model through the Pilot Implementation
+
+The SysML v2 Pilot Implementation is the open-source implementation developed alongside the
+specifications. It needs a Java 21 or newer runtime (`JAVA_HOME`, or `java` on the path) and the
+SDK's Pilot engine: copy `sysml-pilot-server.jar` from the archive beside your program (or name it
+in `SYSML_PILOT_SERVER`).
+
+```cpp
+#include <sysml/classes.g.hpp>
+#include <sysml/pilot.hpp>
+
+using namespace sysml;
+
+int main() {
+    Model model = Model::from_backend(PilotBackend::open({"model.sysml"}));    // your .sysml / .kerml files
+
+    // ... your code here ...
+}
+```
+
+The Pilot runs in a Java process. Compiled with `SYSML_PILOT_JNI` defined and the JDK's include
+directories on the include path, it runs in your process instead, in the JVM of `JAVA_HOME`:
+
+```sh
+g++ -std=c++17 -DSYSML_PILOT_JNI -I include -I "$JAVA_HOME/include" -I "$JAVA_HOME/include/linux" main.cpp -ldl
+```
+
+(`win32` or `darwin` in place of `linux` on Windows and macOS.)
+
+- The first use downloads the Pilot (about 130 MB) into your user cache, checked against its pinned
+  SHA-256; later uses, from any SDK language, find it there. `SYSML_PILOT_HOME` names a Pilot you
+  already have instead: a directory with the Pilot's jar and its `sysml.library`. The Pilot is
+  under the Eclipse Public License 2.0; the SDK does not carry it.
+- Opening takes seconds even for a small model: the Pilot loads its standard library (it always
+  reads with its own) and adds the implied relationships, which `elaborate = false` skips.
+- The Pilot answers rather than refuses, with its own reading of the specification: where it and
+  the SysML Toolkit differ, each is one implementation's answer. A failure inside the Pilot, an
+  operation it does not have, or a Pilot that cannot be found or started raises `backend_error`.
+- Text in memory: `PilotBackend::open_sources({{"model.sysml", text}})`. Options: a
+  `PilotOptions` with `heap = "8g"` (a large model needs a larger Java heap; 4 GB by default) or
+  `elaborate = false`.
+
 ## Find and read elements
 
 The snippets below go where `// ... your code here ...` is, with either backend. They read the
@@ -190,6 +238,81 @@ try {
 
 A reference that does not resolve throws `unresolved_reference`, and an element that is no longer
 there `gone`. All derive from `sysml::sdk_error`, a `std::runtime_error`.
+
+## Convenience members
+
+Beside the specification's members, the structs have `find_` members for what takes several steps
+in the specification: the parts of a definition, with the inherited ones or without, a member by
+name, the definitions a package owns, a value as a number. The SDK defines each one over the
+specification's properties and operations, and the SysML Toolkit and the Pilot Implementation
+answer them alike; a payload does not (`not_answered`). Each member's definition is in its Doxygen
+comment.
+
+<!-- test: queries toolkit -->
+```cpp
+// vehicle, sports and wheels are the elements found above.
+auto vehicles = model.resolve("Vehicles").value().as<Namespace>();
+auto name_of = [](const Element& e) { return e.getName().value_or(e.metaclass_name()); };
+auto print = [&](const auto& elements) {
+    for (const auto& e : elements) std::cout << name_of(e) << " ";
+    std::cout << "\n";
+};
+
+// The features of one kind that a type owns: parts here; attributes, ports, actions, states and the
+// other kinds alike. A connection is a part too; the exact list leaves the subkinds out.
+print(vehicle.find_parts());          // wheels engine tank ConnectionUsage
+print(vehicle.find_parts_exact());    // wheels engine tank
+std::cout << sports.find_part("spoiler")->getQualifiedName().value_or("") << "\n";   // Vehicles::SportsCar::spoiler
+
+// The definitions a namespace owns, as a list, or by name (a NameMap: a vector of pairs, with find).
+print(vehicles.find_part_defs());     // Wheel Engine FuelTank Vehicle SportsCar
+std::cout << vehicles.find_part_defs_by_name().find("Engine")->getQualifiedName().value_or("") << "\n";   // Vehicles::Engine
+
+// A list carries the same members, asked of each element in turn: the ports of every part definition.
+print(vehicles.find_part_defs().find_ports());    // fuelIn fuelOut
+
+// Types, multiplicities, values and documentation. A literal's value, and a bound, is a Literal: a
+// std::variant of std::int64_t, double, bool, std::string and Unbounded (*).
+print(wheels.find_declared_types());              // Wheel
+std::cout << std::get<std::int64_t>(*wheels.find_lower_bound()) << " "
+          << std::get<std::int64_t>(*wheels.find_upper_bound()) << "\n";    // 4 4
+auto mass = model.resolve("Vehicles::myCar::mass").value().as<Feature>();
+std::cout << std::get<std::int64_t>(mass.find_value()->find_literal()) << " "
+          << mass.find_redefinition_root()->getQualifiedName().value_or("") << "\n";   // 1400 Vehicles::Vehicle::mass
+for (const std::string& text : vehicle.find_doc_text()) std::cout << text << "\n";   // The general vehicle: four wheels, one engine, one tank.
+
+// The inherited members too: Scope::Inherited, or Scope::All for both (Scope::Owned is the default).
+try {
+    print(sports.find_parts(Scope::All));     // spoiler wheels engine tank ConnectionUsage
+} catch (const not_answered& refusal) {
+    std::cout << "not answered: " << refusal.what() << "\n";   // where the backend cannot derive the inherited members
+}
+```
+
+- Every list takes `scope`, `visibility` (`VisibilityFilter::Public`, `VisibilityFilter::Protected`
+  for public and protected; `VisibilityFilter::Any` by default) and `library` (`true` keeps the
+  features the standard library's types contribute, which are left out by default).
+- A list of elements is an `ElementList<T>`, a `std::vector<T>` that carries the members its
+  elements have, so calls chain.
+- For each of 27 kinds of feature: `find_parts()`, `find_part(name)`, `find_parts_semantic()` (the
+  features typed by a part definition, whatever their metaclass) and, for most,
+  `find_parts_exact()`. On a namespace, for each kind of definition: `find_part_defs()`,
+  `find_part_def(name)` and `find_part_defs_by_name()`, and the usages it has through any
+  membership, `find_member_parts()`.
+- One by one: the types and supertypes as written, what a feature subsets, redefines or references
+  (`find_redefinition_root()` follows its redefinitions to the first), values and literals, the
+  bounds of a multiplicity, the parameters, inputs and outputs of a behavior, what an accept action
+  or a transition accepts, applied metadata, documentation.
+- Where a member's definition gives no answer, it throws `refused`: `find_literal()` of an
+  expression that is not a literal (`2 * x`, a value with a unit). Where the backend cannot answer
+  something the member reads, it throws `not_answered`, naming what. Today the SysML Toolkit answers
+  430 of the members' 456 examples; it does not answer `type` on action, state and other behavioral
+  usages and on enumeration values (which the semantic lists of those kinds read), a metadata
+  usage's `metaclass`, nor the member lists of a definition with a public import in its body.
+- A member or definition list outside the owned scope is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+- Every member, with its definition, its signature in each language and its examples: the release's
+  `sysml-sdk-reference-<version>.html`.
 
 ## Operations
 

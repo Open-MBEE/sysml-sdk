@@ -1,11 +1,17 @@
 """Extract the language-neutral metamodel table (metamodel.json).
 
-Inputs (all read-only, vendored under vendor/sysml-toolkit/ — see PIN.json
-for provenance; set SYSML_TOOLKIT_REPO to read a live sysml-toolkit
-checkout instead when re-vendoring):
+Inputs (all read-only; provenance and hashes in vendor/sysml-toolkit/PIN.json):
   spec-refs/KerML.xmi, spec-refs/SysML.xmi   -> class hierarchy, abstract, operations
+      The specification's XMI, which the OMG publishes under its terms for its
+      specifications. The repository keeps their URLs and hashes, not the files:
+      they are downloaded from the URLs PIN.json lists under "downloads" into
+      vendor/sysml-toolkit/spec-refs/ (git-ignored) when absent, and checked
+      against the pinned hashes either way.
   crates/sysmlv2-model/src/schema_props.rs   -> concrete-class property catalog + shapes
   crates/sysmlv2-testkit/src/xmi_props.rs    -> per-property derived flag
+      The SysML Toolkit's generated tables, vendored under vendor/sysml-toolkit/;
+      set SYSML_TOOLKIT_REPO to read them from a live sysml-toolkit checkout
+      instead when re-vendoring.
 
 Output: metamodel.json
   { "classes": { name: { "abstract": bool, "bases": [name...],
@@ -45,15 +51,19 @@ Table 0.7.1 corrects the XMI where it contradicts the specification
 document, listed in XMI_ERRATA with the source of each correction.
 """
 
+import hashlib
 import json
 import os
 import re
 import sys
+import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent  # repository root
-REPO = Path(os.environ.get("SYSML_TOOLKIT_REPO", HERE / "vendor" / "sysml-toolkit"))
+VENDOR = HERE / "vendor" / "sysml-toolkit"
+PIN = json.loads((VENDOR / "PIN.json").read_text(encoding="utf-8"))
+REPO = Path(os.environ.get("SYSML_TOOLKIT_REPO", VENDOR))
 
 # metamodel.json is a published, versioned artifact: bump
 # TABLE_VERSION on any change to its shape or semantics. Provenance is
@@ -73,6 +83,33 @@ XMI_ERRATA = {
     ("Type", "isCompatibleWith"): {"returns": _BOOLEAN},
     ("Feature", "isCompatibleWith"): {"returns": _BOOLEAN},
 }
+
+
+def spec_file(rel: str) -> Path:
+    """The specification file PIN.json lists as `rel` under "downloads": the copy under
+    vendor/sysml-toolkit/, downloaded from its URL first when absent, checked against its pinned
+    hash (SHA-256 over LF-normalized bytes, as for the vendored files)."""
+    entry = PIN["downloads"][rel]
+    path = VENDOR / rel
+    if path.is_file():
+        data = path.read_bytes()
+    else:
+        print(f"downloading {entry['url']}")
+        request = urllib.request.Request(entry["url"], headers={"User-Agent": "sysml-sdk"})
+        try:
+            with urllib.request.urlopen(request, timeout=300) as r:
+                data = r.read()
+        except OSError as e:
+            sys.exit(f"cannot download {entry['url']} ({e}); download it by hand to {path}")
+    got = hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+    if got != entry["sha256"]:
+        what = (f"the copy at {path}: delete it and run again" if path.is_file()
+                else f"downloaded from {entry['url']}: nothing was kept")
+        sys.exit(f"{rel}: SHA-256 {got}, not the pinned {entry['sha256']} ({what})")
+    if not path.is_file():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    return path
 
 
 def raw_ref(el, file_key: str):
@@ -210,8 +247,8 @@ PRIMITIVES = {"Boolean", "Integer", "Real", "String", "UnlimitedNatural"}
 
 
 def main():
-    k_ids, k_enums, k_members, k_classes = parse_xmi_classes(REPO / "spec-refs/KerML.xmi", "KerML")
-    s_ids, s_enums, s_members, s_classes = parse_xmi_classes(REPO / "spec-refs/SysML.xmi", "SysML")
+    k_ids, k_enums, k_members, k_classes = parse_xmi_classes(spec_file("spec-refs/KerML.xmi"), "KerML")
+    s_ids, s_enums, s_members, s_classes = parse_xmi_classes(spec_file("spec-refs/SysML.xmi"), "SysML")
     # Language provenance relies on the two declaration sets being a
     # partition (measured for 20250201: 82 + 93, no overlap; SysML.xmi
     # references KerML classes by cross-document href, never by
@@ -377,9 +414,6 @@ def main():
     if shape_mismatch:
         sys.exit("shape/type inconsistency:\n  " + "\n  ".join(shape_mismatch[:20]))
 
-    pin = json.loads(
-        (HERE / "vendor" / "sysml-toolkit" / "PIN.json").read_text(encoding="utf-8")
-    )
     missing = sorted(f"{c}::{o}" for c, o in XMI_ERRATA if f"{c}::{o}" not in applied_errata)
     if missing:
         sys.exit(f"XMI_ERRATA rows that match no operation: {missing}")
@@ -387,7 +421,7 @@ def main():
         "table": TABLE_VERSION,
         "xmiErrata": sorted(applied_errata),
         "specRefs": SPEC_REFS,
-        "toolkitCommit": pin["sourceCommit"],
+        "toolkitCommit": PIN["sourceCommit"],
     }
     out = HERE / "metamodel.json"
     out.write_text(

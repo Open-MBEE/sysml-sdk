@@ -5,11 +5,13 @@ interface, so `instanceof` follows the specification's generalizations. Properti
 getters, `get` and the specification name (`getOwnedFeature()`, `getQualifiedName()`, and for
 Booleans `getIsAbstract()`); operations keep their specification names (`effectiveName()`).
 
-A model is read through one of two backends, with the same interfaces over both:
+A model is read through one of three backends, with the same interfaces over all of them:
 
 - **the OpenMBEE SysML Toolkit** reads your `.sysml` and `.kerml` files, resolves names and
   computes derived properties, through the binding library (a native library, called with the
   foreign function API);
+- **the SysML v2 Pilot Implementation** reads them too, in your Java process, and computes every
+  value with its own code;
 - **a payload** is a model exported as full-form interchange JSON by any SysML v2 tool, read in
   plain Java.
 
@@ -17,7 +19,7 @@ A model is read through one of two backends, with the same interfaces over both:
 
 JDK 21 or newer; the jar has no dependencies. Download from the release:
 
-- `sysml-sdk-0.1.0.jar`, to put on the class path. It carries the binding library
+- `sysml-sdk-0.2.0.jar`, to put on the class path. It carries the binding library
   for Windows x64, Linux x64, and macOS on Apple silicon and on Intel, and copies the one for your
   platform into the temporary directory on first use. It also carries the standard library models.
 
@@ -26,8 +28,8 @@ Compile and run against the jar. On JDK 21 the foreign function API is a preview
 `--enable-native-access=ALL-UNNAMED` silences the JDK's warning about native access.
 
 ```sh
-javac --enable-preview --release 21 -cp sysml-sdk-0.1.0.jar ReadModel.java
-java --enable-preview --enable-native-access=ALL-UNNAMED -cp sysml-sdk-0.1.0.jar:. ReadModel    # ; instead of : on Windows
+javac --enable-preview --release 21 -cp sysml-sdk-0.2.0.jar ReadModel.java
+java --enable-preview --enable-native-access=ALL-UNNAMED -cp sysml-sdk-0.2.0.jar:. ReadModel    # ; instead of : on Windows
 ```
 
 ## First: the standard library
@@ -47,7 +49,7 @@ Path libraryJson = StandardLibrary.json();       // the library as JSON, for pay
   first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your user
   cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache. Nothing is
   downloaded unless you call it.
-- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+- Without access to GitHub, download `sysml_library-0.2.0.zip` from the release, unpack it, and set
   `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
   the same models the jar carries.
 - The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
@@ -120,6 +122,43 @@ on a payload they throw `NotImplementedInToolkitException`.
 the metaclasses, import them by name (`import org.openmbee.sysml.classes.Package;`),
 which takes precedence over `java.lang`.
 
+## Read a model through the Pilot Implementation
+
+The SysML v2 Pilot Implementation is the open-source implementation developed alongside the
+specifications. It runs in your program's Java process, in a class loader of its own (its
+libraries never meet yours), and needs Java 21 or newer:
+
+```java
+import java.util.List;
+
+import org.openmbee.sysml.*;
+import org.openmbee.sysml.classes.*;
+
+public class Main {
+    public static void main(String[] args) {
+        try (PilotBackend pilot = PilotBackend.open(List.of("model.sysml"))) {  // your .sysml / .kerml files
+            Model model = new Model(pilot);
+
+            // ... your code here ...
+        }
+    }
+}
+```
+
+- The first use downloads the Pilot (about 130 MB) into your user cache, checked against its pinned
+  SHA-256; later uses, from any SDK language, find it there. `SYSML_PILOT_HOME` names a Pilot you
+  already have instead: a directory with the Pilot's jar and its `sysml.library`. The Pilot is
+  under the Eclipse Public License 2.0; the SDK does not carry it.
+- Opening takes seconds even for a small model: the Pilot loads its standard library (it always
+  reads with its own) and adds the implied relationships, which `elaborate` false skips.
+- The Pilot answers rather than refuses, with its own reading of the specification: where it and
+  the SysML Toolkit differ, each is one implementation's answer. A failure inside the Pilot, an
+  operation it does not have, or a Pilot that cannot be found or started raises `BackendException`.
+- Text in memory: `PilotBackend.openSources(Map.of("model.sysml", text))`; a Pilot of your own,
+  or no elaboration: `PilotBackend.open(Pilot.at(Path.of(jar), Path.of(library)), paths, sources,
+  elaborate)` (`Pilot` is `org.openmbee.sysml.pilot.Pilot`; `null` for the Pilot the SDK finds). A large
+  model needs a larger heap: run with `-Xmx4g` or more.
+
 ## Find and read elements
 
 The snippets below go where `// ... your code here ...` is, with either backend. They read the
@@ -190,6 +229,80 @@ try {
 
 A reference that does not resolve throws `UnresolvedReferenceException`, and an element that is no
 longer there `GoneException`. All three derive from `SdkException`, an unchecked exception.
+
+## Convenience members
+
+Beside the specification's members, the interfaces have `find` members for what takes several
+steps in the specification: the parts of a definition, with the inherited ones or without, a member
+by name, the definitions a package owns, a value as a number. The SDK defines each one over the
+specification's properties and operations, and the SysML Toolkit and the Pilot Implementation
+answer them alike; a payload does not (`NotAnsweredException`). Your editor shows each member's
+definition in its Javadoc.
+
+<!-- test: queries toolkit -->
+```java
+// vehicle, sports and wheels are the elements found above.
+Namespace vehicles = (Namespace) model.resolve("Vehicles");
+java.util.function.Function<Element, String> nameOf = e -> e.getName() != null ? e.getName() : e.$metaclass();
+
+// The features of one kind that a type owns: parts here; attributes, ports, actions, states and the
+// other kinds alike. A connection is a part too; the exact list leaves the subkinds out.
+System.out.println(vehicle.findParts().stream().map(nameOf).toList());        // [wheels, engine, tank, ConnectionUsage]
+System.out.println(vehicle.findPartsExact().stream().map(nameOf).toList());   // [wheels, engine, tank]
+System.out.println(sports.findPart("spoiler").getQualifiedName());            // Vehicles::SportsCar::spoiler
+
+// The definitions a namespace owns, as a list, or by name (a Map).
+System.out.println(vehicles.findPartDefs().stream().map(nameOf).toList());    // [Wheel, Engine, FuelTank, Vehicle, SportsCar]
+System.out.println(vehicles.findPartDefsByName().get("Engine").getQualifiedName());   // Vehicles::Engine
+
+// A list carries the same members, asked of each element in turn: the ports of every part definition.
+System.out.println(vehicles.findPartDefs().findPorts().stream().map(PortUsage::getQualifiedName).toList());
+// [Vehicles::Engine::fuelIn, Vehicles::FuelTank::fuelOut]
+
+// Types, multiplicities, values and documentation. A literal's value, and a bound, is a Literal: an
+// integer, a real, a Boolean, a string, or unbounded (*); asLong() and the like read it, and a
+// switch over its cases tells them apart.
+System.out.println(wheels.findDeclaredTypes().stream().map(nameOf).toList()
+    + " " + wheels.findLowerBound().asLong() + " " + wheels.findUpperBound().asLong());   // [Wheel] 4 4
+Feature mass = (Feature) model.resolve("Vehicles::myCar::mass");
+long kilograms = mass.findValue().findLiteral(Long.class);                    // or findLiteral().asLong()
+System.out.println(kilograms + " " + mass.findRedefinitionRoot().getQualifiedName());   // 1400 Vehicles::Vehicle::mass
+System.out.println(vehicle.findDocText().stream().map(String::strip).toList());   // [The general vehicle: four wheels, one engine, one tank.]
+
+// The inherited members too: Scope.INHERITED, or Scope.ALL for both (Scope.OWNED is the default).
+try {
+    System.out.println(sports.findParts(Scope.ALL).stream().map(nameOf).toList());
+    // [spoiler, wheels, engine, tank, ConnectionUsage]
+} catch (NotAnsweredException refusal) {
+    System.out.println("not answered: " + refusal.getMessage());   // where the backend cannot derive the inherited members
+}
+```
+
+- Every list takes `scope`, `visibility` (`VisibilityFilter.PUBLIC`, `VisibilityFilter.PROTECTED`
+  for public and protected; `VisibilityFilter.ANY` by default) and `library` (`true` keeps the
+  features the standard library's types contribute, which are left out by default); the shorter
+  overloads leave the rest at their defaults.
+- A list of elements is a typed list (`PartUsageList`, a `List<PartUsage>`) that carries the members
+  its elements have, so calls chain and your IDE offers only those.
+- For each of 27 kinds of feature: `findParts()`, `findPart(name)`, `findPartsSemantic()` (the
+  features typed by a part definition, whatever their metaclass) and, for most, `findPartsExact()`.
+  On a namespace, for each kind of definition: `findPartDefs()`, `findPartDef(name)` and
+  `findPartDefsByName()`, and the usages it has through any membership, `findMemberParts()`.
+- One by one: the types and supertypes as written, what a feature subsets, redefines or references
+  (`findRedefinitionRoot()` follows its redefinitions to the first), values and literals, the bounds
+  of a multiplicity, the parameters, inputs and outputs of a behavior, what an accept action or a
+  transition accepts, applied metadata, documentation.
+- Where a member's definition gives no answer, it throws `RefusedException`: `findLiteral()` of an
+  expression that is not a literal (`2 * x`, a value with a unit). Where the backend cannot answer
+  something the member reads, it throws `NotAnsweredException`, naming what. Today the SysML Toolkit
+  answers 430 of the members' 456 examples; it does not answer `type` on action, state and other
+  behavioral usages and on enumeration values (which the semantic lists of those kinds read), a
+  metadata usage's `metaclass`, nor the member lists of a definition with a public import in its
+  body.
+- A member or definition list outside the owned scope is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+- Every member, with its definition, its signature in each language and its examples: the release's
+  `sysml-sdk-reference-<version>.html`.
 
 ## Operations
 

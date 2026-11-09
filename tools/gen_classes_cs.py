@@ -24,9 +24,14 @@ element classes, ClassMap (TypeMap + Factories). The namespace comes from
 tools/naming.py.
 """
 
+import json
+import re
 import sys
 
-from naming import CS_NAMESPACE, CS_PROJECT, MM, as_meta, flat_ops, op_member
+from naming import (CS_NAMESPACE, CS_PROJECT, MM, ROOT, as_meta, convenience_doc, convenience_generic_doc,
+                    convenience_runtime, flat_ops, op_member, spelling, wrap)
+
+CONVENIENCE = json.loads((ROOT / "convenience.json").read_text(encoding="utf-8"))["members"]
 
 OUT = CS_PROJECT
 
@@ -126,6 +131,143 @@ def member_lines(name, inherited):
     return props, ops
 
 
+def find_const(name: str) -> str:
+    """The Finds field of a convenience member: FindParts for findParts."""
+    return spelling(name, "cs")
+
+
+def xmldoc(m: dict, over_list: bool = False) -> list[str]:
+    """A convenience member's doc comment (tools/naming.py, convenience_doc) as C# XML documentation;
+    over a list, the extension method's `elements` too."""
+    return xmldoc_text(convenience_doc(m, "cs", over_list), over_list)
+
+
+def xmldoc_text(d: dict, over_list: bool = False, typeparam: tuple[str, str] | None = None) -> list[str]:
+    """A doc comment in convenience_doc's form as C# XML documentation."""
+
+    def x(text: str) -> str:
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    params = ([("elements", "The elements to ask.")] if over_list else []) + d["params"]
+    parts = [f"<summary>{x(d['summary'])}</summary>"]
+    if typeparam:
+        parts += [f'<typeparam name="{typeparam[0]}">{x(typeparam[1])}</typeparam>']
+    parts += [f'<param name="{n}">{x(t)}</param>' for n, t in params]
+    parts += [f"<returns>{x(d['returns'])}</returns>"]
+    parts += [f'<exception cref="{e}">{x(t)}</exception>' for e, t in d["throws"]]
+    return [line for p in parts for line in wrap(p, 100, "    /// ", "    /// ")]
+
+
+def find_lines(name):
+    """The default members of the convenience members declared on a metaclass, with optional
+    parameters for the defaults."""
+    out = []
+    for m in CONVENIENCE:
+        if m["on"] != name:
+            continue
+
+        def ptype(t):
+            if t["kind"] == "element":
+                return "IElement" if t["type"] == "Element" else t["type"]
+            if t["kind"] == "enum":
+                return t["type"]
+            return {"Boolean": "bool", "String": "string"}[t["type"]]
+
+        def param(p):
+            d = p["default"]
+            if d is None:
+                return f"{ptype(p['type'])} {p['name']}"
+            if p["type"]["kind"] == "enum":
+                return f"{ptype(p['type'])} {p['name']} = {p['type']['type']}.{d[0].upper() + d[1:]}"
+            return f"{ptype(p['type'])} {p['name']} = {'true' if d is True else 'false'}"
+
+        r = m["returns"]
+        _, result = convenience_runtime(m)
+        if result == "map":
+            rtype, conv = f"IReadOnlyDictionary<string, {r['type']}>", f"Model.AsMap<{r['type']}>"
+        elif r["kind"] == "element":
+            base = "IElement" if r["type"] == "Element" else r["type"]
+            rtype, conv = (f"IReadOnlyList<{base}>", f"Model.AsList<{base}>") if r["many"] else (f"{base}?", f"Model.AsRef<{base}>")
+        else:
+            rtype, conv = {"bool": ("bool", "Model.AsFlag"), "int": ("Literal?", "(Literal?)"),
+                           "unlimited": ("Literal?", "(Literal?)"), "real": ("double?", "Model.AsReal"),
+                           "strings": ("IReadOnlyList<string>", "Model.AsList<string>"),
+                           "literal": ("Literal", "(Literal)")}[result]
+        params = ", ".join(param(p) for p in m["params"])
+        args = "".join(f", {p['name']}" for p in m["params"])
+        call = f"this.Model.FindMember(this, Finds.{find_const(m['name'])}{args})"
+        out += xmldoc(m)
+        if result == "literal" and not r["optional"]:
+            call += "!"  # never null: a literal member answers or throws
+        out.append(f"    {rtype} {spelling(m['name'], 'cs')}({params}) => {conv}({call});")
+        if result == "literal" and not r["optional"]:
+            # The generic shortcut: the value read as the type given (Literal.As).
+            if m["params"]:
+                raise SystemExit(f"{m['name']}: a literal member with parameters has no generic overload yet")
+            out += xmldoc_text(convenience_generic_doc(m, "cs"),
+                               typeparam=("T", "The type to read the value as: long, int, double, bool or "
+                                               "string, or a case of Literal."))
+            out.append(f"    T {spelling(m['name'], 'cs')}<T>() => {spelling(m['name'], 'cs')}().As<T>();")
+    return out
+
+
+def list_extensions() -> list[str]:
+    """ElementLists: the convenience members over lists, as extension methods on IEnumerable of each
+    member's context (covariance applies them to lists of its subtypes), for element and string results:
+    list results concatenated in list order, absent single results dropped."""
+    out = ["/// <summary>The convenience members over lists of elements: <c>xs.FindPorts()</c> is the elements'",
+           "/// <c>FindPorts()</c> in list order, list results concatenated (duplicates kept), absent single",
+           "/// results dropped. If the member refuses for one element, the call refuses. Members that answer a",
+           "/// Boolean, a number or a literal stay on the elements.</summary>",
+           "public static class ElementLists", "{"]
+    for m in CONVENIENCE:
+        _, result = convenience_runtime(m)
+        if result not in ("elements", "element", "strings"):
+            continue
+
+        def ptype(t):
+            if t["kind"] == "element":
+                return "IElement" if t["type"] == "Element" else t["type"]
+            if t["kind"] == "enum":
+                return t["type"]
+            return {"Boolean": "bool", "String": "string"}[t["type"]]
+
+        def param(p):
+            d = p["default"]
+            if d is None:
+                return f"{ptype(p['type'])} {p['name']}"
+            if p["type"]["kind"] == "enum":
+                return f"{ptype(p['type'])} {p['name']} = {p['type']['type']}.{d[0].upper() + d[1:]}"
+            return f"{ptype(p['type'])} {p['name']} = {'true' if d is True else 'false'}"
+
+        r = m["returns"]
+        item = "string" if result == "strings" else ("IElement" if r["type"] == "Element" else r["type"])
+        ctx = "IElement" if m["on"] == "Element" else m["on"]
+        params = "".join(f", {param(p)}" for p in m["params"])
+        args = "".join(f", {p['name']}" for p in m["params"])
+        out += xmldoc(m, over_list=True)
+        out.append(f"    public static IReadOnlyList<{item}> {spelling(m['name'], 'cs')}(this IEnumerable<{ctx}> elements{params}) =>"
+                   f" Model.FindAll<{item}>(elements, Finds.{find_const(m['name'])}{args});")
+    out += ["}", ""]
+    return out
+
+
+def finds_class():
+    seen = {}
+    for m in CONVENIENCE:
+        seen.setdefault(m["name"], m)
+    out = ["/// <summary>The convenience members' descriptors (convenience.json), one per member name.</summary>",
+           "public static class Finds", "{"]
+    for name, m in sorted(seen.items()):
+        params, result = convenience_runtime(m)
+        pnames = ", ".join(json.dumps(p[0]) for p in params)
+        kinds = ", ".join(json.dumps(p[1]) for p in params)
+        out.append(f'    public static readonly Find {find_const(name)} = new("{name}", "{spelling(name, "python")}", '
+                   f'new string[] {{ {pnames} }}, new string[] {{ {kinds} }}, "{result}");')
+    out += ["}", ""]
+    return out, len(seen)
+
+
 def declared_names(name):
     return set(MM[name]["props"]) | {op_member(o["name"], "cs") for _, o in flat_ops(name)}
 
@@ -145,7 +287,7 @@ def main():
     lines.append("/// <summary>The members of the metaclass Element, which every element has.</summary>")
     lines.append("public partial interface IElement")
     lines.append("{")
-    lines += props + ops
+    lines += props + ops + find_lines("Element")
     lines.append("}")
     lines.append("")
     n_props, n_ops = len(props), len(ops)
@@ -166,12 +308,15 @@ def main():
         lines.append(f"public interface {name} : {', '.join(bases)}")
         lines.append("{")
         props, ops = member_lines(name, inherited)
-        lines += props + ops
+        lines += props + ops + find_lines(name)
         n_props += len(props)
         n_ops += len(ops)
         lines.append("}")
         lines.append("")
 
+    finds, n_finds = finds_class()
+    lines += finds
+    lines += list_extensions()
     concrete = sorted(n for n in MM if not MM[n]["abstract"])
     for name in concrete:
         lines.append(
@@ -209,7 +354,7 @@ def main():
     out.write_text("\n".join(lines), encoding="utf-8", newline="\n")
     print(
         f"cs backend: {len(MM) - 1} interfaces, {n_props} property members, "
-        f"{n_ops} operation members, {len(concrete)} element classes"
+        f"{n_ops} operation members, {n_finds} convenience members, {len(concrete)} element classes"
     )
 
 

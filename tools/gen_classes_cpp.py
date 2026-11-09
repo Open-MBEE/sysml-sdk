@@ -27,9 +27,12 @@ Emits cpp/include/sysml/classes.g.hpp: 174 structs, the spec
 hierarchy table, and the out-of-line Element::is_kind definition.
 """
 
+import json
 import sys
 
-from naming import MM, ROOT, as_meta, flat_ops, getter, op_member
+from naming import MM, ROOT, as_meta, convenience_doc, convenience_runtime, flat_ops, getter, op_member, spelling, wrap
+
+CONVENIENCE = json.loads((ROOT / "convenience.json").read_text(encoding="utf-8"))["members"]
 
 OUT = ROOT / "cpp" / "include" / "sysml"
 
@@ -164,6 +167,134 @@ def members(name):
     return decls, defs
 
 
+def doxygen(m: dict, over_list: bool = False) -> list[str]:
+    """A convenience member's doc comment (tools/naming.py, convenience_doc) as Doxygen."""
+    d = convenience_doc(m, "cpp", over_list)
+    out = wrap(d["summary"], 100, "    /// ", "    /// ")
+    tags = [f"@param {n} {t}" for n, t in d["params"]] + [f"@return {d['returns']}"]
+    tags += [f"@throws {e} {t}" for e, t in d["throws"]]
+    for t in tags:
+        out += wrap(t, 100, "    /// ", "    ///     ")
+    return out
+
+
+def finds(name):
+    """The convenience members declared on a metaclass: (declarations with default arguments and their
+    doc comments, inline definitions)."""
+    decls, defs = [], []
+    for m in CONVENIENCE:
+        if m["on"] != name:
+            continue
+
+        def ptype(t):
+            if t["kind"] == "element":
+                return f"const {'Element' if t['type'] == 'Element' else t['type']}&"
+            if t["kind"] == "enum":
+                return t["type"]
+            return {"Boolean": "bool", "String": "const std::string&"}[t["type"]]
+
+        def default(p):
+            d = p["default"]
+            if d is None:
+                return ""
+            if p["type"]["kind"] == "enum":
+                return f" = {p['type']['type']}::{d[0].upper() + d[1:]}"
+            return " = true" if d is True else " = false"
+
+        params, result = convenience_runtime(m)
+        r = m["returns"]
+        if result == "map":
+            rtype, conv = f"NameMap<{r['type']}>", f"as_map_<{r['type']}>"
+        elif r["kind"] == "element":
+            base = "Element" if r["type"] == "Element" else r["type"]
+            rtype, conv = (f"ElementList<{base}>", f"as_list_<{base}>") if r["many"] else (f"std::optional<{base}>", f"as_ref_<{base}>")
+        else:
+            rtype, conv = {"bool": ("bool", "as_bool_"), "int": ("std::optional<Literal>", "as_bound_"),
+                           "unlimited": ("std::optional<Literal>", "as_bound_"), "real": ("std::optional<double>", "as_real_"),
+                           "strings": ("std::vector<std::string>", "as_string_list_"), "literal": ("Literal", "as_literal_")}[result]
+        member = spelling(m["name"], "cpp")
+        decl_params = ", ".join(f"{ptype(p['type'])} {p['name']}{default(p)}" for p in m["params"])
+        def_params = ", ".join(f"{ptype(p['type'])} {p['name']}" for p in m["params"])
+        pnames = ", ".join(json.dumps(p[0]) for p in params)
+        kinds = ", ".join(json.dumps(p[1]) for p in params)
+        args = ", ".join(f"detail::arg({p['name']})" for p in m["params"])
+        descriptor = (f'static const Find f{{"{m["name"]}", "{spelling(m["name"], "python")}", {{{pnames}}}, '
+                      f'{{{kinds}}}, "{result}"}};')
+        if result == "literal":
+            body = f"return as_literal_(find_raw_(f, {{{args}}}));"
+        elif result in ("int", "unlimited"):
+            body = f"return as_bound_(find_raw_(f, {{{args}}}), {'true' if result == 'unlimited' else 'false'});"
+        elif result == "bool":
+            body = f"return as_bool_(find_(f, {{{args}}})).value_or(false);"
+        else:
+            body = f"return {conv}(find_(f, {{{args}}}));"
+        decls += doxygen(m)
+        decls.append(f"    {rtype} {member}({decl_params}) const;")
+        defs.append(f"inline {rtype} {name}::{member}({def_params}) const {{\n    {descriptor}\n    {body}\n}}")
+    return decls, defs
+
+
+def element_list() -> list[str]:
+    """The ElementList template: every member a list carries (element and string results) as a member
+    template enabled when the elements' class derives from the member's context, so it can be called only
+    on a list of a conforming type; a member with several contexts is a template per context."""
+    out = [
+        "/// A list of elements carrying the convenience members of its elements: `xs.find_ports()` is the",
+        "/// elements' `find_ports()` in list order, list results concatenated (duplicates kept), absent single",
+        "/// results dropped; if the member refuses for one element, the call refuses. Members that answer a",
+        "/// Boolean, a number or a literal stay on the elements. A std::vector: any vector of elements",
+        "/// converts to one.",
+        "template <class T>",
+        "class ElementList : public std::vector<T> {",
+        "public:",
+        "    ElementList() = default;",
+        "    ElementList(std::vector<T> elements) : std::vector<T>(std::move(elements)) {}",
+        "",
+    ]
+    for m in CONVENIENCE:
+        params, result = convenience_runtime(m)
+        if result not in ("elements", "element", "strings"):
+            continue
+
+        def ptype(t):
+            if t["kind"] == "element":
+                return f"const {'Element' if t['type'] == 'Element' else t['type']}&"
+            if t["kind"] == "enum":
+                return t["type"]
+            return {"Boolean": "bool", "String": "const std::string&"}[t["type"]]
+
+        def default(p):
+            d = p["default"]
+            if d is None:
+                return ""
+            if p["type"]["kind"] == "enum":
+                return f" = {p['type']['type']}::{d[0].upper() + d[1:]}"
+            return " = true" if d is True else " = false"
+
+        r = m["returns"]
+        member = spelling(m["name"], "cpp")
+        decl_params = ", ".join(f"{ptype(p['type'])} {p['name']}{default(p)}" for p in m["params"])
+        pnames = ", ".join(json.dumps(p[0]) for p in params)
+        kinds = ", ".join(json.dumps(p[1]) for p in params)
+        args = ", ".join(f"detail::arg({p['name']})" for p in m["params"])
+        descriptor = (f'static const Find f{{"{m["name"]}", "{spelling(m["name"], "python")}", {{{pnames}}}, '
+                      f'{{{kinds}}}, "{result}"}};')
+        if result == "strings":
+            rtype, body = "std::vector<std::string>", f"return Element::find_all_strings_(*this, f, {{{args}}});"
+        else:
+            item = "Element" if r["type"] == "Element" else r["type"]
+            rtype, body = f"ElementList<{item}>", f"return Element::find_all_<{item}>(*this, f, {{{args}}});"
+        ctx = m["on"]
+        out += doxygen(m, over_list=True)
+        out.append(f"    template <class U = T, std::enable_if_t<std::is_base_of_v<{ctx}, U>, int> = 0>")
+        out.append(f"    {rtype} {member}({decl_params}) const {{")
+        out.append(f"        {descriptor}")
+        out.append(f"        {body}")
+        out.append("    }")
+    out += ["};", ""]
+    return out
+
+
 def write_fragment(name, comment, body):
     header = ["// Generated — do not edit. Source: metamodel.json via tools/gen_classes_cpp.py."]
     header += [f"// {line}" for line in comment]
@@ -181,6 +312,9 @@ def main():
     # The spec root merges into the runtime Element: its members are declared inside that class
     # by a fragment, and defined below with everything else.
     element_decls, defs = members("Element")
+    element_finds, element_find_defs = finds("Element")
+    element_decls += element_finds
+    defs += element_find_defs
     write_fragment("element_members.g.hpp", [
         "Included by sdk.hpp inside class Element: the members of the metaclass Element, which",
         "every element has. Defined in classes.g.hpp.",
@@ -216,12 +350,14 @@ def main():
         lines.append(f"    {name}(const {name}&) = default;")
         lines.append(f"    {name}& operator=(const {name}&) = default;")
         decls, struct_defs = members(name)
-        lines += decls
-        defs += struct_defs
+        find_decls, find_defs = finds(name)
+        lines += decls + find_decls
+        defs += struct_defs + find_defs
         n_props += len(info["props"])
         n_ops += len(flat_ops(name))
         lines.append("};")
         lines.append("")
+    lines.extend(element_list())
     lines.append("// --- typed getter definitions (all structs complete) ---")
     lines.extend(defs)
     lines.append("")

@@ -56,3 +56,21 @@ const withoutLibrary: Model = ModelClass.fromFullJson(elements);
 // @ts-expect-error — the library is a PayloadLibrary, not an element array
 ModelClass.fromFullJson(elements, { library: elements });
 void [libraryCount, withLibrary, withoutLibrary];
+// find: an element by qualified name, whatever its visibility; resolve: from the root or a context.
+const found: AnyElement | null = withLibrary.find("Scopes::Base::b");
+const inherited: AnyElement | null = withLibrary.find("Scopes::Derived::b", true);
+const resolved: AnyElement | null = withLibrary.resolve("b", found);
+const fromRoot: AnyElement | null = withLibrary.resolve("Scopes::Base::a");
+void [inherited, resolved, fromRoot];
+
+// Convenience lists: a member applies to a list of a conforming type, and chains; element lists from the
+// members are ElementLists.
+import type { ElementList as Lists, PortUsage } from "./classes.d.ts";
+declare const pdef: PartDefinition;
+const pdefParts: Lists<PartUsage> = pdef.findParts("all");
+const pdefPorts: Lists<PortUsage> = pdefParts.findPorts();
+const docs: string[] = pdefParts.findDocText();
+declare const namespaces: Lists<Namespace>;
+// @ts-expect-error — findParts applies to lists of types; a namespace is not one
+namespaces.findParts();
+void [pdefPorts, docs];

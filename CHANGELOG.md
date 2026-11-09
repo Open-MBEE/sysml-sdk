@@ -1,5 +1,194 @@
 # Changelog
 
+## 0.2.0
+
+On the SysML Toolkit `v0.12.0` (0.1.1 was on `v0.10.2`).
+
+### Added
+
+- The convenience contract as data, in preparation of the `find` members: `convenience.toml` gives
+  the members by kind (features, and members through any membership) and by definition kind as three
+  templates, and the others one by one, each with its signature and its semantics in OCL over
+  specification properties and operations;
+  `tools/extract_convenience.py` expands them into `convenience.json` (312 members), checks every name
+  their OCL uses against `metamodel.json`, and spells each member in every language.
+  `convenience-examples.toml` gives every member an example (456, over ten small models, with the
+  answer); a test checks on each backend that the elements the examples name are in their models.
+- The convenience members in every language, beside the specification's: `find_parts()`,
+  `find_part_defs(scope)`, `find_upper_bound()` and the others (`findParts` in Java and JavaScript,
+  `FindParts` in C#), with `Scope` (owned, inherited, all) and `VisibilityFilter` (any, protected,
+  public) arguments and the contract's defaults. The SysML Toolkit answers them through the binding
+  library, and the Pilot Implementation through the SDK's Pilot engine, each by the member's OCL over
+  its own model; a payload backend does not answer them (`NotAnswered`). Where the contract gives no
+  answer (the literal of an expression that is not one), a member raises `Refused`
+  (`RefusedException` in Java and C#, `refused` in C++), a kind of `NotAnswered`. On the examples, the
+  Pilot Implementation answers all 456; the SysML Toolkit answers 430 and does not answer 26, where it
+  does not answer what the members read: `type` on action, state, calculation, case, allocation and
+  flow usages and on enumeration values (15), a metadata usage's `metaclass` (4), the member lists of
+  a definition with a public import in its body (6), and an operator expression's `ownedFeature` (1).
+  Where an answer from the Pilot Implementation contradicts
+  the specification, the examples list it as that backend's deviation (`deviates`), with the
+  reason: four, where its `supertypes()` keeps implied specializations or gives a conjugated type
+  none. The engine protocol has the `find` request and
+  the `invalid` error for them.
+  - A definition list (`find_part_defs(Scope.ALL)` and the others) gives each definition once, as
+    the specification's `member` does, though an alias or a second import makes it a member again.
+    Outside the owned scope a member or definition list is in the backend's order: it reads the
+    specification's `membership` or `member`, whose order the specification does not define, and
+    the backends differ (the SysML Toolkit gives the owned memberships first, the Pilot
+    Implementation the imported ones).
+  - A list of features with the inherited scope gives the inherited features whose owning type the
+    type specializes (`specializes()`, which the SysML Toolkit does not answer yet): a feature that a
+    supertype imports is inherited by name (the member lists have it) but is not a feature of the
+    type, as the specification's `featureMembership` since KERML11-191. The all scope
+    is the owned features followed by the inherited ones. A conjugated port definition's features
+    are its original's.
+  - Converting a value into another unit is not part of the members yet.
+  - Name-keyed definition maps, one per definition kind: `find_part_defs_by_name(scope)`
+    (`findPartDefsByName` in Java and JavaScript, `FindPartDefsByName` in C#) gives the part
+    definitions under every name and short name they are members by, an alias's included, in the
+    backend's order of `membership`: a `dict` in Python, a `Map` in JavaScript, a `java.util.Map` in Java, an
+    `IReadOnlyDictionary` (a `NameMap<T>`) in C#, and a `NameMap<T>` in C++ (a vector of name and
+    element pairs, with `find` and `contains`). A name that names two different definitions (a
+    connection definition and a view definition with one name, which the backends load) is refused,
+    naming both. The engine protocol carries a map as `[name, element]` pairs.
+  - In Java, C# and C++, a literal's value (`findLiteral`) and the bounds (`findLowerBound`,
+    `findUpperBound`) are a `Literal`: an integer, a real, a Boolean, a string, or the unbounded `*`
+    (a sealed interface of records in Java, a record with nested cases in C#, a `std::variant` with
+    `Unbounded` in C++), read by kind (`asLong()`, `AsLong()`) or by a switch over the cases; an
+    absent bound is null. Java's `findLiteral(Long.class)` and C#'s `FindLiteral<long>()` read the
+    value as the type given. Python and JavaScript answer their own values (`*` is `math.inf` and
+    `Infinity`).
+  - Every member carries its contract as a doc comment, so that editors show it on hover: Javadoc,
+    C# XML documentation, JSDoc in `classes.d.ts`, docstrings in the Python stubs, and Doxygen. It
+    says what the member answers, each parameter with its default, the shape of the answer, and when
+    the member is refused: by its contract (`Refused`) where its definition can give no answer, and by
+    the backend (`NotAnswered`) where the backend cannot answer what it reads.
+- Convenience members over lists: every element list a convenience member returns carries the
+  members of its elements, so calls chain (`pkg.find_part_defs(Scope.ALL).find_parts()`). The list's
+  answer is the elements' answers in list order, list results concatenated and absent single results
+  dropped; if the member refuses for one element, the call refuses. Members that answer a Boolean, a
+  number or a literal stay on the elements. Python and JavaScript have `ElementList`, a list (an
+  `Array`) subclass; Java a typed list per element class (`PartUsageList`, …, on `ElementList`); C#
+  extension methods on `IEnumerable` of each member's class (`ElementLists`); C++ the template
+  `ElementList<T>`, a `std::vector<T>`. Any list of elements lifts into one (`ElementList(xs)`,
+  `ElementList.from(xs)`, `new TypeList(types)`). The backends answer a list together where they can:
+  the engine protocol has the `findEach` request, one round trip per list.
+- The convenience members in the documentation: each language's guide has a section on them, run
+  against the release packages like the rest of the guide's code; the README introduces them; and the
+  skills for coding agents teach them, and the Pilot backend, with what each backend answers. Each
+  release carries the convenience reference, `sysml-sdk-reference-<version>.html`: every member with
+  its signature in the five languages, its definition in OCL, its examples, and what each backend
+  answers on them.
+- `Model.find(qualifiedName, inherited)`: the element a qualified name names, whatever its visibility,
+  the same on every backend: each segment a member of the namespace before it through its owned
+  memberships (aliases included) and, with `inherited`, its inherited ones; quoted names with KerML's
+  escapes. `Model.resolve(name, context)`: name resolution from a namespace, the specification's
+  `Namespace::resolve`; without a context, `resolve` is the backend's resolution from the root, as
+  before. `Model.split_qualified_name` (`splitQualifiedName`, `SplitQualifiedName`) splits a qualified
+  name into its segments. The convenience members' internal entry point on the model is now
+  `findMember` in Java, JavaScript and C#.
+- A third backend in every language: the SysML v2 Pilot Implementation
+  (`Systems-Modeling/SysML-v2-Pilot-Implementation`, release `2026-08`, version 0.62.0), run in
+  Java. It reads `.sysml` and `.kerml` files and in-memory sources with its own standard library, adds
+  the implied relationships and implicit elements to both (or not, with `elaborate` false; the
+  Pilot's own elaboration leaves the library out, so the engine elaborates it, once per library
+  loaded), and computes
+  properties and operations with its own code, behind the same classes as the other backends:
+  `Model.from_pilot` and `sysml.pilot.PilotBackend` in Python, `PilotBackend.open` in JavaScript
+  (Node) and Java, `PilotBackend.Open` in C#, `PilotBackend::open` in C++ (`<sysml/pilot.hpp>`). On
+  the specification's Annex A model it reads every property the SDK declares for each of the 30,220
+  elements of the elaborated model without a failure.
+- Where the Pilot runs: in the program's process in Java (in a class loader of its own), in Python
+  through JPype (the `pilot` extra: `pip install "sysml[pilot]"`), and in C++ through JNI when
+  compiled with `SYSML_PILOT_JNI`; otherwise in a Java process the backend starts and exchanges one
+  JSON request and answer per line with. The SDK's Pilot engine that serves both,
+  `sysml-pilot-server.jar`, is inside the Java SDK and carried by the Python, npm, NuGet and C++
+  packages.
+- The Pilot is not part of any package. `SYSML_PILOT_HOME` names one (a Pilot jar and its
+  `sysml.library`); otherwise the release the SDK is pinned to is downloaded on the first use (about
+  130 MB), checked against its pinned SHA-256, and kept in the user's cache, which all languages
+  share. It needs a Java 21 or newer runtime.
+- The Pilot reads its standard library once per Java runtime: a closed model's Pilot instance, with
+  the model taken out of it, serves the next model opened with the same Pilot and library. Opening a
+  small model then takes well under a second instead of about ten. This applies where models share a
+  runtime (in Java, through JPype, and through JNI); with a Java process per backend, each process
+  reads the library again. The answers are those of a fresh Pilot, except where the Pilot's
+  elaboration of a model added an element inside a library feature, which later models then see
+  (rare). `SYSML_PILOT_KEEP_LIBRARY=0` gives every model a fresh library.
+- The Pilot engine can answer the convenience members through a plugin jar compiled against the
+  Pilot (`SYSML_PILOT_PLUGIN`), whose bodies read the Pilot's own properties and utilities where they
+  give a member's answer, or run the plugin's bodies beside its own and refuse a call, naming both
+  answers, wherever the two differ (`SYSML_PILOT_CONVENIENCE=compare`). Without a plugin it answers
+  as before. The engine protocol has the `diagnostics` request; the Pilot engine answers it with how
+  it answers the members and, in compare mode, the counts per member, which it also writes to the
+  file `SYSML_PILOT_DIAGNOSTICS` names.
+- `BackendError` (`BackendException` in Java and C#, `backend_error` in C++): the engine behind a
+  backend failed, or is not available.
+- `EngineBackend` in every language: any engine that speaks the SDK's engine protocol (one JSON request
+  and answer per line over its standard input and output, `docs/engine-protocol.md`) runs as a
+  process behind the same classes. The Pilot backend is built on it.
+- `NotAnswered` (`NotAnsweredException` in Java and C#, `not_answered` in C++): a member the backend
+  does not answer for this element. `NotImplementedInToolkit` is now a kind of it, so one handler
+  covers every backend's refusals; code that catches `NotImplementedInToolkit` is unchanged.
+
+### Changed
+
+- Built and tested against the SysML Toolkit's release `v0.12.0` (was `v0.10.2`). On the
+  specification's Annex A model 3.6 % of all property reads are refused (12.8 % on `v0.10.2`): the
+  inherited and imported member lists, `type`, connector ends, the `subjectParameter` of requirements
+  and cases and the results of operator and invocation expressions are answered now. Every one of
+  the 103 operation declarations has a body (33 before), among them `specializes`,
+  `isCompatibleWith`, `allSupertypes` and `supertypes(...)`; a call still refuses where the SysML
+  Toolkit lacks the evidence for its answer.
+- Interchange-visible changes of the SysML Toolkit `v0.12.0` that reach the SDK's models: a usage that
+  declares no multiplicity, where SysML gives it the default `[1..1]`, owns a `Multiplicity` member
+  without bounds whose subsetting of `Base::exactlyOne` is implied (an `individual` definition one of
+  `Base::zeroOrOne`), as the Pilot Implementation writes it; operator and invocation expressions own
+  their result parameter, an implied relationship, and are typed by the invoked function; the trigger
+  of `accept ... at`, `after` and `when` is the payload parameter's value. The query examples read
+  such a default multiplicity member as no declaration, so their answers are unchanged.
+- The specification's XMI files are no longer in the repository. `tools/extract_metamodel.py`
+  downloads them from the OMG on its first run, checks them against the hashes in
+  `vendor/sysml-toolkit/PIN.json`, and keeps them in `vendor/sysml-toolkit/spec-refs/`, which git
+  ignores. `metamodel.json` and everything generated from it are unchanged.
+- The SysML Toolkit backend keeps a library directory's standard library loaded for the rest of the
+  process once a model has been opened with it, so opening models one after another no longer loads
+  the library again each time: on small models an open takes about 0.01 s instead of 0.16 s, and the
+  first read of a model's implied relationships about half as long. This needs the SysML Toolkit's
+  library cache, which it keeps in `SYSMLV2_CACHE_DIR`, `$XDG_CACHE_HOME/sysmlv2` or
+  `$HOME/.cache/sysmlv2`; on Windows, where `HOME` is usually not set, set `SYSMLV2_CACHE_DIR`. The
+  library stays in memory (about 110 MB) until the process ends.
+- The SysML Toolkit backend, in every language, keeps each answer it has read until the model is
+  closed: a property read, or an operation call with the same arguments, asked again is answered from
+  memory (a refusal is asked again). An open model does not change, so the answers stay right.
+  Members that ask one question per element pay for each element once: the
+  `find_..._defs_semantic(scope)` members call `specializes` on every type they consider, and on the
+  specification's Annex A model `find_attribute_defs_semantic(Scope.ALL)` on `SimpleVehicleModel`
+  takes about 2 s the first time and no measurable time when asked again.
+
+### Fixed
+
+- `resolve` without a context, on the SysML Toolkit and in every language, finds only the names the
+  model gives. It found an unnamed element under the name of what it references (an unnamed
+  `satisfy spec by v` as `v::spec`), through the toolkit's compatibility lookup; the binding library
+  now uses the toolkit's semantic one.
+
+## 0.1.1
+
+On the SysML Toolkit `v0.10.2` (0.1.0 was on `v0.10.0`).
+
+### Changed
+
+- The SysML Toolkit backend runs on `Open-MBEE/sysml-toolkit` `v0.10.2`. Sessions on the standard
+  library build and answer sooner, and the SysML Toolkit's fixes reach the SDK: an unnamed usage that
+  only references another feature (`satisfy R by x;`, `assert c;`) no longer answers a simple name; a
+  feature with no value of its own takes the value of a feature it subsets when the two must be
+  equal; `satisfy requirement : R by x;` is checked against `R`'s constraints; a valued redefinition
+  of a feature chain (`attribute :>> chassis.mass = 2.5 [kg];`) supplies its value when the chain is
+  read through the redefining part. The answers and refusals the SDK reports for the specification's
+  Annex A model are the same as with `v0.10.0`.
+
 ## 0.1.0
 
 The first release.
@@ -85,7 +274,7 @@ The SysML Toolkit backend:
   `parameter`, connector ends (`sourceFeature`, `targetFeature`, `connectorEnd`), the parameters of
   requirements and cases (`subjectParameter`, `actorParameter`, `stakeholderParameter`), and the
   `result` of expressions and functions. On the specification's Annex A
-  model with the library, 12.8 % of all property reads are refused. The relationships these are
+  model with the library, 12.7 % of all property reads are refused. The relationships these are
   derived from are answered: `ownedTyping`, `ownedSubclassification`, `ownedSubsetting`,
   `ownedRedefinition`, `ownedFeature` and `ownedMember` (the guides show how to read them).
 - **A part of the specification operations is evaluated:** 33 of the 103 operation declarations,

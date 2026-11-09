@@ -83,10 +83,12 @@ def test_every_property_agrees_with_the_closure_level_export(pair):
                 continue  # the SysML Toolkit says it has no answer; the export's fill-in is listed in EXPORT_DIFFERENCES
             pv = _read(p, m)
             compared += 1
-            answered.add(m)
+            qualified = f"{type(k).__name__}.{m}"
+            answered.update((m, qualified))
             if kv != pv:
-                if m in EXPORT_DIFFERENCES:
-                    observed.add(m)
+                known = qualified if qualified in EXPORT_DIFFERENCES else m
+                if known in EXPORT_DIFFERENCES:
+                    observed.add(known)
                     continue
                 disagreements.append(
                     f"{type(k).__name__}({k.qualifiedName or k.element_id}).{m}: toolkit={kv!r} payload={pv!r}"
@@ -114,8 +116,6 @@ def test_the_owned_side_export_leaves_the_closures_empty(pair):
 
 
 def test_operations_the_toolkit_answers(pair):
-    from sysml.base import NotImplementedInToolkit
-
     toolkit, _ = pair
     car = toolkit.resolve("Vehicles::Car")
     sports = toolkit.resolve("Vehicles::SportsCar")
@@ -128,26 +128,20 @@ def test_operations_the_toolkit_answers(pair):
     assert all(m.metaclass_name.endswith("Membership") for m in inherited)
     names = sorted(m.memberName for m in inherited)
     assert "wheels" in names and "engine" in names
-    # The SysML Toolkit does not take the excluded lists: a non-empty one is refused, never
-    # ignored.
-    with pytest.raises(NotImplementedInToolkit):
-        sports.inheritedMemberships([car], [], False)
+    # Excluding a namespace's imports (KerML 8.3.3.1.10): Car imports nothing, so nothing changes.
+    assert sports.inheritedMemberships([car], [], False) == inherited
 
 
-def test_operations_the_toolkit_answers_differently_are_refused(pair):
-    from sysml.base import NotImplementedInToolkit
-
+def test_the_conformance_and_resolution_operations(pair):
     toolkit, _ = pair
     car = toolkit.resolve("Vehicles::Car")
     sports = toolkit.resolve("Vehicles::SportsCar")
-    for name, call in [
-        ("isCompatibleWith", lambda: sports.isCompatibleWith(car)),
-        ("supertypes", lambda: sports.supertypes(False)),
-        ("resolve", lambda: car.resolve("wheels")),
-        ("resolveLocal", lambda: car.resolveLocal("wheels")),
-    ]:
-        with pytest.raises(NotImplementedInToolkit, match=name):
-            call()
+    wheels = toolkit.resolve("Vehicles::Car::wheels")
+    assert sports.isCompatibleWith(car)
+    # supertypes(False) includes the implied library bases, so it needs the standard library, which
+    # this model is read without; test_annex_a.py checks it.
+    assert car.resolve("wheels").memberElement == wheels
+    assert car.resolveLocal("wheels").memberElement == wheels
 
 
 def test_operations_refuse_on_payload(pair):

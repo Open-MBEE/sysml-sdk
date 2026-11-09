@@ -38,6 +38,11 @@ public interface Element {
         return (T) v;
     }
 
+    @SuppressWarnings("unchecked")
+    default <T> java.util.Map<String, T> $map(Object v) {
+        return v == null ? java.util.Map.of() : (java.util.Map<String, T>) v;
+    }
+
     default Boolean $bool(Object v) {
         return (Boolean) v;
     }
@@ -81,5 +86,23 @@ public interface Element {
     default String escapedName() { return $string($model().call(this, "escapedName", new Object[] {})); }
     default org.openmbee.sysml.classes.Namespace libraryNamespace() { return $ref($model().call(this, "libraryNamespace", new Object[] {})); }
     default String path() { return $string($model().call(this, "path", new Object[] {})); }
+    /**
+     * Metadata applied to an element by an owned annotation, or as an owned member annotating it
+     * (#M part p;, part p { &#64;M; }). Metadata placed elsewhere (metadata M about p;) is not
+     * found.
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default org.openmbee.sysml.classes.MetadataFeatureList findAppliedMetadata() { return new org.openmbee.sysml.classes.MetadataFeatureList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_APPLIED_METADATA))); }
+    /**
+     * The bodies of the element's documentation comments, in order.
+     *
+     * @return The texts, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default java.util.List<String> findDocText() { return $list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_DOC_TEXT)); }
     // END GENERATED
 }

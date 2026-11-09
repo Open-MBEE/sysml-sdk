@@ -157,4 +157,13 @@ public interface Usage extends Feature {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * The variation a variant belongs to (variation part def V { variant part a; }: a gives V; an
+     * enumeration's values give the enumeration); none for a usage that is not a variant.
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default Type findVariation() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_VARIATION)); }
 }

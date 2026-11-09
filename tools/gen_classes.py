@@ -13,7 +13,9 @@ becomes `instantiatedType_op()`.
 
 import sys
 
-from naming import MM, ROOT, as_meta, op_key, op_member
+import json
+
+from naming import MM, ROOT, as_meta, convenience_doc, convenience_runtime, op_key, op_member, spelling, wrap
 
 HERE = ROOT  # repository root
 
@@ -31,12 +33,12 @@ def check_collisions():
     accessor on MetadataFeature/MetadataUsage).
     """
     sys.path.insert(0, str(HERE / "python"))
-    from sysml.base import Element as RuntimeElement, Op, P
+    from sysml.base import Element as RuntimeElement, Find, Op, P
 
     # Spec operations of Element itself are attached to the runtime base by this
     # generator; they are descriptors, not runtime members, and are excluded here.
     runtime_public = {n for n in dir(RuntimeElement) if not n.startswith("_")
-                      and not isinstance(getattr(RuntimeElement, n), (Op, P))}
+                      and not isinstance(getattr(RuntimeElement, n), (Find, Op, P))}
     bad = [f"runtime member Element.{n} lacks an underscore"
            for n in runtime_public if "_" not in n]
     for cls, info in MM.items():
@@ -53,6 +55,17 @@ def check_collisions():
                 bad.append(f"operation {cls}.{member} collides with a property")
     if bad:
         sys.exit("collision rule violated:\n  " + "\n  ".join(bad))
+
+
+CONVENIENCE = json.loads((ROOT / "convenience.json").read_text(encoding="utf-8"))["members"]
+CONV_ON: dict[str, list[dict]] = {}
+for _m in CONVENIENCE:
+    CONV_ON.setdefault(_m["on"], []).append(_m)
+
+def find_line(m: dict) -> str:
+    params, result = convenience_runtime(m)
+    params = tuple(tuple(p) for p in params)
+    return f'Find("{m["name"]}", "{spelling(m["name"], "python")}", {params!r}, "{result}")'
 
 
 def ancestors(name, acc):
@@ -131,10 +144,10 @@ def main():
         "catalog, XMI derived flags).",
         '"""',
         "",
-        "from .base import Element, Op, P",
+        "from .base import Element, ElementList, Find, Op, P  # noqa: F401 (ElementList: re-exported, typed in the stub)",
         "",
     ]
-    n_props = n_ops = 0
+    n_props = n_ops = n_finds = 0
     order = topo_order()
     topo_index = {n: i for i, n in enumerate(order)}
     for name in order:
@@ -174,6 +187,9 @@ def main():
             member = op_member(oname, "python")
             lines.append(f'    {member} = Op("{oname}", {op["params"]!r}, "{sym}", "{code}", {params!r})')
             n_ops += 1
+        for m in CONV_ON.get(name, []):
+            lines.append(f'    {spelling(m["name"], "python")} = {find_line(m)}')
+            n_finds += 1
         lines.append("")
 
     # Every element has the members of the metaclass Element, whatever its class.
@@ -189,6 +205,9 @@ def main():
         member = op_member(oname, "python")
         lines.append(f'Element.{member} = Op("{oname}", {op["params"]!r}, "{sym}", "{code}", {params!r})')
         n_ops += 1
+    for m in CONV_ON.get("Element", []):
+        lines.append(f'Element.{spelling(m["name"], "python")} = {find_line(m)}')
+        n_finds += 1
     lines.append("")
 
     concrete = [n for n in MM if not MM[n]["abstract"]]
@@ -203,7 +222,7 @@ def main():
     write_stub(order, topo_index, concrete)
     print(
         f"wrote {out.name} (+ .pyi): {len(MM) - 1} classes, {n_props} property "
-        f"descriptors, {n_ops} operation stubs, {len(concrete)} in registry"
+        f"descriptors, {n_ops} operation stubs, {n_finds} convenience members, {len(concrete)} in registry"
     )
 
 
@@ -222,6 +241,72 @@ def py_type(meta):
     return f"list[{base}]" if meta["shape"] == "A" else f"{base} | None"
 
 
+def find_stub_args(m: dict) -> str:
+    out = ""
+    for p in m["params"]:
+        t = p["type"]
+        ty = t["type"] if t["kind"] in ("element", "enum") else {"Boolean": "bool", "String": "str"}[t["type"]]
+        out += f", {p['name']}: {ty}" + ("" if p["default"] is None else " = ...")
+    return out
+
+
+def find_stub_result(m: dict) -> str:
+    r = m["returns"]
+    if r["kind"] == "map":
+        return f"dict[str, {r['type']}]"
+    if r["kind"] == "element":
+        return f"ElementList[{r['type']}]" if r["many"] else f"{r['type']} | None"
+    if r["kind"] == "literal":
+        return "int | float | bool | str"
+    if r["type"] == "String":
+        return "list[str]"
+    base = {"Boolean": "bool", "Integer": "int", "UnlimitedNatural": "int | float", "Real": "float"}[r["type"]]
+    return base if r["type"] == "Boolean" else f"{base} | None"
+
+
+def docstring(m: dict, over_list: bool = False) -> list[str]:
+    """A convenience member's doc comment (tools/naming.py, convenience_doc) as the docstring of its stub,
+    in sections (Args, Returns, Raises) as IDEs show them."""
+    d = convenience_doc(m, "python", over_list)
+    i = " " * 8
+    out = wrap(d["summary"], 100, i + '"""', i)
+    if d["params"]:
+        out += ["", i + "Args:"]
+        for n, t in d["params"]:
+            out += wrap(f"{n}: {t}", 100, i + "    ", i + "        ")
+    out += ["", i + "Returns:", *wrap(d["returns"], 100, i + "    ", i + "    "), "", i + "Raises:"]
+    for e, t in d["throws"]:
+        out += wrap(f"{e}: {t}", 100, i + "    ", i + "        ")
+    return out + [i + '"""']
+
+
+def element_list_stub() -> list[str]:
+    """The typed ElementList: every member a list carries (element and string results), its self type
+    bounded by the member's context class, so a checker offers it only on lists of a conforming type; a
+    member with several contexts is an overload per context."""
+    by_name: dict[str, list[dict]] = {}
+    for m in CONVENIENCE:
+        params, result = convenience_runtime(m)
+        if result in ("elements", "element", "strings"):
+            by_name.setdefault(m["name"], []).append(m)
+    contexts = sorted({m["on"] for recs in by_name.values() for m in recs})
+    out = ['_E = TypeVar("_E", bound=Element)']
+    out += [f'_T_{c} = TypeVar("_T_{c}", bound={c})' for c in contexts]
+    out += ["", "class ElementList(list[_E]):",
+            '    """A list of elements carrying their convenience members (see sysml.base.ElementList)."""']
+    for name in sorted(by_name):
+        recs = by_name[name]
+        r = recs[0]["returns"]
+        ret = "list[str]" if r["kind"] == "primitive" else f"ElementList[{r['type']}]"
+        for m in recs:
+            if len(recs) > 1:
+                out.append("    @overload")
+            out.append(f"    def {spelling(name, 'python')}(self: ElementList[_T_{m['on']}]{find_stub_args(m)}) -> {ret}:")
+            out += docstring(m, over_list=True)
+    out.append("")
+    return out
+
+
 def write_stub(order, topo_index, concrete):
     """classes.pyi: the typed surface for IDEs and type checkers. The
     runtime stays descriptor-based (dynamic); unresolved references
@@ -229,7 +314,9 @@ def write_stub(order, topo_index, concrete):
     lines = [
         '"""Generated type stubs — do not edit. Source: metamodel.json."""',
         "",
-        "from .base import Element as _RuntimeElement",
+        "from typing import TypeVar, overload",
+        "",
+        "from .base import Element as _RuntimeElement, Scope, VisibilityFilter",
         "",
     ]
     for name in order:
@@ -254,8 +341,12 @@ def write_stub(order, topo_index, concrete):
                            for a, tr in zip(op["params"], op["paramTypes"]))
             ret = py_type(as_meta(op["returns"])) if op["returns"] else "object"
             body.append(f"    def {op_member(oname, 'python')}(self{args}) -> {ret}: ...")
+        for m in CONV_ON.get(name, []):
+            body.append(f"    def {spelling(m['name'], 'python')}(self{find_stub_args(m)}) -> {find_stub_result(m)}:")
+            body += docstring(m)
         lines.extend(body if body else ["    ..."])
         lines.append("")
+    lines.extend(element_list_stub())
     lines.append("REGISTRY: dict[str, type[Element]]")
     lines.append("")
     (HERE / "python" / "sysml" / "classes.pyi").write_text(

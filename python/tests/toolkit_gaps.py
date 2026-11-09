@@ -13,10 +13,8 @@ REFUSED = "refused"  # the read raises NotImplementedInToolkit
 # (element id prefix, member) -> (expected answer, why). A member is a
 # property; a member ending in "()" is an operation called without arguments.
 TOOLKIT_GAPS = {
-    ("7ed4db60", "connectorEnd"): (REFUSED, "connector ends wait on the implied end redefinitions"),
-    ("be8ea388", "isVariable"): (REFUSED, "redefined by mayTimeVary, whose variability evidence is incomplete"),
     # Reads of every property of every user element, by outcome.
-    ("*", "reads"): ({"value": 134104, "empty": 182917, "refused": 46479, "unresolved": 83},
+    ("*", "reads"): ({"value": 173532, "empty": 214069, "refused": 14601, "unresolved": 83},
                      "the properties the SysML Toolkit's checked reader does not answer yet"),
 }
 
@@ -26,8 +24,6 @@ TOOLKIT_GAPS = {
 # refusal. It fails when it passes (the SysML Toolkit answers now: remove the row), and when it
 # stops on anything else (conftest.py applies this table).
 TOOLKIT_REFUSALS = {
-    "test_annex_a.py::test_the_answered_operations_agree_with_the_derived_properties":
-        ("effectiveName()", "incomplete evidence for Feature::effectiveName"),
     "test_toolkit_backend.py::test_ownership_spine": ("type", "the type projection waits on implied relationships"),
     "test_toolkit_vs_payload.py::test_the_owned_side_export_leaves_the_closures_empty":
         ("inheritedFeature", "inherited features wait on implied relationships"),
@@ -50,7 +46,8 @@ TOOLKIT_REFUSALS = {
 # refuses in that report, why)}, or a list of such pairs where the report stops at a different read
 # depending on how the model was loaded: with the standard library the SysML Toolkit answers more,
 # so a report can stop later. A report the SysML Toolkit stops must equal the expected one up to
-# its refusal; a listed report that completes fails.
+# its refusal; a listed report that completes fails. `<report> --library` is the table for a run with
+# the standard library where it differs from the run without it.
 TOOLKIT_REPORT_REFUSALS = {
     "report.txt": {
         "Reachable states: Pumps::PumpController::modes": ("targetFeature", "connector ends"),
@@ -61,14 +58,19 @@ TOOLKIT_REPORT_REFUSALS = {
         ],
         "Requirements": ("satisfyingFeature", "requirement parameters"),
     },
+    # With the standard library (v0.12.0) every section of report.txt completes.
+    "report.txt --library": {},
     "annex-a.txt": {
-        "Reachable states: SimpleVehicleModel::Definitions::PartDefinitions::Vehicle::vehicleStates":
+        "Reachable states: SimpleVehicleModel::Definitions::PartDefinitions::Vehicle::vehicleStates": [
             ("payloadParameter", "accept action parameters"),
+            ("argument", "the arguments of a transition's trigger invocation (`accept ... after`, `at`, `when`)"),
+        ],
     },
 }
 
 # The small model of test_toolkit_vs_payload.py, read through the SysML Toolkit and through the
-# SysML Toolkit's own closure-level export: the properties whose answers differ, and why.
+# SysML Toolkit's own closure-level export: the properties whose answers differ, and why. A key
+# `Metaclass.property` names the property on elements of that metaclass only.
 _DEFAULT_AS_NULL = ("the export writes null for this [1] property at its default; the SysML Toolkit answers "
                     "the default")
 EXPORT_DIFFERENCES = {
@@ -77,6 +79,11 @@ EXPORT_DIFFERENCES = {
     "ownedRelationship": "the export invents elements to carry the unresolved reference to Real",
     "ownedElement": "as ownedRelationship",
     "textualRepresentation": "as ownedRelationship",
+    "Namespace.ownedMembership": "the export's recovery note for the unresolved reference hangs off the unit's root "
+                                 "namespace, through a membership the model does not have",
+    "Namespace.ownedMember": "as Namespace.ownedMembership",
+    "Namespace.membership": "as Namespace.ownedMembership",
+    "Namespace.member": "as Namespace.ownedMembership",
     **{name: _DEFAULT_AS_NULL for name in (
         "isVariable", "mayTimeVary")},
 }

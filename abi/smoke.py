@@ -64,9 +64,17 @@ def last_error():
 print("--- refusals ---")
 st, out = call("feature_featuring_type", roots[0], Handles)
 print("Feature::featuringType on a Namespace ->", st, "|", last_error()); assert st == "NOT_APPLICABLE"
-# An operation the SysML Toolkit has no body for yet is refused by it, with its reason.
-st, out = call("element_path", roots[0], Str)
-print("Element::path (operation) ->", st, "|", last_error()); assert st == "NOT_IMPLEMENTED"
+# A read the SysML Toolkit cannot derive yet is refused by it, with its reason: a feature's
+# featuringType (every operation has a body since the SysML Toolkit v0.12.0).
+def features_under(h, depth=3):
+    for f in take_handles(call("type_owned_feature", h, Handles)[1]):
+        yield f
+    if depth:
+        for m in take_handles(call("namespace_owned_member", h, Handles)[1]):
+            yield from features_under(m, depth - 1)
+feature = next(features_under(roots[0]))
+st, out = call("feature_featuring_type", feature, Handles)
+print("Feature::featuringType on a feature ->", st, "|", last_error()); assert st == "NOT_IMPLEMENTED"
 st, out = call("element_owner", 999999, Ref); print("bogus handle ->", st); assert st == "INVALID_HANDLE"
 
 first = take_handles((lambda hs: (lib.sysmlv2_namespace_owned_member(sess, C.c_uint64(roots[0]), C.byref(hs)), hs)[1])(Handles()))[0]

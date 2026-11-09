@@ -1,18 +1,23 @@
 ---
 name: sysml-sdk-java
-description: Writes Java code that reads, navigates and queries SysML v2 and KerML models with the sysml-sdk jar (packages org.openmbee.sysml and .classes), through the OpenMBEE SysML Toolkit (a native binding library) or from a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml files or SysML v2 JSON in Java, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
+description: Writes Java code that reads, navigates and queries SysML v2 and KerML models with the sysml-sdk jar (packages org.openmbee.sysml and .classes), through the OpenMBEE SysML Toolkit (a native binding library), the SysML v2 Pilot Implementation, or a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml files or SysML v2 JSON in Java, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
 ---
 
 # SysML v2 SDK for Java
 
 The SDK is the OMG metamodel as Java interfaces: every KerML and SysML metaclass, property and
 operation, under its specification name, with the metaclass hierarchy as interface inheritance.
-A model comes from one of two backends:
+A model comes from one of three backends:
 
 - **the SysML Toolkit**, through its native binding library (the foreign function API): reads SysML
   text, resolves names, computes derived properties and evaluates operations, and refuses what it
   cannot derive completely;
+- **the SysML v2 Pilot Implementation**, run in the program's process: reads the text too, and
+  computes every property and operation with its own code;
 - **a payload**: a full-form interchange JSON export from any SysML v2 tool, pure Java.
+
+Besides the specification's members, the interfaces have `find` convenience members (`findParts()`,
+`findPartDefs()`, `findValue()`, ...) for what takes several steps in the specification.
 
 The SDK never guesses. A member the SysML Toolkit does not answer throws
 `NotImplementedInToolkitException` with the reason the SysML Toolkit gives; a reference that does
@@ -24,13 +29,13 @@ value; read around them as described below, or report them.
 - JDK 21 or later. On JDK 21 compile and run with `--enable-preview` (and `--release 21` for
   `javac`): the foreign function API is a preview there; from JDK 22 on leave both out. Add
   `--enable-native-access=ALL-UNNAMED` to silence the native-access warning.
-- Put `sysml-sdk-0.1.0.jar` on the class path; no dependencies, no build tool (the class path
+- Put `sysml-sdk-0.2.0.jar` on the class path; no dependencies, no build tool (the class path
   separator is `;` on Windows, quoted in Git Bash, and `:` elsewhere):
 
   ```sh
-  javac --enable-preview --release 21 -cp sysml-sdk-0.1.0.jar Main.java
-  java --enable-preview --enable-native-access=ALL-UNNAMED -cp "sysml-sdk-0.1.0.jar;." Main   # Windows
-  java --enable-preview --enable-native-access=ALL-UNNAMED -cp sysml-sdk-0.1.0.jar:. Main     # Linux, macOS
+  javac --enable-preview --release 21 -cp sysml-sdk-0.2.0.jar Main.java
+  java --enable-preview --enable-native-access=ALL-UNNAMED -cp "sysml-sdk-0.2.0.jar;." Main   # Windows
+  java --enable-preview --enable-native-access=ALL-UNNAMED -cp sysml-sdk-0.2.0.jar:. Main     # Linux, macOS
   ```
 - The jar carries the binding library for Windows x64, Linux x64, and macOS on Apple
   silicon and on Intel, and copies the one for the running platform into the temporary directory on
@@ -50,7 +55,7 @@ Path libraryJson = StandardLibrary.json();       // the library as JSON, for a p
 `StandardLibrary.json()` downloads the JSON from the SDK's GitHub release on its first call (checked
 against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and throws
 `LibraryUnavailableException` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a
-copy (the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one
+copy (the `sysml.library.full.json` of the release's `sysml_library-0.2.0.zip`). Call only the one
 the chosen backend needs.
 
 Costs: opening a model with the standard library takes one to three seconds; the SysML Toolkit's
@@ -96,6 +101,28 @@ A payload refers to the standard library's elements without containing them; pas
 and those references resolve. Library elements are not the model's (`all()`, `roots()`,
 `elementsOfType` skip them); a qualified name is looked up in the payload first. The library JSON
 lists each library element's own members only, not what it inherits.
+
+Through the SysML v2 Pilot Implementation, which runs in this process, in a class loader of its own:
+
+```java
+try (PilotBackend pilot = PilotBackend.open(List.of("model.sysml"))) {   // or openSources(Map.of(...))
+    Model model = new Model(pilot);
+    // ...
+}
+```
+
+- It needs a Java 21 or newer runtime (`JAVA_HOME`, or `java` on the path). The first use downloads
+  the Pilot (about 130 MB) into the user cache; `SYSML_PILOT_HOME` names a Pilot already at hand.
+  Opening takes seconds even for a small model.
+- It reads with its own standard library: pass no library.
+- It answers rather than refuses: the derived reads the SysML Toolkit refuses (`type`,
+  `inheritedFeature`, `connectorEnd`, ...) and the operations it does not evaluate are answered, so
+  the workarounds below are not needed. Its answers are the Pilot's own; where they differ from the
+  SysML Toolkit's, say which backend produced the result.
+- The model it reads is elaborated: it holds the implied relationships and implicit elements too
+  (more elements in `all()` than the text declares).
+- A failure inside the Pilot, an operation it lacks, or a Pilot that cannot be found or started
+  raises `BackendException`.
 
 ## The shape of the API
 
@@ -144,39 +171,103 @@ lists each library element's own members only, not what it inherits.
   use bare `Class` or `Package` (ambiguous with `java.lang`): import the metaclass by its single
   name if you need it.
 
+## Convenience members
+
+Besides the specification's members, the interfaces have `find` members (312), each defined by the
+SDK over the specification's properties and operations; every one has its definition as Javadoc.
+Use one wherever it answers: one call instead of a walk.
+
+```java
+d.findParts();                       // the part usages d owns (a connection is a part too)
+d.findPartsExact();                  // exactly PartUsage; d.findPart("engine"): by name, or null
+d.findParts(Scope.ALL);              // owned, then inherited; Scope.INHERITED: inherited only
+d.findPartsSemantic();               // the features typed by a part definition
+pkg.findPartDefs();                  // the part definitions a namespace owns; findPartDef(name)
+pkg.findPartDefsByName();            // a Map from every name and short name to its definition
+pkg.findPartDefs().findPorts();      // a list (PartDefinitionList) carries its elements' members
+feature.findDeclaredTypes();         // the types as written; t.findDeclaredSupertypes()
+feature.findRedefinitionRoot();      // the feature its written redefinitions start from
+feature.findValue();                 // the value expression (=, :=, default), or null
+expr.findLiteral();                  // a Literal: IntegerValue, RealValue, BooleanValue,
+                                     //   StringValue or Unbounded; asLong(), asDouble(), ... read it
+expr.findLiteral(Long.class);        // the value as the class given
+t.findLowerBound(); t.findUpperBound();   // t's own multiplicity as a Literal; null without one
+```
+
+- The feature kinds (27): `findAttributes`, `findPorts`, `findItems`, `findActions`, `findStates`,
+  `findConnections`, `findRequirements`, `findConstraints`, ... Every list takes `scope`,
+  `visibility` (`VisibilityFilter.PUBLIC`, `PROTECTED`; `ANY` by default) and `library` (`true`
+  keeps what the standard library's types contribute, left out by default); the shorter overloads
+  leave the rest at their defaults. On a namespace: `find<Kind>Defs()`, `find<Kind>Def(name)`,
+  `find<Kind>DefsByName()`, and the usages it has through any membership, `findMember<Kinds>()`.
+- Also: `findSubsettedFeatures()`, `findRedefinedFeatures()`, `findReferencedFeature()`,
+  `findEffectiveFeature(f)`, `findUnit()` (`1500 [kg]`: `SI::kilogram`), `findParameters()`,
+  `findInputs()`, `findOutputs()`, `findInitialStates()`, `findAcceptedTypes()`,
+  `findIsAcceptedType(t)`, `findResultExpression()`, `findPath()`, `findAppliedMetadata()`,
+  `findDocText()`.
+- `RefusedException` (a `NotAnsweredException`): the member's definition gives no answer for this
+  element (`findLiteral()` of `2 * x`, or of a value with a unit). `NotAnsweredException`: the
+  backend cannot answer something the member reads, named in the message
+  (`NotImplementedInToolkitException` from the SysML Toolkit).
+- **On the Pilot Implementation** every member answers.
+- **On the SysML Toolkit**, the members answer: every list, lookup and exact list in the owned scope;
+  the definition lists and name maps of a package; the types, supertypes, subsettings and
+  redefinitions as written; values, unsigned literals and own bounds; paths, metadata and
+  documentation. They are refused, with the reason: the inherited scope and `Scope.ALL` of feature
+  and member lists and the semantic lists (`specializes()`), `findEffectiveFeature`, the implied
+  supertypes, `findParameters`, `findInputs` and `findOutputs` (`directionOf()`), the accepted types
+  (`payloadParameter`), `findInitialStates`, `findResultExpression`, and a literal with a sign or a
+  unit (`argument`). For those, use the helpers below: `featuresWithInherited`, `acceptedTypes`,
+  `initialStates`, `number`.
+- `findLowerBound()`/`findUpperBound()` read the type's own multiplicity only; for SysML's default
+  and the multiplicity a usage takes from what it redefines, use `multiplicityOf` below.
+- Outside the owned scope, a member or definition list is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+
 ## When the SysML Toolkit refuses a read (read this before writing queries)
 
 The SysML Toolkit's checked reader answers a property only where it can derive it completely. In
-this release it refuses most of what builds on inheritance, so plan for it:
+this release it answers most reads (all but 3.6 % on the specification's Annex A model), refuses a
+few properties wherever they apply, and refuses some on particular elements, so plan for it:
 
-- **refused on nearly every element:** `getFeature()`, `getInheritedFeature()`,
-  `getInheritedMembership()`, `getFeatureMembership()`, `getMember()`, `getMembership()`,
-  `getImportedMembership()`, `getEndFeature()`, `getInput()`, `getOutput()`, `getUsage()`,
-  `getDirectedUsage()`, `getDefinition()` and the kind-specific definitions
-  (`getPartDefinition()`, `getPortDefinition()`, `getItemDefinition()`,
-  `getRequirementDefinition()`, ...), `getParameter()` and `getFeaturingType()`;
-- **refused on features, even with a written typing:** `getType()`. Assume it is refused and use
-  `typesOf` below;
-- **refused on connectors, accept actions, requirements and satisfy relations:**
-  `getSourceFeature()`, `getTargetFeature()`, `getConnectorEnd()`, `getRelatedFeature()`,
-  `getPayloadParameter()`, `getSubjectParameter()`, `getActorParameter()`,
-  `getStakeholderParameter()`, `getSatisfyingFeature()`;
-- **answered:** what the model states itself: `getOwnedMember()`, `getOwnedFeature()`,
-  `getOwnedMembership()`, the owned lists (`getOwnedUsage()`, `getOwnedPart()`, `getNestedUsage()`,
-  `getNestedPart()`, `getNestedAttribute()`, `getNestedState()`, `getNestedTransition()`, ...; owned
-  members only, so an empty `getNestedPart()` does not mean a usage has no parts), `getOwner()`,
-  `getOwningNamespace()`, `getOwningType()`, `getName()`, `getDeclaredName()`,
-  `getQualifiedName()`, `getDocumentation()`, `getMultiplicity()`, `getDirection()`,
-  `getIsComposite()`, `getIsEnd()`, `getIsImplied()`, `getEntryAction()`, `getIsParallel()`,
-  `getTriggerAction()`, a transition's `getSource()` and `getTarget()`,
-  `getSatisfiedRequirement()`, `getChainingFeature()`, and the specific owned relationships with
-  their ends: `getOwnedTyping()` (`getType()`), `getOwnedSubclassification()`
-  (`getSuperclassifier()`), `getOwnedSpecialization()` (`getGeneral()`), `getOwnedSubsetting()`
-  (`getSubsettedFeature()`; it holds the redefinitions too), `getOwnedRedefinition()`
-  (`getRedefinedFeature()`), `getOwnedReferenceSubsetting()` (`getReferencedFeature()`), and a port
-  definition's `getConjugatedPortDefinition()` / `getOriginalPortDefinition()`.
-  (`getOwnedMember()`, `getOwnedFeature()` and `getOwnedMembership()` are refused on a
-  `FeatureReferenceExpression`.)
+- **refused wherever they apply (on the Annex A model):** `getFeaturingType()`, `getParameter()`,
+  `getIsModelLevelEvaluable()`, `getIndividualDefinition()`, `getDefaultFeaturingType()`,
+  `getActionDefinition()`, `getStateDefinition()`, `getCalculationDefinition()`,
+  `getFlowDefinition()`, `getEnumerationDefinition()`, a metadata usage's `getMetadataDefinition()`
+  and `getMetaclass()`, `getActorParameter()`, `getStakeholderParameter()`, `getFramedConcern()`,
+  `getObjectiveRequirement()`, `getStep()`, `getExpression()`, `getCalculation()`,
+  `getInteraction()`, `getFlowEnd()`, `getSourceOutputFeature()` and `getTargetInputFeature()`;
+- **refused on some elements:** `getType()`, `getDefinition()` and `getBehavior()` on action,
+  perform action, state, exhibit state, transition, flow, accept, send, allocation and use case
+  usages and on enumeration values, and `getType()` on some parameters and reference usages (use
+  `typesOf` below there); the inherited and imported member lists (`getFeature()`,
+  `getInheritedFeature()`, `getFeatureMembership()`, `getInheritedMembership()`, `getMember()`,
+  `getMembership()`, `getImportedMembership()`, `getInput()`, `getOutput()` and `getEndFeature()`)
+  on a definition with a `public import` in its body, or one that specializes it; on expressions
+  (operator, invocation, feature reference and feature chain expressions, literals) their owned
+  lists (`getOwnedMember()`, `getOwnedFeature()`, `getOwnedMembership()` and `getOwnedElement()`),
+  `getDirectedFeature()` and a literal's `getResult()`; `getResult()` on some requirement,
+  constraint and case usages and on calculation, requirement and case definitions;
+  `getIsImpliedIncluded()`; an end feature's `getIsConstant()`; a connector's `getAssociation()`;
+  `getArgument()` on a type test (`istype`, `@`);
+- **answered:** everything else, among it the inherited and imported member lists and `getType()` on
+  most elements, a connector's ends (`getSourceFeature()`, `getTargetFeature()`, `getConnectorEnd()`
+  and `getRelatedFeature()`), `getPayloadParameter()`, `getPayloadType()`, `getSubjectParameter()`,
+  `getRequirementDefinition()` and `getSatisfyingFeature()`, and what the model states itself:
+  `getOwnedMember()`, `getOwnedFeature()`, `getOwnedMembership()`, the owned lists
+  (`getOwnedUsage()`, `getOwnedPart()`, `getNestedUsage()`, `getNestedPart()`,
+  `getNestedAttribute()`, `getNestedState()`, `getNestedTransition()`, ...; owned members only, so
+  an empty `getNestedPart()` does not mean a usage has no parts), `getOwner()`,
+  `getOwningNamespace()`, `getOwningType()`, `getName()`, `getDeclaredName()`, `getQualifiedName()`,
+  `getDocumentation()`, `getMultiplicity()`, `getDirection()`, `getIsComposite()`, `getIsEnd()`,
+  `getIsImplied()`, `getEntryAction()`, `getIsParallel()`, `getTriggerAction()`, a transition's
+  `getSource()` and `getTarget()`, `getSatisfiedRequirement()`, `getChainingFeature()`, and the
+  specific owned relationships with their ends: `getOwnedTyping()` (`getType()`),
+  `getOwnedSubclassification()` (`getSuperclassifier()`), `getOwnedSpecialization()`
+  (`getGeneral()`), `getOwnedSubsetting()` (`getSubsettedFeature()`; it holds the redefinitions
+  too), `getOwnedRedefinition()` (`getRedefinedFeature()`), `getOwnedReferenceSubsetting()`
+  (`getReferencedFeature()`), and a port definition's `getConjugatedPortDefinition()` /
+  `getOriginalPortDefinition()`.
 
 The refusal's message names the member and the SysML Toolkit's reason (`property has an incomplete
 derivation`, `Type features are incomplete: IncompleteProvider`, `incomplete operation evidence`):
@@ -377,25 +468,21 @@ static Usage subjectOf(Type requirement) {
     return null;
 }
 
-/** The states a state machine (a StateUsage or StateDefinition) starts in: the targets of its
- *  successions from its entry action (`entry; then off;`) or from the library's `start`
- *  (`first start then off;`), and of its transitions from its entry action
- *  (`entry action initial; transition initial then off;`). */
+/** The states a state machine (a StateUsage or StateDefinition) starts in, as findInitialStates
+ *  defines them: the targets of its successions from the library's `start` (`first start then
+ *  off;`), and only where there are none, from its entry action (`entry; then off;`). */
 static List<StateUsage> initialStates(Type machine) {
     ActionUsage entry = machine instanceof StateUsage su ? su.getEntryAction()
         : machine instanceof StateDefinition sd ? sd.getEntryAction() : null;
-    List<StateUsage> out = new ArrayList<>();
+    List<StateUsage> fromStart = new ArrayList<>(), fromEntry = new ArrayList<>();
     for (Feature f : machine.getOwnedFeature()) {
-        if (f instanceof TransitionUsage t) {
-            if (entry != null && entry.equals(t.getSource()) && t.getTarget() instanceof StateUsage target) out.add(target);
-        } else if (f instanceof SuccessionAsUsage s) {
-            List<Feature> e = ends(s);
-            if (e.size() == 2 && e.get(1) instanceof StateUsage target && ((entry != null && entry.equals(e.get(0)))
-                    || (Boolean.TRUE.equals(e.get(0).getIsLibraryElement()) && "start".equals(e.get(0).getName()))))
-                out.add(target);
-        }
+        if (!(f instanceof SuccessionAsUsage s)) continue;
+        List<Feature> e = ends(s);
+        if (e.size() != 2 || !(e.get(1) instanceof StateUsage target)) continue;
+        if (Boolean.TRUE.equals(e.get(0).getIsLibraryElement()) && "start".equals(e.get(0).getName())) fromStart.add(target);
+        else if (entry != null && entry.equals(e.get(0))) fromEntry.add(target);
     }
-    return out;
+    return fromStart.isEmpty() ? fromEntry : fromStart;
 }
 
 /** The states of a state machine reachable from its initial states along its own transitions, in
@@ -419,9 +506,14 @@ static double number(Expression expr) {
     if (expr instanceof LiteralInteger i) return i.getValue();
     if (expr instanceof LiteralRational r) return r.getValue();
     if (expr instanceof OperatorExpression op && ("-".equals(op.getOperator()) || "+".equals(op.getOperator()))) {
+        // The operands' parameters through the owned relationships: the SysML Toolkit refuses an
+        // operator expression's ownedFeature in this release.
         List<Expression> operands = new ArrayList<>();
-        for (Feature f : op.getOwnedFeature())
-            for (Membership m : f.getOwnedMembership()) if (m instanceof FeatureValue v) operands.add(v.getValue());
+        for (Relationship r : op.getOwnedRelationship())
+            if (r instanceof ParameterMembership)
+                for (Element p : r.getOwnedRelatedElement())
+                    if (p instanceof Feature f)
+                        for (Membership m : f.getOwnedMembership()) if (m instanceof FeatureValue v) operands.add(v.getValue());
         if (operands.size() == 1) return "-".equals(op.getOperator()) ? -number(operands.get(0)) : number(operands.get(0));
     }
     throw new IllegalArgumentException("not a literal number: " + expr.$metaclass());
@@ -499,11 +591,11 @@ List<Classifier> items = ((FlowUsage) flow).getPayloadType();     // the flowing
 // States
 StateUsage machine = (StateUsage) model.resolve("Pkg::Controller::modes");   // e.g. an ExhibitStateUsage
 List<StateUsage> states = machine.getNestedState();   // its own states
-List<StateUsage> initial = initialStates(machine);   // `entry; then off;`, `first start then off;`, ...
+List<StateUsage> initial = initialStates(machine);   // `first start then off;`, else `entry; then off;`
 List<StateUsage> reachable = reachableStates(machine);   // from the initial states along the transitions
 for (TransitionUsage t : machine.getNestedTransition()) {
-    ActionUsage from = t.getSource(), to = t.getTarget();   // the states (cast to StateUsage); an initial
-    // transition (`transition init then off;`) leaves the entry action, not a state: no cast then
+    ActionUsage from = t.getSource(), to = t.getTarget();   // the states (cast to StateUsage); a
+    // transition from the entry action leaves an action, not a state: no cast then
     List<Type> signals = t.getTriggerAction().isEmpty() ? List.of() : acceptedTypes(t.getTriggerAction().get(0));
     if (!t.getTriggerAction().isEmpty())
         t.getTriggerAction().get(0).getPayloadArgument();   // TriggerInvocationExpression for at/when

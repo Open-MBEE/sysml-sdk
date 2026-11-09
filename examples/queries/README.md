@@ -25,6 +25,13 @@ and evaluating the model's own expressions along the way.
   whose battery has six. Around that: attribute values redefined along the part tree, connections
   and flows between nested parts, and requirements with constraints, satisfied by two drones.
 
+The Annex A vehicle model is not in this repository. It is
+`sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml` in the
+[SysML v2 release repository](https://github.com/Systems-Modeling/SysML-v2-Release), which licenses
+its models under the Eclipse Public License 2.0, by the copyright holders its README lists.
+[expected/annex-a.txt](expected/annex-a.txt) is the queries' report on that model and quotes its
+names and guard expressions.
+
 `models/*.full.json` are the same models exported by the SysML Toolkit with the standard library
 loaded, so every demo can run without the SysML Toolkit too: their references into the library
 resolve against the library as JSON (`examples/sysml.library.full.json`). None of these files is
@@ -68,8 +75,10 @@ The queries use specification properties only: `nestedState`, `ownedFeature`, `e
   tells them apart.
 
 A state's initial states are the targets of the successions it owns (`first start then off;`), as
-SysML writes them. `explore` also follows the older form that Annex A uses: an entry action with a
-transition from it (`entry action initial; transition initial then off;`).
+SysML writes them. To read the specification's Annex A model, `explore` also enters a state through
+the transitions from its entry action (`entry action initial; transition initial then off;`), the
+form that model uses. The form is the Annex A model's own: the SDK's convenience member
+`find_initial_states` does not count it as giving initial states.
 
 ### What the queries simplify, on purpose
 

@@ -15,7 +15,7 @@ from sysml import REGISTRY, Model, NotImplementedInToolkit
 from sysml import classes as C
 from sysml.base import Element, Op, P
 
-TABLE_SHA256 = "17644f3a5d70189d76b5ecb95c2089aeda1f93b6705f8bce5eeae1faf023758b"
+TABLE_SHA256 = "28d1d7f6523803e35df85303c4cea45320cfd6c9330217b4824817005331557f"
 _RAW = (Path(__file__).resolve().parents[2] / "metamodel.json").read_bytes()
 MM = json.loads(_RAW)["classes"]
 

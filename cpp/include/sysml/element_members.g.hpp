@@ -24,3 +24,14 @@ std::optional<std::string> effectiveShortName() const;
 std::optional<std::string> escapedName() const;
 std::optional<Namespace> libraryNamespace() const;
 std::optional<std::string> path() const;
+/// Metadata applied to an element by an owned annotation, or as an owned member annotating it
+/// (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not found.
+/// @return The elements, in order; an empty list where there are none.
+/// @throws not_answered Where the backend cannot answer a property or operation this member
+///     reads; the message names it.
+ElementList<MetadataFeature> find_applied_metadata() const;
+/// The bodies of the element's documentation comments, in order.
+/// @return The texts, in order; an empty list where there are none.
+/// @throws not_answered Where the backend cannot answer a property or operation this member
+///     reads; the message names it.
+std::vector<std::string> find_doc_text() const;

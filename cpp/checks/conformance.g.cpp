@@ -17,7 +17,7 @@ namespace checks {
 
 using namespace sysml;
 
-static const char* const TABLE_SHA256 = "17644f3a5d70189d76b5ecb95c2089aeda1f93b6705f8bce5eeae1faf023758b";
+static const char* const TABLE_SHA256 = "28d1d7f6523803e35df85303c4cea45320cfd6c9330217b4824817005331557f";
 
 static void require(bool cond, const std::string& what) {
     if (!cond)

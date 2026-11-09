@@ -184,7 +184,9 @@ public static class StandardLibrary
         return plus < 0 ? v : v[..plus];
     }
 
-    static string CacheRoot()
+    /// <summary>The user's cache directory, which the SDK's languages share: SYSML_CACHE_DIR, else the
+    /// platform's per-user cache directory.</summary>
+    internal static string CacheRoot()
     {
         var env = Environment.GetEnvironmentVariable(CacheVariable);
         if (!string.IsNullOrEmpty(env)) return env;

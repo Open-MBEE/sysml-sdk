@@ -8,6 +8,7 @@ namespace OpenMBEE.SysML;
 internal static class ToolkitTable
 {
     public const string NamesDigest = "3f9b7564be50625bf64b6d5b8f8959ad9b0ca10a64c6b56ce5b1c84b6d2cd351";
+    public const string ConvenienceDigest = "edcab7ef0f4863bdd8c564da76ea3cebd92d8a1ba5bd360d7805f7061f235feb";
     public static readonly Dictionary<string, (string Symbol, char Code, string Params)> Funcs = new()
     {
         ["AcceptActionUsage::payloadArgument"] = ("sysmlv2_accept_action_usage_payload_argument", 'R', ""),

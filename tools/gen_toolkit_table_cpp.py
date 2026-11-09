@@ -9,7 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from naming import abi_params, op_key, result_code
+from naming import convenience_digest, abi_params, op_key, result_code
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -39,6 +39,7 @@ def main() -> None:
         "namespace sysml::toolkit_table {",
         "",
         f'inline constexpr std::string_view NAMES_DIGEST = "{digest}";',
+        f'inline constexpr std::string_view CONVENIENCE_DIGEST = "{convenience_digest(json.loads((ROOT / "convenience.json").read_text(encoding="utf-8")))}";',
         "",
         "/// C symbol, result code and, for an operation, its parameters' C types joined by ';'.",
         "struct Entry { const char* symbol; char code; const char* params; };",

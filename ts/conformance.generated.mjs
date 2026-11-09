@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { Model, NotImplementedInToolkit, is } from "./runtime.mjs";
 import { ABSTRACT, HIERARCHY, OPS, PROPS } from "./meta.mjs";
 
-const TABLE_SHA256 = "17644f3a5d70189d76b5ecb95c2089aeda1f93b6705f8bce5eeae1faf023758b";
+const TABLE_SHA256 = "28d1d7f6523803e35df85303c4cea45320cfd6c9330217b4824817005331557f";
 const raw = readFileSync(new URL("../metamodel.json", import.meta.url));
 if (createHash("sha256").update(raw).digest("hex") !== TABLE_SHA256)
   throw new Error("metamodel.json changed since this harness was generated; " +

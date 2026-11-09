@@ -4,12 +4,20 @@
 // Unresolved references THROW UnresolvedReference at access time
 // (the SDK requires resolved models), so reference types are clean.
 
+/** Which members a convenience list reads: the element's own, those it inherits (for a
+ * namespace's members, imported ones too), or both. A list of features gives its own first; a list
+ * of members or definitions, outside the owned scope, is in the backend's order. */
+export type Scope = "owned" | "inherited" | "all";
+/** Which visibilities a convenience list keeps: every one, public and protected, or public. */
+export type VisibilityFilter = "any" | "protected" | "public";
+
 // Any element: the runtime members, and the members of the metaclass Element, which
 // every element has.
 export interface AnyElement {
   readonly $id: string;      // runtime members are $-prefixed:
   readonly $handle: string;  // spec camelCase can never collide
   readonly $metaclass: string;
+  readonly $model: import("./index.d.ts").Model;
   $raw(prop: string): unknown;
   readonly aliasIds: string[];
   readonly declaredName: string | null;
@@ -34,6 +42,21 @@ export interface AnyElement {
   escapedName(): string | null;
   libraryNamespace(): Namespace | null;
   path(): string | null;
+  /**
+   * Metadata applied to an element by an owned annotation, or as an owned member annotating it (#M
+   * part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not found.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAppliedMetadata(): ElementList<MetadataFeature>;
+  /**
+   * The bodies of the element's documentation comments, in order.
+   * @returns The texts, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDocText(): string[];
 }
 
 export interface AcceptActionUsage extends ActionUsage {
@@ -206,6 +229,22 @@ export interface AcceptActionUsage extends ActionUsage {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * What an accept action accepts: its payload's types.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAcceptedTypes(): ElementList<Type>;
+  /**
+   * Whether this accept action accepts a value of type: whether type specializes one of its
+   * accepted types (findAcceptedTypes).
+   * @param type The type of what arrives: an item, a signal or an event.
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsAcceptedType(type: Type): boolean;
 }
 
 export interface ActionDefinition extends OccurrenceDefinition, Behavior {
@@ -2095,6 +2134,23 @@ export interface Behavior extends Class {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The directed features, scoped like the kind lists: those whose direction relative to this
+   * behaviour or step, directionOf, is not null. With scope all and library true, the
+   * specification's parameter.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findParameters(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
 }
 
 export interface BindingConnector extends Connector {
@@ -6542,6 +6598,48 @@ export interface Expression extends Step {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * Whether the value is written with a unit, <expression> [<unit>], a sign allowed.
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findHasUnit(): boolean;
+  /**
+   * Whether findLiteral answers: a literal, or a sign on a number literal; a value with a unit is
+   * not one.
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsLiteral(): boolean;
+  /**
+   * A literal's value, a sign folded. Refused for anything else: a value with a unit (1500 [kg];
+   * findUnit gives the unit), an expression (2 * x), a reference (= other).
+   * @returns The value: a number, boolean or string (Infinity for *, unbounded).
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findLiteral(): number | boolean | string;
+  /**
+   * The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference names,
+   * SI::kilogram); none for a literal without a unit; refused for anything else, whose unit needs
+   * evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit().
+   * @returns The element, or null where there is none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUnit(): AnyElement | null;
+  /**
+   * The result expression of a calculation or constraint, owned or inherited; the specification has
+   * resultExpression only on analysis cases.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findResultExpression(): Expression | null;
 }
 
 export interface Feature extends Type {
@@ -6661,6 +6759,277 @@ export interface Feature extends Type {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * Whether a type of this feature conforms to Actions::Action; refused where the model's library
+   * has no Actions::Action.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticAction(): boolean;
+  /**
+   * Whether a type of this feature conforms to Allocations::Allocation; refused where the model's
+   * library has no Allocations::Allocation.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticAllocation(): boolean;
+  /**
+   * Whether a type of this feature conforms to AnalysisCases::AnalysisCase; refused where the
+   * model's library has no AnalysisCases::AnalysisCase.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticAnalysisCase(): boolean;
+  /**
+   * Whether a type of this feature conforms to Base::DataValue; refused where the model's library
+   * has no Base::DataValue.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticAttribute(): boolean;
+  /**
+   * Whether a type of this feature conforms to Calculations::Calculation; refused where the model's
+   * library has no Calculations::Calculation.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticCalculation(): boolean;
+  /**
+   * Whether a type of this feature conforms to Cases::Case; refused where the model's library has
+   * no Cases::Case.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticCase(): boolean;
+  /**
+   * Whether a type of this feature conforms to Requirements::ConcernCheck; refused where the
+   * model's library has no Requirements::ConcernCheck.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticConcern(): boolean;
+  /**
+   * Whether a type of this feature conforms to Connections::Connection; refused where the model's
+   * library has no Connections::Connection.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticConnection(): boolean;
+  /**
+   * Whether a type of this feature conforms to Constraints::ConstraintCheck; refused where the
+   * model's library has no Constraints::ConstraintCheck.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticConstraint(): boolean;
+  /**
+   * Whether a type of this feature conforms to Flows::MessageAction; refused where the model's
+   * library has no Flows::MessageAction.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticFlow(): boolean;
+  /**
+   * Whether a type of this feature conforms to Interfaces::Interface; refused where the model's
+   * library has no Interfaces::Interface.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticInterface(): boolean;
+  /**
+   * Whether a type of this feature conforms to Items::Item; refused where the model's library has
+   * no Items::Item.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticItem(): boolean;
+  /**
+   * Whether a type of this feature conforms to Occurrences::Occurrence; refused where the model's
+   * library has no Occurrences::Occurrence.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticOccurrence(): boolean;
+  /**
+   * Whether a type of this feature conforms to Parts::Part; refused where the model's library has
+   * no Parts::Part.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticPart(): boolean;
+  /**
+   * Whether a type of this feature conforms to Ports::Port; refused where the model's library has
+   * no Ports::Port.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticPort(): boolean;
+  /**
+   * Whether a type of this feature conforms to Views::Rendering; refused where the model's library
+   * has no Views::Rendering.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticRendering(): boolean;
+  /**
+   * Whether a type of this feature conforms to Requirements::RequirementCheck; refused where the
+   * model's library has no Requirements::RequirementCheck.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticRequirement(): boolean;
+  /**
+   * Whether a type of this feature conforms to States::StateAction; refused where the model's
+   * library has no States::StateAction.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticState(): boolean;
+  /**
+   * Whether a type of this feature conforms to UseCases::UseCase; refused where the model's library
+   * has no UseCases::UseCase.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticUseCase(): boolean;
+  /**
+   * Whether a type of this feature conforms to VerificationCases::VerificationCase; refused where
+   * the model's library has no VerificationCases::VerificationCase.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticVerificationCase(): boolean;
+  /**
+   * Whether a type of this feature conforms to Views::View; refused where the model's library has
+   * no Views::View.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticView(): boolean;
+  /**
+   * Whether a type of this feature conforms to Views::ViewpointCheck; refused where the model's
+   * library has no Views::ViewpointCheck.
+   * @returns true or false.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsSemanticViewpoint(): boolean;
+  /**
+   * The types this feature is declared with.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDeclaredTypes(): ElementList<Type>;
+  /**
+   * The features this feature subsets as written (redefinitions and reference subsettings left
+   * out).
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findSubsettedFeatures(): ElementList<Feature>;
+  /**
+   * The features this feature redefines as written.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRedefinedFeatures(): ElementList<Feature>;
+  /**
+   * The feature this feature references (::>), or none.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findReferencedFeature(): Feature | null;
+  /**
+   * The feature a chain of written redefinitions starts from, following the first at each step
+   * (Truck::mass to Frame::mass); itself when it redefines nothing.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRedefinitionRoot(): Feature | null;
+  /**
+   * The value expression this feature is declared with (=, :=, default), or none.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findValue(): Expression | null;
+  /**
+   * Whether the value is a default (default = or default :=).
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findHasDefaultValue(): boolean;
+  /**
+   * Whether the value is an initial value (:=).
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findHasInitialValue(): boolean;
+  /**
+   * Ordered: declared, or through a feature it subsets or redefines, implied ones included, as the
+   * Pilot's FeatureUtil.checkIsOrdered.
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsEffectivelyOrdered(): boolean;
+  /**
+   * A feature chain as its features (battery.powerOut gives [battery, powerOut]); else [self].
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPath(): ElementList<Feature>;
 }
 
 export interface FeatureChainExpression extends OperatorExpression {
@@ -8170,6 +8539,14 @@ export interface Function extends Behavior {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The result expression of a calculation or constraint, owned or inherited; the specification has
+   * resultExpression only on analysis cases.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findResultExpression(): Expression | null;
 }
 
 export interface IfActionUsage extends ActionUsage {
@@ -12135,6 +12512,2256 @@ export interface Namespace extends AnyElement {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The features that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberFeatures(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The feature that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberFeature(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): Feature | null;
+  /**
+   * The usages that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberUsages(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Usage>;
+  /**
+   * The usage that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberUsage(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): Usage | null;
+  /**
+   * The actions that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberActions(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The action that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAction(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ActionUsage | null;
+  /**
+   * The allocations that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAllocations(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AllocationUsage>;
+  /**
+   * The allocation that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAllocation(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): AllocationUsage | null;
+  /**
+   * The analysisCases that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAnalysisCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AnalysisCaseUsage>;
+  /**
+   * The analysisCase that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAnalysisCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): AnalysisCaseUsage | null;
+  /**
+   * The attributes that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAttributes(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The attribute that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberAttribute(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): AttributeUsage | null;
+  /**
+   * The calculations that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberCalculations(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The calculation that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberCalculation(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): CalculationUsage | null;
+  /**
+   * The cases that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The case that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): CaseUsage | null;
+  /**
+   * The concerns that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberConcerns(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConcernUsage>;
+  /**
+   * The concern that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberConcern(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ConcernUsage | null;
+  /**
+   * The connections that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberConnections(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectorAsUsage>;
+  /**
+   * The connection that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberConnection(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ConnectorAsUsage | null;
+  /**
+   * The constraints that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberConstraints(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The constraint that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberConstraint(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ConstraintUsage | null;
+  /**
+   * The enumerations that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberEnumerations(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<EnumerationUsage>;
+  /**
+   * The enumeration that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberEnumeration(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): EnumerationUsage | null;
+  /**
+   * The flows that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberFlows(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The flow that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberFlow(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): FlowUsage | null;
+  /**
+   * The interfaces that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberInterfaces(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<InterfaceUsage>;
+  /**
+   * The interface that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberInterface(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): InterfaceUsage | null;
+  /**
+   * The items that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberItems(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The item that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberItem(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ItemUsage | null;
+  /**
+   * The occurrences that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberOccurrences(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The occurrence that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberOccurrence(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): OccurrenceUsage | null;
+  /**
+   * The parts that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberParts(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The part that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberPart(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): PartUsage | null;
+  /**
+   * The ports that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberPorts(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PortUsage>;
+  /**
+   * The port that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberPort(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): PortUsage | null;
+  /**
+   * The references that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberReferences(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ReferenceUsage>;
+  /**
+   * The reference that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberReference(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ReferenceUsage | null;
+  /**
+   * The renderings that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberRenderings(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RenderingUsage>;
+  /**
+   * The rendering that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberRendering(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): RenderingUsage | null;
+  /**
+   * The requirements that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberRequirements(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The requirement that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberRequirement(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): RequirementUsage | null;
+  /**
+   * The states that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberStates(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The state that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberState(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): StateUsage | null;
+  /**
+   * The transitions that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberTransitions(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<TransitionUsage>;
+  /**
+   * The transition that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberTransition(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): TransitionUsage | null;
+  /**
+   * The useCases that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberUseCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The useCase that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberUseCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): UseCaseUsage | null;
+  /**
+   * The verificationCases that are members of this namespace through any membership (owned,
+   * aliased, imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberVerificationCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<VerificationCaseUsage>;
+  /**
+   * The verificationCase that is a member under this simple name (an alias's name included), or
+   * none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberVerificationCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): VerificationCaseUsage | null;
+  /**
+   * The views that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberViews(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewUsage>;
+  /**
+   * The view that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberView(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ViewUsage | null;
+  /**
+   * The viewpoints that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberViewpoints(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewpointUsage>;
+  /**
+   * The viewpoint that is a member under this simple name (an alias's name included), or none.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberViewpoint(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ViewpointUsage | null;
+  /**
+   * The definitions of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDefinitions(scope?: Scope): ElementList<Definition>;
+  /**
+   * The definition with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDefinition(name: string, scope?: Scope): Definition | null;
+  /**
+   * The definitions of this namespace by name: each under every name and short name it is a member
+   * by (an alias's included). The order is the backend's: the specification does not define the
+   * order of membership. Refused where one name names two different definitions, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDefinitionsByName(scope?: Scope): Map<string, Definition>;
+  /**
+   * The actionDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionDefs(scope?: Scope): ElementList<ActionDefinition>;
+  /**
+   * The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionDefsExact(scope?: Scope): ElementList<ActionDefinition>;
+  /**
+   * The types that specialize Actions::Action; refused where the model's library has no
+   * Actions::Action.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The actionDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionDef(name: string, scope?: Scope): ActionDefinition | null;
+  /**
+   * The actionDefs of this namespace by name: each under every name and short name it is a member
+   * by (an alias's included). The order is the backend's: the specification does not define the
+   * order of membership. Refused where one name names two different actionDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionDefsByName(scope?: Scope): Map<string, ActionDefinition>;
+  /**
+   * The allocationDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocationDefs(scope?: Scope): ElementList<AllocationDefinition>;
+  /**
+   * The types that specialize Allocations::Allocation; refused where the model's library has no
+   * Allocations::Allocation.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocationDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The allocationDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocationDef(name: string, scope?: Scope): AllocationDefinition | null;
+  /**
+   * The allocationDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different allocationDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocationDefsByName(scope?: Scope): Map<string, AllocationDefinition>;
+  /**
+   * The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCaseDefs(scope?: Scope): ElementList<AnalysisCaseDefinition>;
+  /**
+   * The types that specialize AnalysisCases::AnalysisCase; refused where the model's library has no
+   * AnalysisCases::AnalysisCase.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCaseDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The analysisCaseDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCaseDef(name: string, scope?: Scope): AnalysisCaseDefinition | null;
+  /**
+   * The analysisCaseDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different analysisCaseDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCaseDefsByName(scope?: Scope): Map<string, AnalysisCaseDefinition>;
+  /**
+   * The attributeDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributeDefs(scope?: Scope): ElementList<AttributeDefinition>;
+  /**
+   * The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributeDefsExact(scope?: Scope): ElementList<AttributeDefinition>;
+  /**
+   * The types that specialize Base::DataValue; refused where the model's library has no
+   * Base::DataValue.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributeDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The attributeDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributeDef(name: string, scope?: Scope): AttributeDefinition | null;
+  /**
+   * The attributeDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different attributeDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributeDefsByName(scope?: Scope): Map<string, AttributeDefinition>;
+  /**
+   * The calculationDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationDefs(scope?: Scope): ElementList<CalculationDefinition>;
+  /**
+   * The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationDefsExact(scope?: Scope): ElementList<CalculationDefinition>;
+  /**
+   * The types that specialize Calculations::Calculation; refused where the model's library has no
+   * Calculations::Calculation.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The calculationDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationDef(name: string, scope?: Scope): CalculationDefinition | null;
+  /**
+   * The calculationDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different calculationDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationDefsByName(scope?: Scope): Map<string, CalculationDefinition>;
+  /**
+   * The caseDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCaseDefs(scope?: Scope): ElementList<CaseDefinition>;
+  /**
+   * The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCaseDefsExact(scope?: Scope): ElementList<CaseDefinition>;
+  /**
+   * The types that specialize Cases::Case; refused where the model's library has no Cases::Case.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCaseDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The caseDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCaseDef(name: string, scope?: Scope): CaseDefinition | null;
+  /**
+   * The caseDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different caseDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCaseDefsByName(scope?: Scope): Map<string, CaseDefinition>;
+  /**
+   * The concernDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcernDefs(scope?: Scope): ElementList<ConcernDefinition>;
+  /**
+   * The types that specialize Requirements::ConcernCheck; refused where the model's library has no
+   * Requirements::ConcernCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcernDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The concernDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcernDef(name: string, scope?: Scope): ConcernDefinition | null;
+  /**
+   * The concernDefs of this namespace by name: each under every name and short name it is a member
+   * by (an alias's included). The order is the backend's: the specification does not define the
+   * order of membership. Refused where one name names two different concernDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcernDefsByName(scope?: Scope): Map<string, ConcernDefinition>;
+  /**
+   * The connectionDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionDefs(scope?: Scope): ElementList<ConnectionDefinition>;
+  /**
+   * The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionDefsExact(scope?: Scope): ElementList<ConnectionDefinition>;
+  /**
+   * The types that specialize Connections::Connection; refused where the model's library has no
+   * Connections::Connection.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The connectionDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionDef(name: string, scope?: Scope): ConnectionDefinition | null;
+  /**
+   * The connectionDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different connectionDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionDefsByName(scope?: Scope): Map<string, ConnectionDefinition>;
+  /**
+   * The constraintDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintDefs(scope?: Scope): ElementList<ConstraintDefinition>;
+  /**
+   * The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintDefsExact(scope?: Scope): ElementList<ConstraintDefinition>;
+  /**
+   * The types that specialize Constraints::ConstraintCheck; refused where the model's library has
+   * no Constraints::ConstraintCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The constraintDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintDef(name: string, scope?: Scope): ConstraintDefinition | null;
+  /**
+   * The constraintDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different constraintDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintDefsByName(scope?: Scope): Map<string, ConstraintDefinition>;
+  /**
+   * The enumerationDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findEnumerationDefs(scope?: Scope): ElementList<EnumerationDefinition>;
+  /**
+   * The enumerationDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findEnumerationDef(name: string, scope?: Scope): EnumerationDefinition | null;
+  /**
+   * The enumerationDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different enumerationDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findEnumerationDefsByName(scope?: Scope): Map<string, EnumerationDefinition>;
+  /**
+   * The flowDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlowDefs(scope?: Scope): ElementList<FlowDefinition>;
+  /**
+   * The types that specialize Flows::MessageAction; refused where the model's library has no
+   * Flows::MessageAction.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlowDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The flowDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlowDef(name: string, scope?: Scope): FlowDefinition | null;
+  /**
+   * The flowDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different flowDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlowDefsByName(scope?: Scope): Map<string, FlowDefinition>;
+  /**
+   * The interfaceDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterfaceDefs(scope?: Scope): ElementList<InterfaceDefinition>;
+  /**
+   * The types that specialize Interfaces::Interface; refused where the model's library has no
+   * Interfaces::Interface.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterfaceDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The interfaceDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterfaceDef(name: string, scope?: Scope): InterfaceDefinition | null;
+  /**
+   * The interfaceDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different interfaceDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterfaceDefsByName(scope?: Scope): Map<string, InterfaceDefinition>;
+  /**
+   * The itemDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemDefs(scope?: Scope): ElementList<ItemDefinition>;
+  /**
+   * The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemDefsExact(scope?: Scope): ElementList<ItemDefinition>;
+  /**
+   * The types that specialize Items::Item; refused where the model's library has no Items::Item.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The itemDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemDef(name: string, scope?: Scope): ItemDefinition | null;
+  /**
+   * The itemDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different itemDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemDefsByName(scope?: Scope): Map<string, ItemDefinition>;
+  /**
+   * The metadataDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMetadataDefs(scope?: Scope): ElementList<MetadataDefinition>;
+  /**
+   * The metadataDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMetadataDef(name: string, scope?: Scope): MetadataDefinition | null;
+  /**
+   * The metadataDefs of this namespace by name: each under every name and short name it is a member
+   * by (an alias's included). The order is the backend's: the specification does not define the
+   * order of membership. Refused where one name names two different metadataDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMetadataDefsByName(scope?: Scope): Map<string, MetadataDefinition>;
+  /**
+   * The occurrenceDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrenceDefs(scope?: Scope): ElementList<OccurrenceDefinition>;
+  /**
+   * The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrenceDefsExact(scope?: Scope): ElementList<OccurrenceDefinition>;
+  /**
+   * The types that specialize Occurrences::Occurrence; refused where the model's library has no
+   * Occurrences::Occurrence.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrenceDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The occurrenceDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrenceDef(name: string, scope?: Scope): OccurrenceDefinition | null;
+  /**
+   * The occurrenceDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different occurrenceDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrenceDefsByName(scope?: Scope): Map<string, OccurrenceDefinition>;
+  /**
+   * The partDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartDefs(scope?: Scope): ElementList<PartDefinition>;
+  /**
+   * The partDefs whose metaclass is exactly PartDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartDefsExact(scope?: Scope): ElementList<PartDefinition>;
+  /**
+   * The types that specialize Parts::Part; refused where the model's library has no Parts::Part.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The partDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartDef(name: string, scope?: Scope): PartDefinition | null;
+  /**
+   * The partDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different partDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartDefsByName(scope?: Scope): Map<string, PartDefinition>;
+  /**
+   * The portDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPortDefs(scope?: Scope): ElementList<PortDefinition>;
+  /**
+   * The portDefs whose metaclass is exactly PortDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPortDefsExact(scope?: Scope): ElementList<PortDefinition>;
+  /**
+   * The types that specialize Ports::Port; refused where the model's library has no Ports::Port.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPortDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The portDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPortDef(name: string, scope?: Scope): PortDefinition | null;
+  /**
+   * The portDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different portDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPortDefsByName(scope?: Scope): Map<string, PortDefinition>;
+  /**
+   * The renderingDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRenderingDefs(scope?: Scope): ElementList<RenderingDefinition>;
+  /**
+   * The types that specialize Views::Rendering; refused where the model's library has no
+   * Views::Rendering.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRenderingDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The renderingDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRenderingDef(name: string, scope?: Scope): RenderingDefinition | null;
+  /**
+   * The renderingDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different renderingDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRenderingDefsByName(scope?: Scope): Map<string, RenderingDefinition>;
+  /**
+   * The requirementDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementDefs(scope?: Scope): ElementList<RequirementDefinition>;
+  /**
+   * The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementDefsExact(scope?: Scope): ElementList<RequirementDefinition>;
+  /**
+   * The types that specialize Requirements::RequirementCheck; refused where the model's library has
+   * no Requirements::RequirementCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The requirementDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementDef(name: string, scope?: Scope): RequirementDefinition | null;
+  /**
+   * The requirementDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different requirementDefs, naming
+   * both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementDefsByName(scope?: Scope): Map<string, RequirementDefinition>;
+  /**
+   * The stateDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStateDefs(scope?: Scope): ElementList<StateDefinition>;
+  /**
+   * The types that specialize States::StateAction; refused where the model's library has no
+   * States::StateAction.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStateDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The stateDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStateDef(name: string, scope?: Scope): StateDefinition | null;
+  /**
+   * The stateDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different stateDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStateDefsByName(scope?: Scope): Map<string, StateDefinition>;
+  /**
+   * The useCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCaseDefs(scope?: Scope): ElementList<UseCaseDefinition>;
+  /**
+   * The types that specialize UseCases::UseCase; refused where the model's library has no
+   * UseCases::UseCase.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCaseDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The useCaseDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCaseDef(name: string, scope?: Scope): UseCaseDefinition | null;
+  /**
+   * The useCaseDefs of this namespace by name: each under every name and short name it is a member
+   * by (an alias's included). The order is the backend's: the specification does not define the
+   * order of membership. Refused where one name names two different useCaseDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCaseDefsByName(scope?: Scope): Map<string, UseCaseDefinition>;
+  /**
+   * The verificationCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCaseDefs(scope?: Scope): ElementList<VerificationCaseDefinition>;
+  /**
+   * The types that specialize VerificationCases::VerificationCase; refused where the model's
+   * library has no VerificationCases::VerificationCase.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCaseDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The verificationCaseDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCaseDef(name: string, scope?: Scope): VerificationCaseDefinition | null;
+  /**
+   * The verificationCaseDefs of this namespace by name: each under every name and short name it is
+   * a member by (an alias's included). The order is the backend's: the specification does not
+   * define the order of membership. Refused where one name names two different
+   * verificationCaseDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCaseDefsByName(scope?: Scope): Map<string, VerificationCaseDefinition>;
+  /**
+   * The viewDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewDefs(scope?: Scope): ElementList<ViewDefinition>;
+  /**
+   * The types that specialize Views::View; refused where the model's library has no Views::View.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The viewDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewDef(name: string, scope?: Scope): ViewDefinition | null;
+  /**
+   * The viewDefs of this namespace by name: each under every name and short name it is a member by
+   * (an alias's included). The order is the backend's: the specification does not define the order
+   * of membership. Refused where one name names two different viewDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewDefsByName(scope?: Scope): Map<string, ViewDefinition>;
+  /**
+   * The viewpointDefs of this namespace: owned, imported (and inherited) only, or both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpointDefs(scope?: Scope): ElementList<ViewpointDefinition>;
+  /**
+   * The types that specialize Views::ViewpointCheck; refused where the model's library has no
+   * Views::ViewpointCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpointDefsSemantic(scope?: Scope): ElementList<Type>;
+  /**
+   * The viewpointDef with this simple (effective) name, or none.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpointDef(name: string, scope?: Scope): ViewpointDefinition | null;
+  /**
+   * The viewpointDefs of this namespace by name: each under every name and short name it is a
+   * member by (an alias's included). The order is the backend's: the specification does not define
+   * the order of membership. Refused where one name names two different viewpointDefs, naming both.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The names and the element each names, in membership order; an empty map where there
+   *   are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpointDefsByName(scope?: Scope): Map<string, ViewpointDefinition>;
+  /**
+   * The packages this namespace owns.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPackages(): ElementList<Package>;
+  /**
+   * The owned package with this simple name, or none.
+   * @param name The simple name to look for.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPackage(name: string): Package | null;
+  /**
+   * The metadata usages this namespace owns, whatever they annotate (metadata M about other;
+   * included). Owned only: metadata is about the element that owns it, so it is never read through
+   * inheritance or imports.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findMemberMetadata(): ElementList<MetadataUsage>;
 }
 
 export interface NamespaceExpose extends Expose, NamespaceImport {
@@ -12792,6 +15419,14 @@ export interface OperatorExpression extends InvocationExpression {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x as T, m
+   * meta T give T): the grammar puts it in the second owned feature.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findTypeArgument(): Type | null;
 }
 
 export interface OwningMembership extends Membership {
@@ -15630,6 +18265,15 @@ export interface StateDefinition extends ActionDefinition {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * Initial states, by a priority chain over the notation's forms: first start then off; and, only
+   * if that gives none, entry; then off; (the Annex A form, an entry action with a transition from
+   * it, is not recognized).
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInitialStates(): ElementList<StateUsage>;
 }
 
 export interface StateSubactionMembership extends FeatureMembership {
@@ -15851,6 +18495,15 @@ export interface StateUsage extends ActionUsage {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * Initial states, by a priority chain over the notation's forms: first start then off; and, only
+   * if that gives none, entry; then off; (the Annex A form, an entry action with a transition from
+   * it, is not recognized).
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInitialStates(): ElementList<StateUsage>;
 }
 
 export interface Step extends Feature {
@@ -15972,6 +18625,23 @@ export interface Step extends Feature {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The directed features, scoped like the kind lists: those whose direction relative to this
+   * behaviour or step, directionOf, is not null. With scope all and library true, the
+   * specification's parameter.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findParameters(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
 }
 
 export interface Structure extends Class {
@@ -17228,6 +19898,22 @@ export interface TransitionUsage extends ActionUsage {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * What a transition's triggers accept.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAcceptedTypes(): ElementList<Type>;
+  /**
+   * Whether this transition's triggers accept a value of type: whether type specializes one of
+   * their accepted types (findAcceptedTypes).
+   * @param type The type of what arrives: an item, a signal or an event.
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findIsAcceptedType(type: Type): boolean;
 }
 
 export interface TriggerInvocationExpression extends InvocationExpression {
@@ -17439,6 +20125,1546 @@ export interface Type extends Namespace {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The features of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFeatures(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The feature with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFeature(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): Feature | null;
+  /**
+   * The usages of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUsages(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Usage>;
+  /**
+   * The usage with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUsage(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): Usage | null;
+  /**
+   * The actions of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActions(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The actions whose metaclass is exactly ActionUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The features whose type conforms to Actions::Action, as the Pilot navigation API's
+   * semanticActions; refused where the model's library has no Actions::Action.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findActionsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The action with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAction(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ActionUsage | null;
+  /**
+   * The allocations of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocations(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AllocationUsage>;
+  /**
+   * The features whose type conforms to Allocations::Allocation, as the Pilot navigation API's
+   * semanticAllocations; refused where the model's library has no Allocations::Allocation.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocationsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The allocation with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAllocation(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): AllocationUsage | null;
+  /**
+   * The analysisCases of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AnalysisCaseUsage>;
+  /**
+   * The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot navigation API's
+   * semanticAnalysisCases; refused where the model's library has no AnalysisCases::AnalysisCase.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCasesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The analysisCase with this simple (effective) name, or none: part :>> wheels is found as
+   * wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAnalysisCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): AnalysisCaseUsage | null;
+  /**
+   * The attributes of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributes(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The attributes whose metaclass is exactly AttributeUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributesExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+   * semanticAttributes; refused where the model's library has no Base::DataValue.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttributesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The attribute with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findAttribute(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): AttributeUsage | null;
+  /**
+   * The calculations of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculations(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The calculations whose metaclass is exactly CalculationUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The features whose type conforms to Calculations::Calculation, as the Pilot navigation API's
+   * semanticCalculations; refused where the model's library has no Calculations::Calculation.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculationsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The calculation with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCalculation(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): CalculationUsage | null;
+  /**
+   * The cases of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The cases whose metaclass is exactly CaseUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCasesExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The features whose type conforms to Cases::Case, as the Pilot navigation API's semanticCases;
+   * refused where the model's library has no Cases::Case.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCasesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The case with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): CaseUsage | null;
+  /**
+   * The concerns of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcerns(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConcernUsage>;
+  /**
+   * The features whose type conforms to Requirements::ConcernCheck, as the Pilot navigation API's
+   * semanticConcerns; refused where the model's library has no Requirements::ConcernCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcernsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The concern with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConcern(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ConcernUsage | null;
+  /**
+   * The connections of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnections(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectorAsUsage>;
+  /**
+   * The connections whose metaclass is exactly ConnectionUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectionUsage>;
+  /**
+   * The features whose type conforms to Connections::Connection, as the Pilot navigation API's
+   * semanticConnections; refused where the model's library has no Connections::Connection.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnectionsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The connection with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConnection(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ConnectorAsUsage | null;
+  /**
+   * The constraints of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraints(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The features whose type conforms to Constraints::ConstraintCheck, as the Pilot navigation API's
+   * semanticConstraints; refused where the model's library has no Constraints::ConstraintCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraintsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The constraint with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findConstraint(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ConstraintUsage | null;
+  /**
+   * The enumerations of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findEnumerations(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<EnumerationUsage>;
+  /**
+   * The enumeration with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findEnumeration(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): EnumerationUsage | null;
+  /**
+   * The flows of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlows(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The flows whose metaclass is exactly FlowUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlowsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The features whose type conforms to Flows::MessageAction, as the Pilot navigation API's
+   * semanticFlows; refused where the model's library has no Flows::MessageAction.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlowsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The flow with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findFlow(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): FlowUsage | null;
+  /**
+   * The interfaces of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterfaces(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<InterfaceUsage>;
+  /**
+   * The features whose type conforms to Interfaces::Interface, as the Pilot navigation API's
+   * semanticInterfaces; refused where the model's library has no Interfaces::Interface.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterfacesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The interface with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInterface(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): InterfaceUsage | null;
+  /**
+   * The items of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItems(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The items whose metaclass is exactly ItemUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The features whose type conforms to Items::Item, as the Pilot navigation API's semanticItems;
+   * refused where the model's library has no Items::Item.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItemsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The item with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findItem(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ItemUsage | null;
+  /**
+   * The occurrences of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrences(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrencesExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The features whose type conforms to Occurrences::Occurrence, as the Pilot navigation API's
+   * semanticOccurrences; refused where the model's library has no Occurrences::Occurrence.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrencesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The occurrence with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOccurrence(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): OccurrenceUsage | null;
+  /**
+   * The parts of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findParts(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The parts whose metaclass is exactly PartUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The features whose type conforms to Parts::Part, as the Pilot navigation API's semanticParts;
+   * refused where the model's library has no Parts::Part.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPartsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The part with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPart(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): PartUsage | null;
+  /**
+   * The ports of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPorts(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PortUsage>;
+  /**
+   * The features whose type conforms to Ports::Port, as the Pilot navigation API's semanticPorts;
+   * refused where the model's library has no Ports::Port.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPortsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The port with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findPort(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): PortUsage | null;
+  /**
+   * The references of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findReferences(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ReferenceUsage>;
+  /**
+   * The reference with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findReference(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ReferenceUsage | null;
+  /**
+   * The renderings of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRenderings(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RenderingUsage>;
+  /**
+   * The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+   * semanticRenderings; refused where the model's library has no Views::Rendering.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRenderingsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The rendering with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRendering(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): RenderingUsage | null;
+  /**
+   * The requirements of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirements(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The requirements whose metaclass is exactly RequirementUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementsExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The features whose type conforms to Requirements::RequirementCheck, as the Pilot navigation
+   * API's semanticRequirements; refused where the model's library has no
+   * Requirements::RequirementCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirementsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The requirement with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findRequirement(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): RequirementUsage | null;
+  /**
+   * The states of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStates(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The states whose metaclass is exactly StateUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStatesExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The features whose type conforms to States::StateAction, as the Pilot navigation API's
+   * semanticStates; refused where the model's library has no States::StateAction.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findStatesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The state with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findState(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): StateUsage | null;
+  /**
+   * The transitions of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findTransitions(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<TransitionUsage>;
+  /**
+   * The transition with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findTransition(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): TransitionUsage | null;
+  /**
+   * The useCases of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCasesExact(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The features whose type conforms to UseCases::UseCase, as the Pilot navigation API's
+   * semanticUseCases; refused where the model's library has no UseCases::UseCase.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCasesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The useCase with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUseCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): UseCaseUsage | null;
+  /**
+   * The verificationCases of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCases(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<VerificationCaseUsage>;
+  /**
+   * The features whose type conforms to VerificationCases::VerificationCase, as the Pilot
+   * navigation API's semanticVerificationCases; refused where the model's library has no
+   * VerificationCases::VerificationCase.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCasesSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The verificationCase with this simple (effective) name, or none: part :>> wheels is found as
+   * wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVerificationCase(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): VerificationCaseUsage | null;
+  /**
+   * The views of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViews(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewUsage>;
+  /**
+   * The features whose type conforms to Views::View, as the Pilot navigation API's semanticViews;
+   * refused where the model's library has no Views::View.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The view with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findView(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ViewUsage | null;
+  /**
+   * The viewpoints of this type.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpoints(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewpointUsage>;
+  /**
+   * The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation API's
+   * semanticViewpoints; refused where the model's library has no Views::ViewpointCheck.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpointsSemantic(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The viewpoint with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findViewpoint(name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ViewpointUsage | null;
+  /**
+   * Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its
+   * original type; a feature chain's last feature is a supertype of the chain.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDeclaredSupertypes(): ElementList<Type>;
+  /**
+   * Direct supertypes the backend adds by the language's rules (Parts::Part for a part definition).
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findImpliedSupertypes(): ElementList<Type>;
+  /**
+   * Direct supertypes, written and implied: supertypes(false).
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findDeclaredAndImpliedSupertypes(): ElementList<Type>;
+  /**
+   * The feature in effect here for feature: itself where inherited as it is, else the one
+   * redefining it; none where this type does not have it.
+   * @param feature The feature as declared, on this type or on a type it specializes.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findEffectiveFeature(feature: Feature): Feature | null;
+  /**
+   * The lower bound as a number; none where the type has no multiplicity; refused where the bound
+   * is an expression ([rotorCount]).
+   * @returns The number, or null where there is none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findLowerBound(): number | null;
+  /**
+   * The upper bound as a number or * (unbounded); none where the type has no multiplicity; refused
+   * where the bound is an expression.
+   * @returns The number (Infinity for *, unbounded), or null where there is none.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUpperBound(): number | null;
+  /**
+   * The lower bound's expression; none where there is none (no multiplicity, the lower bound of
+   * [*], a multiplicity without a range).
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findLowerBoundExpr(): Expression | null;
+  /**
+   * The upper bound's expression; none where there is none.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findUpperBoundExpr(): Expression | null;
+  /**
+   * Whether the type has a multiplicity whose lower bound is a literal (findLowerBound then answers
+   * with a number).
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findHasLiteralLowerBound(): boolean;
+  /**
+   * Whether the type has a multiplicity whose upper bound is a literal.
+   * @returns true or false.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findHasLiteralUpperBound(): boolean;
+  /**
+   * The features directed in or inout relative to this type, directionOf taking conjugation into
+   * account (a conjugated port's out items are its inputs), scoped like the kind lists. With scope
+   * all and library true, the specification's input.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findInputs(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features directed out or inout relative to this type, directionOf taking conjugation into
+   * account (a conjugated port's in items are its outputs), scoped like the kind lists. With scope
+   * all and library true, the specification's output.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findOutputs(scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features of this type that are, or specialize, feature (the wheels among a vehicle's
+   * parts), scoped.
+   * @param feature The feature the answers are or specialize.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order; an empty list where there are none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findSubsettingFeaturesOf(feature: Feature, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
 }
 
 export interface TypeFeaturing extends Relationship {
@@ -17665,6 +21891,14 @@ export interface Usage extends Feature {
   unqualifiedNameOf(qualifiedName: string | null): string | null;
   visibilityOf(mem: Membership | null): string | null;
   visibleMemberships(excluded: Namespace[], isRecursive: boolean | null, includeAll: boolean | null): Membership[];
+  /**
+   * The variation a variant belongs to (variation part def V { variant part a; }: a gives V; an
+   * enumeration's values give the enumeration); none for a usage that is not a variant.
+   * @returns The element, or null where there is none.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it.
+   */
+  findVariation(): Type | null;
 }
 
 export interface UseCaseDefinition extends CaseDefinition {
@@ -19307,6 +23541,3816 @@ export interface ClassMap {
   ViewpointDefinition: ViewpointDefinition;
   ViewpointUsage: ViewpointUsage;
   WhileLoopActionUsage: WhileLoopActionUsage;
+}
+
+/** A list of elements carrying the convenience members of its elements: `xs.findPorts()` is the
+ * elements' `findPorts()` in list order, list results concatenated, absent single results dropped. */
+export interface ElementList<T extends AnyElement = AnyElement> extends Array<T> {
+  /**
+   * What an accept action accepts: its payload's types. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAcceptedTypes<U extends AcceptActionUsage>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * What a transition's triggers accept. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAcceptedTypes<U extends TransitionUsage>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * The action with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAction<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The actionDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActionDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ActionDefinition>;
+  /**
+   * The actionDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActionDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ActionDefinition>;
+  /**
+   * The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActionDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ActionDefinition>;
+  /**
+   * The types that specialize Actions::Action; refused where the model's library has no
+   * Actions::Action. Over the list's elements, in order: list answers concatenated, absent single
+   * answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActionDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The actions of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActions<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The actions whose metaclass is exactly ActionUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActionsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The features whose type conforms to Actions::Action, as the Pilot navigation API's
+   * semanticActions; refused where the model's library has no Actions::Action. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findActionsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The allocation with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAllocation<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AllocationUsage>;
+  /**
+   * The allocationDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAllocationDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<AllocationDefinition>;
+  /**
+   * The allocationDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAllocationDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<AllocationDefinition>;
+  /**
+   * The types that specialize Allocations::Allocation; refused where the model's library has no
+   * Allocations::Allocation. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAllocationDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The allocations of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAllocations<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AllocationUsage>;
+  /**
+   * The features whose type conforms to Allocations::Allocation, as the Pilot navigation API's
+   * semanticAllocations; refused where the model's library has no Allocations::Allocation. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAllocationsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The analysisCase with this simple (effective) name, or none: part :>> wheels is found as
+   * wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+   * dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAnalysisCase<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AnalysisCaseUsage>;
+  /**
+   * The analysisCaseDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAnalysisCaseDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<AnalysisCaseDefinition>;
+  /**
+   * The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAnalysisCaseDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<AnalysisCaseDefinition>;
+  /**
+   * The types that specialize AnalysisCases::AnalysisCase; refused where the model's library has no
+   * AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAnalysisCaseDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The analysisCases of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAnalysisCases<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AnalysisCaseUsage>;
+  /**
+   * The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot navigation API's
+   * semanticAnalysisCases; refused where the model's library has no AnalysisCases::AnalysisCase.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAnalysisCasesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * Metadata applied to an element by an owned annotation, or as an owned member annotating it (#M
+   * part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not found. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAppliedMetadata<U extends AnyElement>(this: ElementList<U>): ElementList<MetadataFeature>;
+  /**
+   * The attribute with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttribute<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The attributeDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributeDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<AttributeDefinition>;
+  /**
+   * The attributeDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributeDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<AttributeDefinition>;
+  /**
+   * The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left out. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributeDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<AttributeDefinition>;
+  /**
+   * The types that specialize Base::DataValue; refused where the model's library has no
+   * Base::DataValue. Over the list's elements, in order: list answers concatenated, absent single
+   * answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributeDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The attributes of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributes<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The attributes whose metaclass is exactly AttributeUsage, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributesExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+   * semanticAttributes; refused where the model's library has no Base::DataValue. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findAttributesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The calculation with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculation<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The calculationDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculationDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<CalculationDefinition>;
+  /**
+   * The calculationDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculationDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<CalculationDefinition>;
+  /**
+   * The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds left out.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculationDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<CalculationDefinition>;
+  /**
+   * The types that specialize Calculations::Calculation; refused where the model's library has no
+   * Calculations::Calculation. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculationDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The calculations of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculations<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The calculations whose metaclass is exactly CalculationUsage, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculationsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The features whose type conforms to Calculations::Calculation, as the Pilot navigation API's
+   * semanticCalculations; refused where the model's library has no Calculations::Calculation. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCalculationsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The case with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCase<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The caseDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCaseDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<CaseDefinition>;
+  /**
+   * The caseDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCaseDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<CaseDefinition>;
+  /**
+   * The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCaseDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<CaseDefinition>;
+  /**
+   * The types that specialize Cases::Case; refused where the model's library has no Cases::Case.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCaseDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The cases of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCases<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The cases whose metaclass is exactly CaseUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCasesExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The features whose type conforms to Cases::Case, as the Pilot navigation API's semanticCases;
+   * refused where the model's library has no Cases::Case. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findCasesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The concern with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConcern<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConcernUsage>;
+  /**
+   * The concernDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConcernDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ConcernDefinition>;
+  /**
+   * The concernDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConcernDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ConcernDefinition>;
+  /**
+   * The types that specialize Requirements::ConcernCheck; refused where the model's library has no
+   * Requirements::ConcernCheck. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConcernDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The concerns of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConcerns<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConcernUsage>;
+  /**
+   * The features whose type conforms to Requirements::ConcernCheck, as the Pilot navigation API's
+   * semanticConcerns; refused where the model's library has no Requirements::ConcernCheck. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConcernsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The connection with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnection<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectorAsUsage>;
+  /**
+   * The connectionDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnectionDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ConnectionDefinition>;
+  /**
+   * The connectionDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnectionDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ConnectionDefinition>;
+  /**
+   * The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds left out. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnectionDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ConnectionDefinition>;
+  /**
+   * The types that specialize Connections::Connection; refused where the model's library has no
+   * Connections::Connection. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnectionDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The connections of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnections<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectorAsUsage>;
+  /**
+   * The connections whose metaclass is exactly ConnectionUsage, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnectionsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectionUsage>;
+  /**
+   * The features whose type conforms to Connections::Connection, as the Pilot navigation API's
+   * semanticConnections; refused where the model's library has no Connections::Connection. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConnectionsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The constraint with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraint<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The constraintDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraintDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ConstraintDefinition>;
+  /**
+   * The constraintDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraintDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ConstraintDefinition>;
+  /**
+   * The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds left out. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraintDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ConstraintDefinition>;
+  /**
+   * The types that specialize Constraints::ConstraintCheck; refused where the model's library has
+   * no Constraints::ConstraintCheck. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraintDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The constraints of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraints<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraintsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The features whose type conforms to Constraints::ConstraintCheck, as the Pilot navigation API's
+   * semanticConstraints; refused where the model's library has no Constraints::ConstraintCheck.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findConstraintsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * Direct supertypes, written and implied: supertypes(false). Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findDeclaredAndImpliedSupertypes<U extends Type>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its
+   * original type; a feature chain's last feature is a supertype of the chain. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findDeclaredSupertypes<U extends Type>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * The types this feature is declared with. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findDeclaredTypes<U extends Feature>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * The definition with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findDefinition<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<Definition>;
+  /**
+   * The definitions of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findDefinitions<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Definition>;
+  /**
+   * The bodies of the element's documentation comments, in order. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @returns The texts, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findDocText<U extends AnyElement>(this: ElementList<U>): string[];
+  /**
+   * The feature in effect here for feature: itself where inherited as it is, else the one
+   * redefining it; none where this type does not have it. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param feature The feature as declared, on this type or on a type it specializes.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findEffectiveFeature<U extends Type>(this: ElementList<U>, feature: Feature): ElementList<Feature>;
+  /**
+   * The enumeration with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findEnumeration<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<EnumerationUsage>;
+  /**
+   * The enumerationDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findEnumerationDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<EnumerationDefinition>;
+  /**
+   * The enumerationDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findEnumerationDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<EnumerationDefinition>;
+  /**
+   * The enumerations of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findEnumerations<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<EnumerationUsage>;
+  /**
+   * The feature with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFeature<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFeatures<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The flow with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlow<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The flowDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlowDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<FlowDefinition>;
+  /**
+   * The flowDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlowDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<FlowDefinition>;
+  /**
+   * The types that specialize Flows::MessageAction; refused where the model's library has no
+   * Flows::MessageAction. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlowDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The flows of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlows<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The flows whose metaclass is exactly FlowUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlowsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The features whose type conforms to Flows::MessageAction, as the Pilot navigation API's
+   * semanticFlows; refused where the model's library has no Flows::MessageAction. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findFlowsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * Direct supertypes the backend adds by the language's rules (Parts::Part for a part definition).
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findImpliedSupertypes<U extends Type>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * Initial states, by a priority chain over the notation's forms: first start then off; and, only
+   * if that gives none, entry; then off; (the Annex A form, an entry action with a transition from
+   * it, is not recognized). Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInitialStates<U extends StateUsage>(this: ElementList<U>): ElementList<StateUsage>;
+  /**
+   * Initial states, by a priority chain over the notation's forms: first start then off; and, only
+   * if that gives none, entry; then off; (the Annex A form, an entry action with a transition from
+   * it, is not recognized). Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInitialStates<U extends StateDefinition>(this: ElementList<U>): ElementList<StateUsage>;
+  /**
+   * The features directed in or inout relative to this type, directionOf taking conjugation into
+   * account (a conjugated port's out items are its inputs), scoped like the kind lists. With scope
+   * all and library true, the specification's input. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInputs<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The interface with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInterface<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<InterfaceUsage>;
+  /**
+   * The interfaceDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInterfaceDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<InterfaceDefinition>;
+  /**
+   * The interfaceDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInterfaceDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<InterfaceDefinition>;
+  /**
+   * The types that specialize Interfaces::Interface; refused where the model's library has no
+   * Interfaces::Interface. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInterfaceDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The interfaces of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInterfaces<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<InterfaceUsage>;
+  /**
+   * The features whose type conforms to Interfaces::Interface, as the Pilot navigation API's
+   * semanticInterfaces; refused where the model's library has no Interfaces::Interface. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findInterfacesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The item with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItem<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The itemDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItemDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ItemDefinition>;
+  /**
+   * The itemDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItemDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ItemDefinition>;
+  /**
+   * The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItemDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ItemDefinition>;
+  /**
+   * The types that specialize Items::Item; refused where the model's library has no Items::Item.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItemDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The items of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItems<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The items whose metaclass is exactly ItemUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItemsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The features whose type conforms to Items::Item, as the Pilot navigation API's semanticItems;
+   * refused where the model's library has no Items::Item. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findItemsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The lower bound's expression; none where there is none (no multiplicity, the lower bound of
+   * [*], a multiplicity without a range). Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findLowerBoundExpr<U extends Type>(this: ElementList<U>): ElementList<Expression>;
+  /**
+   * The action that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAction<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The actions that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberActions<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ActionUsage>;
+  /**
+   * The allocation that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAllocation<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AllocationUsage>;
+  /**
+   * The allocations that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAllocations<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AllocationUsage>;
+  /**
+   * The analysisCase that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAnalysisCase<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AnalysisCaseUsage>;
+  /**
+   * The analysisCases that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAnalysisCases<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AnalysisCaseUsage>;
+  /**
+   * The attribute that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAttribute<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The attributes that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberAttributes<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<AttributeUsage>;
+  /**
+   * The calculation that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberCalculation<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The calculations that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberCalculations<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CalculationUsage>;
+  /**
+   * The case that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberCase<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The cases that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberCases<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<CaseUsage>;
+  /**
+   * The concern that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberConcern<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConcernUsage>;
+  /**
+   * The concerns that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberConcerns<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConcernUsage>;
+  /**
+   * The connection that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberConnection<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectorAsUsage>;
+  /**
+   * The connections that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberConnections<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConnectorAsUsage>;
+  /**
+   * The constraint that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberConstraint<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The constraints that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberConstraints<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ConstraintUsage>;
+  /**
+   * The enumeration that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberEnumeration<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<EnumerationUsage>;
+  /**
+   * The enumerations that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberEnumerations<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<EnumerationUsage>;
+  /**
+   * The feature that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberFeature<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberFeatures<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The flow that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberFlow<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The flows that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberFlows<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<FlowUsage>;
+  /**
+   * The interface that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberInterface<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<InterfaceUsage>;
+  /**
+   * The interfaces that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberInterfaces<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<InterfaceUsage>;
+  /**
+   * The item that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberItem<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The items that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberItems<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ItemUsage>;
+  /**
+   * The metadata usages this namespace owns, whatever they annotate (metadata M about other;
+   * included). Owned only: metadata is about the element that owns it, so it is never read through
+   * inheritance or imports. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberMetadata<U extends Namespace>(this: ElementList<U>): ElementList<MetadataUsage>;
+  /**
+   * The occurrence that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberOccurrence<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The occurrences that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberOccurrences<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The part that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberPart<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The parts that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberParts<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The port that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberPort<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PortUsage>;
+  /**
+   * The ports that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberPorts<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PortUsage>;
+  /**
+   * The reference that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberReference<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ReferenceUsage>;
+  /**
+   * The references that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberReferences<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ReferenceUsage>;
+  /**
+   * The rendering that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberRendering<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RenderingUsage>;
+  /**
+   * The renderings that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberRenderings<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RenderingUsage>;
+  /**
+   * The requirement that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberRequirement<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The requirements that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberRequirements<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The state that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberState<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The states that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberStates<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The transition that is a member under this simple name (an alias's name included), or none.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberTransition<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<TransitionUsage>;
+  /**
+   * The transitions that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberTransitions<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<TransitionUsage>;
+  /**
+   * The usage that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberUsage<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Usage>;
+  /**
+   * The usages that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberUsages<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Usage>;
+  /**
+   * The useCase that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberUseCase<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The useCases that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberUseCases<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The verificationCase that is a member under this simple name (an alias's name included), or
+   * none. Over the list's elements, in order: list answers concatenated, absent single answers
+   * dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberVerificationCase<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<VerificationCaseUsage>;
+  /**
+   * The verificationCases that are members of this namespace through any membership (owned,
+   * aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberVerificationCases<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<VerificationCaseUsage>;
+  /**
+   * The view that is a member under this simple name (an alias's name included), or none. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberView<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewUsage>;
+  /**
+   * The viewpoint that is a member under this simple name (an alias's name included), or none. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The member name to look for, an alias's name included.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberViewpoint<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewpointUsage>;
+  /**
+   * The viewpoints that are members of this namespace through any membership (owned, aliased,
+   * imported, inherited), each once. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberViewpoints<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewpointUsage>;
+  /**
+   * The views that are members of this namespace through any membership (owned, aliased, imported,
+   * inherited), each once. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMemberViews<U extends Namespace>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewUsage>;
+  /**
+   * The metadataDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMetadataDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<MetadataDefinition>;
+  /**
+   * The metadataDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findMetadataDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<MetadataDefinition>;
+  /**
+   * The occurrence with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrence<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The occurrenceDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrenceDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<OccurrenceDefinition>;
+  /**
+   * The occurrenceDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrenceDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<OccurrenceDefinition>;
+  /**
+   * The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds left out. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrenceDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<OccurrenceDefinition>;
+  /**
+   * The types that specialize Occurrences::Occurrence; refused where the model's library has no
+   * Occurrences::Occurrence. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrenceDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The occurrences of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrences<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrencesExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<OccurrenceUsage>;
+  /**
+   * The features whose type conforms to Occurrences::Occurrence, as the Pilot navigation API's
+   * semanticOccurrences; refused where the model's library has no Occurrences::Occurrence. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOccurrencesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features directed out or inout relative to this type, directionOf taking conjugation into
+   * account (a conjugated port's in items are its outputs), scoped like the kind lists. With scope
+   * all and library true, the specification's output. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findOutputs<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The owned package with this simple name, or none. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPackage<U extends Namespace>(this: ElementList<U>, name: string): ElementList<Package>;
+  /**
+   * The packages this namespace owns. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPackages<U extends Namespace>(this: ElementList<U>): ElementList<Package>;
+  /**
+   * The directed features, scoped like the kind lists: those whose direction relative to this
+   * behaviour or step, directionOf, is not null. With scope all and library true, the
+   * specification's parameter. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findParameters<U extends Behavior>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The directed features, scoped like the kind lists: those whose direction relative to this
+   * behaviour or step, directionOf, is not null. With scope all and library true, the
+   * specification's parameter. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findParameters<U extends Step>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The part with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPart<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The partDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPartDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<PartDefinition>;
+  /**
+   * The partDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPartDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<PartDefinition>;
+  /**
+   * The partDefs whose metaclass is exactly PartDefinition, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPartDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<PartDefinition>;
+  /**
+   * The types that specialize Parts::Part; refused where the model's library has no Parts::Part.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPartDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The parts of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findParts<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The parts whose metaclass is exactly PartUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPartsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PartUsage>;
+  /**
+   * The features whose type conforms to Parts::Part, as the Pilot navigation API's semanticParts;
+   * refused where the model's library has no Parts::Part. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPartsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * A feature chain as its features (battery.powerOut gives [battery, powerOut]); else [self]. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPath<U extends Feature>(this: ElementList<U>): ElementList<Feature>;
+  /**
+   * The port with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPort<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PortUsage>;
+  /**
+   * The portDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPortDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<PortDefinition>;
+  /**
+   * The portDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPortDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<PortDefinition>;
+  /**
+   * The portDefs whose metaclass is exactly PortDefinition, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPortDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<PortDefinition>;
+  /**
+   * The types that specialize Ports::Port; refused where the model's library has no Ports::Port.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPortDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The ports of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPorts<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<PortUsage>;
+  /**
+   * The features whose type conforms to Ports::Port, as the Pilot navigation API's semanticPorts;
+   * refused where the model's library has no Ports::Port. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findPortsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features this feature redefines as written. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRedefinedFeatures<U extends Feature>(this: ElementList<U>): ElementList<Feature>;
+  /**
+   * The feature a chain of written redefinitions starts from, following the first at each step
+   * (Truck::mass to Frame::mass); itself when it redefines nothing. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRedefinitionRoot<U extends Feature>(this: ElementList<U>): ElementList<Feature>;
+  /**
+   * The reference with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findReference<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ReferenceUsage>;
+  /**
+   * The feature this feature references (::>), or none. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findReferencedFeature<U extends Feature>(this: ElementList<U>): ElementList<Feature>;
+  /**
+   * The references of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findReferences<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ReferenceUsage>;
+  /**
+   * The rendering with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRendering<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RenderingUsage>;
+  /**
+   * The renderingDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRenderingDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<RenderingDefinition>;
+  /**
+   * The renderingDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRenderingDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<RenderingDefinition>;
+  /**
+   * The types that specialize Views::Rendering; refused where the model's library has no
+   * Views::Rendering. Over the list's elements, in order: list answers concatenated, absent single
+   * answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRenderingDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The renderings of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRenderings<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RenderingUsage>;
+  /**
+   * The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+   * semanticRenderings; refused where the model's library has no Views::Rendering. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRenderingsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The requirement with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirement<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The requirementDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirementDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<RequirementDefinition>;
+  /**
+   * The requirementDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirementDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<RequirementDefinition>;
+  /**
+   * The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds left out.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirementDefsExact<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<RequirementDefinition>;
+  /**
+   * The types that specialize Requirements::RequirementCheck; refused where the model's library has
+   * no Requirements::RequirementCheck. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirementDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The requirements of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirements<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The requirements whose metaclass is exactly RequirementUsage, its subkinds left out. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirementsExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<RequirementUsage>;
+  /**
+   * The features whose type conforms to Requirements::RequirementCheck, as the Pilot navigation
+   * API's semanticRequirements; refused where the model's library has no
+   * Requirements::RequirementCheck. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findRequirementsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The result expression of a calculation or constraint, owned or inherited; the specification has
+   * resultExpression only on analysis cases. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findResultExpression<U extends Function>(this: ElementList<U>): ElementList<Expression>;
+  /**
+   * The result expression of a calculation or constraint, owned or inherited; the specification has
+   * resultExpression only on analysis cases. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findResultExpression<U extends Expression>(this: ElementList<U>): ElementList<Expression>;
+  /**
+   * The state with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findState<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The stateDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findStateDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<StateDefinition>;
+  /**
+   * The stateDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findStateDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<StateDefinition>;
+  /**
+   * The types that specialize States::StateAction; refused where the model's library has no
+   * States::StateAction. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findStateDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The states of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findStates<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The states whose metaclass is exactly StateUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findStatesExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<StateUsage>;
+  /**
+   * The features whose type conforms to States::StateAction, as the Pilot navigation API's
+   * semanticStates; refused where the model's library has no States::StateAction. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findStatesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The features this feature subsets as written (redefinitions and reference subsettings left
+   * out). Over the list's elements, in order: list answers concatenated, absent single answers
+   * dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findSubsettedFeatures<U extends Feature>(this: ElementList<U>): ElementList<Feature>;
+  /**
+   * The features of this type that are, or specialize, feature (the wheels among a vehicle's
+   * parts), scoped. Over the list's elements, in order: list answers concatenated, absent single
+   * answers dropped.
+   * @param feature The feature the answers are or specialize.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findSubsettingFeaturesOf<U extends Type>(this: ElementList<U>, feature: Feature, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The transition with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findTransition<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<TransitionUsage>;
+  /**
+   * The transitions of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findTransitions<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<TransitionUsage>;
+  /**
+   * The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x as T, m
+   * meta T give T): the grammar puts it in the second owned feature. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findTypeArgument<U extends OperatorExpression>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference names,
+   * SI::kilogram); none for a literal without a unit; refused for anything else, whose unit needs
+   * evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit(). Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUnit<U extends Expression>(this: ElementList<U>): ElementList<AnyElement>;
+  /**
+   * The upper bound's expression; none where there is none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUpperBoundExpr<U extends Type>(this: ElementList<U>): ElementList<Expression>;
+  /**
+   * The usage with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUsage<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Usage>;
+  /**
+   * The usages of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUsages<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Usage>;
+  /**
+   * The useCase with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCase<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The useCaseDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCaseDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<UseCaseDefinition>;
+  /**
+   * The useCaseDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCaseDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<UseCaseDefinition>;
+  /**
+   * The types that specialize UseCases::UseCase; refused where the model's library has no
+   * UseCases::UseCase. Over the list's elements, in order: list answers concatenated, absent single
+   * answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCaseDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The useCases of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCases<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCasesExact<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<UseCaseUsage>;
+  /**
+   * The features whose type conforms to UseCases::UseCase, as the Pilot navigation API's
+   * semanticUseCases; refused where the model's library has no UseCases::UseCase. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findUseCasesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The value expression this feature is declared with (=, :=, default), or none. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findValue<U extends Feature>(this: ElementList<U>): ElementList<Expression>;
+  /**
+   * The variation a variant belongs to (variation part def V { variant part a; }: a gives V; an
+   * enumeration's values give the enumeration); none for a usage that is not a variant. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVariation<U extends Usage>(this: ElementList<U>): ElementList<Type>;
+  /**
+   * The verificationCase with this simple (effective) name, or none: part :>> wheels is found as
+   * wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+   * dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVerificationCase<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<VerificationCaseUsage>;
+  /**
+   * The verificationCaseDef with this simple (effective) name, or none. Over the list's elements,
+   * in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVerificationCaseDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<VerificationCaseDefinition>;
+  /**
+   * The verificationCaseDefs of this namespace: owned, imported (and inherited) only, or both. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVerificationCaseDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<VerificationCaseDefinition>;
+  /**
+   * The types that specialize VerificationCases::VerificationCase; refused where the model's
+   * library has no VerificationCases::VerificationCase. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVerificationCaseDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The verificationCases of this type. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVerificationCases<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<VerificationCaseUsage>;
+  /**
+   * The features whose type conforms to VerificationCases::VerificationCase, as the Pilot
+   * navigation API's semanticVerificationCases; refused where the model's library has no
+   * VerificationCases::VerificationCase. Over the list's elements, in order: list answers
+   * concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findVerificationCasesSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The view with this simple (effective) name, or none: part :>> wheels is found as wheels. Over
+   * the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findView<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewUsage>;
+  /**
+   * The viewDef with this simple (effective) name, or none. Over the list's elements, in order:
+   * list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ViewDefinition>;
+  /**
+   * The viewDefs of this namespace: owned, imported (and inherited) only, or both. Over the list's
+   * elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ViewDefinition>;
+  /**
+   * The types that specialize Views::View; refused where the model's library has no Views::View.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The viewpoint with this simple (effective) name, or none: part :>> wheels is found as wheels.
+   * Over the list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for, a feature's effective name.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewpoint<U extends Type>(this: ElementList<U>, name: string, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewpointUsage>;
+  /**
+   * The viewpointDef with this simple (effective) name, or none. Over the list's elements, in
+   * order: list answers concatenated, absent single answers dropped.
+   * @param name The simple name to look for.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewpointDef<U extends Namespace>(this: ElementList<U>, name: string, scope?: Scope): ElementList<ViewpointDefinition>;
+  /**
+   * The viewpointDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewpointDefs<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<ViewpointDefinition>;
+  /**
+   * The types that specialize Views::ViewpointCheck; refused where the model's library has no
+   * Views::ViewpointCheck. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewpointDefsSemantic<U extends Namespace>(this: ElementList<U>, scope?: Scope): ElementList<Type>;
+  /**
+   * The viewpoints of this type. Over the list's elements, in order: list answers concatenated,
+   * absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewpoints<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewpointUsage>;
+  /**
+   * The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation API's
+   * semanticViewpoints; refused where the model's library has no Views::ViewpointCheck. Over the
+   * list's elements, in order: list answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewpointsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
+  /**
+   * The views of this type. Over the list's elements, in order: list answers concatenated, absent
+   * single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViews<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<ViewUsage>;
+  /**
+   * The features whose type conforms to Views::View, as the Pilot navigation API's semanticViews;
+   * refused where the model's library has no Views::View. Over the list's elements, in order: list
+   * answers concatenated, absent single answers dropped.
+   * @param scope Which members a list reads: the type's own, those it inherits, or both. A list of
+   *   features gives its own first; a list of members or definitions, outside the owned scope, is
+   *   in the backend's order. For a namespace's members, inherited includes imported. Default:
+   *   "owned".
+   * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+   *   only. Default: "any".
+   * @param library Whether members inherited from the standard library's types are kept (a user's
+   *   library package counts as model). Default: false.
+   * @returns The elements, in order.
+   * @throws {Refused} Where the definition gives no answer for this element, as described above.
+   * @throws {NotAnswered} Where the backend cannot answer a property or operation this member
+   *   reads; the message names it. If the member refuses for one element, the call refuses.
+   */
+  findViewsSemantic<U extends Type>(this: ElementList<U>, scope?: Scope, visibility?: VisibilityFilter, library?: boolean): ElementList<Feature>;
 }
 
 // Every metaclass, abstract included — the narrowable kinds

@@ -26,4 +26,24 @@ public interface Backend {
      * evaluate the operation throws {@link NotImplementedInToolkitException}.
      */
     Object call(String handle, String op, java.util.List<Object> args);
+
+    /**
+     * A convenience member on the element {@code handle}, with its arguments in order, defaults filled
+     * in. A backend that cannot answer it throws {@link NotAnsweredException}; where its contract gives
+     * no answer, {@link RefusedException}.
+     */
+    default Object find(String handle, Find member, java.util.List<Object> args) {
+        throw new NotAnsweredException(member.name() + ": this backend does not answer the convenience members");
+    }
+
+    /**
+     * {@link #find} on each element, a result per handle in order, for the members of an
+     * {@link ElementList}. By default one {@code find} per element; a backend that can answer them
+     * together (in one request) overrides it.
+     */
+    default java.util.List<Object> findEach(java.util.List<String> handles, Find member, java.util.List<Object> args) {
+        java.util.List<Object> out = new java.util.ArrayList<>(handles.size());
+        for (String h : handles) out.add(find(h, member, args));
+        return out;
+    }
 }

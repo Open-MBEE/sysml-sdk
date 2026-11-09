@@ -1,0 +1,863 @@
+# The convenience contract: the `find` members of the generated classes, as data.
+#
+# The source of `convenience.json`, which `tools/extract_convenience.py` writes from this file and
+# `metamodel.json`: it expands the two families into their members, checks every name against the
+# metamodel, and spells each member in every language. Generators and checks read the JSON.
+#
+# Semantics are OCL over specification properties and operations only, in the style of the
+# specification's derivations. A backend implements each member natively; the OCL is the reference its
+# answers are checked against. A member is refused ("not answered", with the member and the reason) when
+# the backend refuses any member its OCL reads, or when its body yields `invalid`; never a partial
+# answer. An optional result is null / None / undefined / nullopt.
+#
+# Types are written as in OCL: `T`, `T[0..1]`, `Sequence(T)`. `OclAny` is a literal's value (Integer,
+# Real, Boolean, String or the unbounded `*`). `Map(String, T)` is a map from names to elements, in an
+# order: in OCL, a Sequence(Tuple(key : String, entry : T)) whose keys are unique.
+
+[meta]
+specRefs = "20250201"
+
+# ------------------------------------------------------------------ shared arguments
+
+[enums.Scope]
+literals = ["owned", "inherited", "all"]
+doc = "Which members a list reads: the type's own, those it inherits, or both. A list of features gives its own first; a list of members or definitions, outside the owned scope, is in the backend's order. For a namespace's members, inherited includes imported."
+
+[enums.VisibilityFilter]
+literals = ["any", "protected", "public"]
+doc = "Which visibilities a list keeps: every one, public and protected, or public only."
+
+[arguments.scope]
+type = "Scope"
+default = "owned"
+
+[arguments.visibility]
+type = "VisibilityFilter"
+default = "any"
+
+[arguments.library]
+type = "Boolean"
+default = false
+doc = "Whether members inherited from the standard library's types are kept (a user's library package counts as model)."
+
+# ------------------------------------------------------------------ helpers (contract-internal, not members)
+
+[[helper]]
+name = "scopedFeatureMemberships"
+on = "Type"
+params = ["scope", "visibility", "library"]
+returns = "Sequence(FeatureMembership)"
+doc = "The inherited feature memberships are those whose owning type this type specializes, as deriveTypeFeatureMembership keeps them since KERML11-191: a feature that a supertype imports is inherited by name (a member list has it) but is not a feature of this type. Scope all is the owned ones followed by the inherited ones."
+basis = "deriveTypeFeature, deriveTypeFeatureMembership (KERML11-191), deriveTypeInheritedFeature, Type::inheritedMemberships (private memberships are not inherited; removeRedefinedFeatures leaves out the features a redefinition replaces)"
+ocl = '''
+let inherited : Sequence(FeatureMembership) =
+    if scope = Scope::owned then Sequence{}
+    else inheritedMembership->selectByKind(FeatureMembership)->select(m | self.specializes(m.owningType))
+    endif in
+let memberships : Sequence(FeatureMembership) =
+    if scope = Scope::owned then ownedFeatureMembership
+    else if scope = Scope::inherited then inherited
+    else ownedFeatureMembership->union(inherited)
+    endif endif in
+memberships
+    ->select(m | visibility = VisibilityFilter::any
+                 or m.visibility = VisibilityKind::public
+                 or (visibility = VisibilityFilter::protected and m.visibility = VisibilityKind::protected))
+    ->reject(m | not library and not self.isStandardLibraryElement()
+                 and m.membershipOwningNamespace.isStandardLibraryElement())
+'''
+
+[[helper]]
+name = "isStandardLibraryElement"
+on = "Element"
+returns = "Boolean"
+doc = "In a standard library package. Written over owningNamespace, which agrees with libraryNamespace() being a standard library package on the namespaces the contract asks this of (written so while the SysML Toolkit did not evaluate libraryNamespace(), as on v0.10.10)."
+basis = "Element::isLibraryElement, Element::libraryNamespace, LibraryPackage::isStandard"
+ocl = '''
+isLibraryElement and
+(let ns : Namespace = owningNamespace in
+ ns <> null and (if ns.oclIsKindOf(LibraryPackage) then ns.oclAsType(LibraryPackage).isStandard
+                 else ns.isStandardLibraryElement() endif))
+'''
+
+[[helper]]
+name = "libraryType"
+on = "Namespace"
+params = [{ name = "qualifiedName", type = "String" }]
+returns = "Type"
+basis = "Namespace::resolveGlobal"
+ocl = '''
+let m : Membership = resolveGlobal(qualifiedName) in
+if m = null then null else m.memberElement.oclAsType(Type) endif
+'''
+
+[[helper]]
+name = "scopedMemberships"
+on = "Namespace"
+params = ["scope", "visibility", "library"]
+returns = "Sequence(Membership)"
+doc = "Memberships of any kind: owned (aliases included); the others (imported and, on a type, inherited); or all, the specification's membership. Visibility as visibilityOf gives it: an imported membership's is its import's. Outside the owned scope the order is the backend's: the specification does not define the order of membership, the union of the owned, imported and inherited memberships."
+basis = "Namespace::membership, Namespace::ownedMembership, Namespace::visibilityOf"
+ocl = '''
+let memberships : Sequence(Membership) =
+    if scope = Scope::owned then ownedMembership
+    else if scope = Scope::inherited then membership->reject(m | ownedMembership->includes(m))
+    else membership endif endif in
+memberships
+    ->select(m | visibility = VisibilityFilter::any
+                 or visibilityOf(m) = VisibilityKind::public
+                 or (visibility = VisibilityFilter::protected and visibilityOf(m) = VisibilityKind::protected))
+    ->reject(m | not library and not self.isStandardLibraryElement()
+                 and m.membershipOwningNamespace.isStandardLibraryElement())
+'''
+
+[[helper]]
+name = "scopedMembers"
+on = "Namespace"
+params = ["scope"]
+returns = "Sequence(Element)"
+doc = "The owned members; the others (imported and, on a type, inherited); or all, the specification's member. Each element once, as member is a set: an element that is a member through several memberships (an owned definition and an alias for it) is listed once. Outside the owned scope the order is the backend's: the specification does not define the order of membership, which member follows."
+basis = "Namespace::member, Namespace::ownedMember, Namespace::membership"
+ocl = '''
+if scope = Scope::owned then ownedMember
+else if scope = Scope::all then member
+else member->reject(e | ownedMember->includes(e)) endif endif
+'''
+
+[[helper]]
+name = "operands"
+on = "OperatorExpression"
+returns = "Sequence(Expression)"
+doc = "The arguments: the values of the owned features that redefine the inputs of the function the expression invokes, in the order of the inputs."
+basis = "InvocationExpression::argument, deriveInvocationExpressionArgument"
+ocl = '''
+argument
+'''
+
+[[helper]]
+name = "unsigned"
+on = "Expression"
+returns = "Expression"
+doc = "A sign taken off (-5 gives 5; -5 [kg], parsed as -(5 [kg]), gives 5 [kg]); else the expression."
+ocl = '''
+if oclIsKindOf(OperatorExpression)
+   and Set{'-', '+'}->includes(oclAsType(OperatorExpression).operator)
+   and oclAsType(OperatorExpression).operands()->size() = 1
+then oclAsType(OperatorExpression).operands()->first() else self endif
+'''
+
+[[helper]]
+name = "boundsRange"
+on = "Multiplicity"
+returns = "MultiplicityRange[0..1]"
+doc = "Its own bounds; for a multiplicity without bounds (the Pilot's defaults), the nearest range it specializes; else none (0..*)."
+ocl = '''
+if oclIsKindOf(MultiplicityRange) then oclAsType(MultiplicityRange)
+else let rs : OrderedSet(MultiplicityRange) = ownedSpecialization.general
+             ->closure(t | if t.oclIsKindOf(MultiplicityRange) then OrderedSet{} else t.ownedSpecialization.general endif)
+             ->selectByKind(MultiplicityRange)->asOrderedSet() in
+     if rs->isEmpty() then null else rs->first() endif
+endif
+'''
+
+[[helper]]
+name = "ownRange"
+on = "Type"
+returns = "MultiplicityRange[0..1]"
+ocl = '''
+if multiplicity = null then null else multiplicity.boundsRange() endif
+'''
+
+[[helper]]
+name = "lowerBoundExpression"
+on = "Type"
+returns = "Expression[0..1]"
+doc = "[4] has only an upper bound, so lower = upper; [*] has none (the lower bound is 0), as MultiplicityRange::lowerBound specifies."
+ocl = '''
+let r : MultiplicityRange = ownRange() in
+if r = null then null
+else if r.lowerBound <> null then r.lowerBound
+else if r.upperBound.oclIsKindOf(LiteralInfinity) then null
+else r.upperBound endif endif endif
+'''
+
+# ------------------------------------------------------------------ family 1: kind lists on types
+#
+# Placeholders: {ks} the kind's plural and {k} its singular, {Ks} and {K} the same with a capital
+# first letter, {M} its metaclass, {X} the metaclass of its exact variant (`exact` where it names one,
+# else {M}), {L} its library type. A kind gets the exact variant where `exact` is set, and the semantic
+# ones where it names a `library` type. With the owned scope, a list is the specification's owned{K} on
+# a definition and nested{K} on a usage, where those exist (deriveDefinitionOwnedPart: ownedPart =
+# ownedUsage->selectByKind(PartUsage)); the extractor records them and checks their types.
+
+[family.kindLists]
+on = "Type"
+doc = "Members by kind, on definitions and usages alike."
+# Exact variants for the kinds whose metaclass has subtypes (features and usages excepted); for
+# connections, exactly ConnectionUsage (what `connection` and `connect` declare), since
+# ConnectorAsUsage is abstract. Semantic variants for the kinds with a library type (taken from the
+# Pilot navigation API, to be confirmed by the conformance models). No kind for metadata: metadata in
+# a body is owned through an OwningMembership, never a FeatureMembership, so its list would always be
+# empty; findAppliedMetadata finds it.
+kinds = [
+    { ks = "features", k = "feature", metaclass = "Feature" },
+    { ks = "usages", k = "usage", metaclass = "Usage" },
+    { ks = "actions", k = "action", metaclass = "ActionUsage", exact = true, library = "Actions::Action" },
+    { ks = "allocations", k = "allocation", metaclass = "AllocationUsage", library = "Allocations::Allocation" },
+    { ks = "analysisCases", k = "analysisCase", metaclass = "AnalysisCaseUsage", library = "AnalysisCases::AnalysisCase" },
+    { ks = "attributes", k = "attribute", metaclass = "AttributeUsage", exact = true, library = "Base::DataValue" },
+    { ks = "calculations", k = "calculation", metaclass = "CalculationUsage", exact = true, library = "Calculations::Calculation" },
+    { ks = "cases", k = "case", metaclass = "CaseUsage", exact = true, library = "Cases::Case" },
+    { ks = "concerns", k = "concern", metaclass = "ConcernUsage", library = "Requirements::ConcernCheck" },
+    { ks = "connections", k = "connection", metaclass = "ConnectorAsUsage", exact = "ConnectionUsage", library = "Connections::Connection" },
+    { ks = "constraints", k = "constraint", metaclass = "ConstraintUsage", exact = true, library = "Constraints::ConstraintCheck" },
+    { ks = "enumerations", k = "enumeration", metaclass = "EnumerationUsage" },
+    { ks = "flows", k = "flow", metaclass = "FlowUsage", exact = true, library = "Flows::MessageAction" },
+    { ks = "interfaces", k = "interface", metaclass = "InterfaceUsage", library = "Interfaces::Interface" },
+    { ks = "items", k = "item", metaclass = "ItemUsage", exact = true, library = "Items::Item" },
+    { ks = "occurrences", k = "occurrence", metaclass = "OccurrenceUsage", exact = true, library = "Occurrences::Occurrence" },
+    { ks = "parts", k = "part", metaclass = "PartUsage", exact = true, library = "Parts::Part" },
+    { ks = "ports", k = "port", metaclass = "PortUsage", library = "Ports::Port" },
+    { ks = "references", k = "reference", metaclass = "ReferenceUsage" },
+    { ks = "renderings", k = "rendering", metaclass = "RenderingUsage", library = "Views::Rendering" },
+    { ks = "requirements", k = "requirement", metaclass = "RequirementUsage", exact = true, library = "Requirements::RequirementCheck" },
+    { ks = "states", k = "state", metaclass = "StateUsage", exact = true, library = "States::StateAction" },
+    { ks = "transitions", k = "transition", metaclass = "TransitionUsage" },
+    { ks = "useCases", k = "useCase", metaclass = "UseCaseUsage", exact = true, library = "UseCases::UseCase" },
+    { ks = "verificationCases", k = "verificationCase", metaclass = "VerificationCaseUsage", library = "VerificationCases::VerificationCase" },
+    { ks = "views", k = "view", metaclass = "ViewUsage", library = "Views::View" },
+    { ks = "viewpoints", k = "viewpoint", metaclass = "ViewpointUsage", library = "Views::ViewpointCheck" },
+]
+
+[family.kindLists.variants.list]
+name = "find{Ks}"
+params = ["scope", "visibility", "library"]
+returns = "Sequence({M})"
+doc = "The {ks} of this type."
+ocl = '''
+scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature->selectByKind({M})
+'''
+
+[family.kindLists.variants.exact]
+when = "exact"
+name = "find{Ks}Exact"
+params = ["scope", "visibility", "library"]
+returns = "Sequence({X})"
+doc = "The {ks} whose metaclass is exactly {X}, its subkinds left out."
+ocl = '''
+scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature->selectByKind({X})
+    ->select(oclIsTypeOf({X}))
+'''
+
+[family.kindLists.variants.semantic]
+when = "library"
+name = "find{Ks}Semantic"
+params = ["scope", "visibility", "library"]
+returns = "Sequence(Feature)"
+doc = "The features whose type conforms to {L}, as the Pilot navigation API's semantic{Ks}; refused where the model's library has no {L}."
+ocl = '''
+let lib : Type = libraryType('{L}') in
+if lib = null then invalid
+else scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature
+         ->select(f | f.type->exists(t | t.specializes(lib)))
+endif
+'''
+
+[family.kindLists.variants.semanticTest]
+when = "library"
+on = "Feature"
+name = "findIsSemantic{K}"
+returns = "Boolean"
+doc = "Whether a type of this feature conforms to {L}; refused where the model's library has no {L}."
+ocl = '''
+let lib : Type = libraryType('{L}') in
+if lib = null then invalid else type->exists(t | t.specializes(lib)) endif
+'''
+
+[family.kindLists.variants.byName]
+name = "find{K}"
+params = [{ name = "name", type = "String", doc = "The simple name to look for, a feature's effective name." }, "scope", "visibility", "library"]
+returns = "{M}[0..1]"
+doc = "The {k} with this simple (effective) name, or none: part :>> wheels is found as wheels."
+ocl = '''
+find{Ks}(scope, visibility, library)->any(f | f.name = name)
+'''
+
+# ------------------------------------------------------------------ member lists on namespaces
+#
+# The kinds of the kind lists, over memberships of any kind instead of feature memberships: usages in a
+# package, variants, enumeration literals, aliases, imported members. Metadata is not among them: it is
+# about the element that owns it, so it is never read through inheritance (findMemberMetadata).
+
+[family.memberLists]
+on = "Namespace"
+doc = "Members by kind, through any membership."
+kindsFrom = "kindLists"
+
+[family.memberLists.variants.list]
+name = "findMember{Ks}"
+params = ["scope", "visibility", "library"]
+returns = "Sequence({M})"
+doc = "The {ks} that are members of this namespace through any membership (owned, aliased, imported, inherited), each once."
+ocl = '''
+scopedMemberships(scope, visibility, library).memberElement->selectByKind({M})->asOrderedSet()->asSequence()
+'''
+
+[family.memberLists.variants.byName]
+name = "findMember{K}"
+params = [{ name = "name", type = "String", doc = "The member name to look for, an alias's name included." }, "scope", "visibility", "library"]
+returns = "{M}[0..1]"
+doc = "The {k} that is a member under this simple name (an alias's name included), or none."
+ocl = '''
+let ms : Sequence(Membership) = scopedMemberships(scope, visibility, library)
+    ->select(m | m.memberName = name and m.memberElement.oclIsKindOf({M})) in
+if ms->isEmpty() then null else ms->first().memberElement.oclAsType({M}) endif
+'''
+
+# ------------------------------------------------------------------ family 2: definition lists on namespaces
+#
+# The specification has no such property on Namespace; the Pilot navigation API's partDefs and kin.
+
+[family.definitionLists]
+on = "Namespace"
+doc = "Definitions by kind, in a package or any other namespace."
+kinds = [
+    { ks = "definitions", k = "definition", metaclass = "Definition" },
+    { ks = "actionDefs", k = "actionDef", metaclass = "ActionDefinition", exact = true, library = "Actions::Action" },
+    { ks = "allocationDefs", k = "allocationDef", metaclass = "AllocationDefinition", library = "Allocations::Allocation" },
+    { ks = "analysisCaseDefs", k = "analysisCaseDef", metaclass = "AnalysisCaseDefinition", library = "AnalysisCases::AnalysisCase" },
+    { ks = "attributeDefs", k = "attributeDef", metaclass = "AttributeDefinition", exact = true, library = "Base::DataValue" },
+    { ks = "calculationDefs", k = "calculationDef", metaclass = "CalculationDefinition", exact = true, library = "Calculations::Calculation" },
+    { ks = "caseDefs", k = "caseDef", metaclass = "CaseDefinition", exact = true, library = "Cases::Case" },
+    { ks = "concernDefs", k = "concernDef", metaclass = "ConcernDefinition", library = "Requirements::ConcernCheck" },
+    { ks = "connectionDefs", k = "connectionDef", metaclass = "ConnectionDefinition", exact = true, library = "Connections::Connection" },
+    { ks = "constraintDefs", k = "constraintDef", metaclass = "ConstraintDefinition", exact = true, library = "Constraints::ConstraintCheck" },
+    { ks = "enumerationDefs", k = "enumerationDef", metaclass = "EnumerationDefinition" },
+    { ks = "flowDefs", k = "flowDef", metaclass = "FlowDefinition", library = "Flows::MessageAction" },
+    { ks = "interfaceDefs", k = "interfaceDef", metaclass = "InterfaceDefinition", library = "Interfaces::Interface" },
+    { ks = "itemDefs", k = "itemDef", metaclass = "ItemDefinition", exact = true, library = "Items::Item" },
+    { ks = "metadataDefs", k = "metadataDef", metaclass = "MetadataDefinition" },
+    { ks = "occurrenceDefs", k = "occurrenceDef", metaclass = "OccurrenceDefinition", exact = true, library = "Occurrences::Occurrence" },
+    { ks = "partDefs", k = "partDef", metaclass = "PartDefinition", exact = true, library = "Parts::Part" },
+    { ks = "portDefs", k = "portDef", metaclass = "PortDefinition", exact = true, library = "Ports::Port" },
+    { ks = "renderingDefs", k = "renderingDef", metaclass = "RenderingDefinition", library = "Views::Rendering" },
+    { ks = "requirementDefs", k = "requirementDef", metaclass = "RequirementDefinition", exact = true, library = "Requirements::RequirementCheck" },
+    { ks = "stateDefs", k = "stateDef", metaclass = "StateDefinition", library = "States::StateAction" },
+    { ks = "useCaseDefs", k = "useCaseDef", metaclass = "UseCaseDefinition", library = "UseCases::UseCase" },
+    { ks = "verificationCaseDefs", k = "verificationCaseDef", metaclass = "VerificationCaseDefinition", library = "VerificationCases::VerificationCase" },
+    { ks = "viewDefs", k = "viewDef", metaclass = "ViewDefinition", library = "Views::View" },
+    { ks = "viewpointDefs", k = "viewpointDef", metaclass = "ViewpointDefinition", library = "Views::ViewpointCheck" },
+]
+
+[family.definitionLists.variants.list]
+name = "find{Ks}"
+params = ["scope"]
+returns = "Sequence({M})"
+doc = "The {ks} of this namespace: owned, imported (and inherited) only, or both."
+ocl = '''
+scopedMembers(scope)->selectByKind({M})
+'''
+
+[family.definitionLists.variants.exact]
+when = "exact"
+name = "find{Ks}Exact"
+params = ["scope"]
+returns = "Sequence({X})"
+doc = "The {ks} whose metaclass is exactly {X}, its subkinds left out."
+ocl = '''
+scopedMembers(scope)->selectByKind({X})->select(oclIsTypeOf({X}))
+'''
+
+[family.definitionLists.variants.semantic]
+when = "library"
+name = "find{Ks}Semantic"
+params = ["scope"]
+returns = "Sequence(Type)"
+doc = "The types that specialize {L}; refused where the model's library has no {L}."
+ocl = '''
+let lib : Type = libraryType('{L}') in
+if lib = null then invalid else scopedMembers(scope)->selectByKind(Type)->select(t | t.specializes(lib)) endif
+'''
+
+[family.definitionLists.variants.byName]
+name = "find{K}"
+params = [{ name = "name", type = "String", doc = "The simple name to look for." }, "scope"]
+returns = "{M}[0..1]"
+doc = "The {k} with this simple (effective) name, or none."
+ocl = '''
+find{Ks}(scope)->any(d | d.name = name)
+'''
+
+[family.definitionLists.variants.nameMap]
+name = "find{Ks}ByName"
+params = ["scope"]
+returns = "Map(String, {M})"
+doc = "The {ks} of this namespace by name: each under every name and short name it is a member by (an alias's included). The order is the backend's: the specification does not define the order of membership. Refused where one name names two different {ks}, naming both."
+basis = "Namespace::namesOf, read over the element's memberships as its body means (it binds them as elementMemberships, then reads memberships, which Namespace does not have)"
+ocl = '''
+let ds : Sequence({M}) = find{Ks}(scope) in
+let entries : Sequence(Tuple(key : String, entry : {M})) =
+    membership->select(m | ds->includes(m.memberElement))
+        ->collect(m | Sequence{m.memberName, m.memberShortName}->reject(n | n = null)
+                          ->collect(n | Tuple{key = n, entry = m.memberElement.oclAsType({M})}))
+        ->asOrderedSet()->asSequence() in
+if entries->exists(a | entries->exists(b | a.key = b.key and a.entry <> b.entry)) then invalid
+else entries endif
+'''
+
+# ------------------------------------------------------------------ individual members
+
+[[member]]
+name = "findPackages"
+on = "Namespace"
+returns = "Sequence(Package)"
+doc = "The packages this namespace owns."
+ocl = '''
+ownedMember->selectByKind(Package)
+'''
+
+[[member]]
+name = "findPackage"
+on = "Namespace"
+params = [{ name = "name", type = "String", doc = "The simple name to look for." }]
+returns = "Package[0..1]"
+doc = "The owned package with this simple name, or none."
+ocl = '''
+findPackages()->any(p | p.name = name)
+'''
+
+# Typing and specialization as written (the model's own, not the relationships the backend implies)
+
+[[member]]
+name = "findDeclaredTypes"
+on = "Feature"
+returns = "Sequence(Type)"
+doc = "The types this feature is declared with."
+ocl = '''
+ownedTyping->reject(isImplied).type
+'''
+
+[[member]]
+name = "findDeclaredSupertypes"
+on = "Type"
+returns = "Sequence(Type)"
+doc = "Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its original type; a feature chain's last feature is a supertype of the chain."
+basis = "Type::supertypes, Feature::supertypes"
+ocl = '''
+supertypes(true)
+'''
+
+[[member]]
+name = "findImpliedSupertypes"
+on = "Type"
+returns = "Sequence(Type)"
+doc = "Direct supertypes the backend adds by the language's rules (Parts::Part for a part definition)."
+basis = "Type::supertypes"
+ocl = '''
+let declared : Sequence(Type) = supertypes(true) in supertypes(false)->reject(t | declared->includes(t))
+'''
+
+[[member]]
+name = "findDeclaredAndImpliedSupertypes"
+on = "Type"
+returns = "Sequence(Type)"
+doc = "Direct supertypes, written and implied: supertypes(false)."
+basis = "Type::supertypes, Feature::supertypes"
+ocl = '''
+supertypes(false)
+'''
+
+[[member]]
+name = "findSubsettedFeatures"
+on = "Feature"
+returns = "Sequence(Feature)"
+doc = "The features this feature subsets as written (redefinitions and reference subsettings left out)."
+ocl = '''
+ownedSubsetting->reject(isImplied)->select(oclIsTypeOf(Subsetting)).subsettedFeature
+'''
+
+[[member]]
+name = "findRedefinedFeatures"
+on = "Feature"
+returns = "Sequence(Feature)"
+doc = "The features this feature redefines as written."
+ocl = '''
+ownedRedefinition->reject(isImplied).redefinedFeature
+'''
+
+[[member]]
+name = "findReferencedFeature"
+on = "Feature"
+returns = "Feature[0..1]"
+doc = "The feature this feature references (::>), or none."
+ocl = '''
+if ownedReferenceSubsetting = null then null else ownedReferenceSubsetting.referencedFeature endif
+'''
+
+[[member]]
+name = "findRedefinitionRoot"
+on = "Feature"
+returns = "Feature"
+doc = "The feature a chain of written redefinitions starts from, following the first at each step (Truck::mass to Frame::mass); itself when it redefines nothing."
+ocl = '''
+let redefined : Sequence(Feature) = findRedefinedFeatures() in
+if redefined->isEmpty() then self else redefined->first().findRedefinitionRoot() endif
+'''
+
+[[member]]
+name = "findEffectiveFeature"
+on = "Type"
+params = [{ name = "feature", type = "Feature", doc = "The feature as declared, on this type or on a type it specializes." }]
+returns = "Feature[0..1]"
+doc = "The feature in effect here for feature: itself where inherited as it is, else the one redefining it; none where this type does not have it."
+ocl = '''
+self.feature->any(f | f = feature or f.allRedefinedFeatures()->includes(feature))
+'''
+
+# Values as declared: null only where there is no value; a member that cannot answer for the value the
+# model has refuses (invalid), so that null never reads as "no value" by mistake.
+
+[[member]]
+name = "findValue"
+on = "Feature"
+returns = "Expression[0..1]"
+doc = "The value expression this feature is declared with (=, :=, default), or none."
+ocl = '''
+let values : Sequence(FeatureValue) = ownedMembership->selectByKind(FeatureValue) in
+if values->isEmpty() then null else values->first().value endif
+'''
+
+[[member]]
+name = "findHasDefaultValue"
+on = "Feature"
+returns = "Boolean"
+doc = "Whether the value is a default (default = or default :=)."
+ocl = '''
+ownedMembership->selectByKind(FeatureValue)->exists(isDefault)
+'''
+
+[[member]]
+name = "findHasInitialValue"
+on = "Feature"
+returns = "Boolean"
+doc = "Whether the value is an initial value (:=)."
+ocl = '''
+ownedMembership->selectByKind(FeatureValue)->exists(isInitial)
+'''
+
+[[member]]
+name = "findHasUnit"
+on = "Expression"
+returns = "Boolean"
+doc = "Whether the value is written with a unit, <expression> [<unit>], a sign allowed."
+ocl = '''
+let u : Expression = unsigned() in
+u.oclIsKindOf(OperatorExpression) and u.oclAsType(OperatorExpression).operator = '['
+'''
+
+[[member]]
+name = "findIsLiteral"
+on = "Expression"
+returns = "Boolean"
+doc = "Whether findLiteral answers: a literal, or a sign on a number literal; a value with a unit is not one."
+ocl = '''
+oclIsKindOf(LiteralExpression)
+or (unsigned() <> self
+    and (unsigned().oclIsKindOf(LiteralInteger) or unsigned().oclIsKindOf(LiteralRational)))
+'''
+
+[[member]]
+name = "findLiteral"
+on = "Expression"
+returns = "OclAny"
+doc = "A literal's value, a sign folded. Refused for anything else: a value with a unit (1500 [kg]; findUnit gives the unit), an expression (2 * x), a reference (= other)."
+ocl = '''
+if not findIsLiteral() then invalid
+else if oclIsKindOf(LiteralInteger) then oclAsType(LiteralInteger).value
+else if oclIsKindOf(LiteralRational) then oclAsType(LiteralRational).value
+else if oclIsKindOf(LiteralBoolean) then oclAsType(LiteralBoolean).value
+else if oclIsKindOf(LiteralString) then oclAsType(LiteralString).value
+else if oclIsKindOf(LiteralInfinity) then *
+else
+    let op : OperatorExpression = oclAsType(OperatorExpression) in
+    let a : Expression = op.operands()->first() in
+    if a.oclIsKindOf(LiteralInteger) then
+        (if op.operator = '-' then -a.oclAsType(LiteralInteger).value
+         else a.oclAsType(LiteralInteger).value endif)
+    else
+        (if op.operator = '-' then -a.oclAsType(LiteralRational).value
+         else a.oclAsType(LiteralRational).value endif)
+    endif
+endif endif endif endif endif endif
+'''
+
+[[member]]
+name = "findUnit"
+on = "Expression"
+returns = "Element[0..1]"
+doc = "The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference names, SI::kilogram); none for a literal without a unit; refused for anything else, whose unit needs evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit()."
+ocl = '''
+let u : Expression = unsigned() in
+if not findHasUnit() then (if u.oclIsKindOf(LiteralExpression) then null else invalid endif)
+else let parts : Sequence(Expression) = u.oclAsType(OperatorExpression).operands() in
+     if parts->size() = 2
+        and (parts->first().unsigned().oclIsKindOf(LiteralInteger)
+             or parts->first().unsigned().oclIsKindOf(LiteralRational))
+        and parts->last().oclIsKindOf(FeatureReferenceExpression)
+     then parts->last().oclAsType(FeatureReferenceExpression).referent
+     else invalid endif
+endif
+'''
+
+# Multiplicity: the type's own, as the backend has it; nothing is taken from the general types (how a
+# multiplicity follows from them is not formalized). Defaults are the backend's to put into the model.
+
+[[member]]
+name = "findLowerBound"
+on = "Type"
+returns = "Integer[0..1]"
+doc = "The lower bound as a number; none where the type has no multiplicity; refused where the bound is an expression ([rotorCount])."
+ocl = '''
+if multiplicity = null then null
+else let e : Expression = lowerBoundExpression() in
+     if e = null then 0 else e.findLiteral() endif endif
+'''
+
+[[member]]
+name = "findUpperBound"
+on = "Type"
+returns = "UnlimitedNatural[0..1]"
+doc = "The upper bound as a number or * (unbounded); none where the type has no multiplicity; refused where the bound is an expression."
+ocl = '''
+if multiplicity = null then null
+else let r : MultiplicityRange = ownRange() in
+     if r = null then * else r.upperBound.findLiteral() endif endif
+'''
+
+[[member]]
+name = "findLowerBoundExpr"
+on = "Type"
+returns = "Expression[0..1]"
+doc = "The lower bound's expression; none where there is none (no multiplicity, the lower bound of [*], a multiplicity without a range)."
+ocl = '''
+lowerBoundExpression()
+'''
+
+[[member]]
+name = "findUpperBoundExpr"
+on = "Type"
+returns = "Expression[0..1]"
+doc = "The upper bound's expression; none where there is none."
+ocl = '''
+let r : MultiplicityRange = ownRange() in
+if r = null then null else r.upperBound endif
+'''
+
+[[member]]
+name = "findHasLiteralLowerBound"
+on = "Type"
+returns = "Boolean"
+doc = "Whether the type has a multiplicity whose lower bound is a literal (findLowerBound then answers with a number)."
+ocl = '''
+multiplicity <> null and (lowerBoundExpression() = null or lowerBoundExpression().findIsLiteral())
+'''
+
+[[member]]
+name = "findHasLiteralUpperBound"
+on = "Type"
+returns = "Boolean"
+doc = "Whether the type has a multiplicity whose upper bound is a literal."
+ocl = '''
+multiplicity <> null and (findUpperBoundExpr() = null or findUpperBoundExpr().findIsLiteral())
+'''
+
+[[member]]
+name = "findIsEffectivelyOrdered"
+on = "Feature"
+returns = "Boolean"
+doc = "Ordered: declared, or through a feature it subsets or redefines, implied ones included, as the Pilot's FeatureUtil.checkIsOrdered."
+ocl = '''
+Sequence{self}->closure(f | f.ownedSubsetting.subsettedFeature)->exists(isOrdered)
+'''
+
+# Behaviour
+
+[[member]]
+name = "findParameters"
+on = ["Behavior", "Step"]
+params = ["scope", "visibility", "library"]
+returns = "Sequence(Feature)"
+doc = "The directed features, scoped like the kind lists: those whose direction relative to this behaviour or step, directionOf, is not null. With scope all and library true, the specification's parameter."
+ocl = '''
+scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature->select(f | directionOf(f) <> null)
+'''
+
+[[member]]
+name = "findInputs"
+on = "Type"
+params = ["scope", "visibility", "library"]
+returns = "Sequence(Feature)"
+doc = "The features directed in or inout relative to this type, directionOf taking conjugation into account (a conjugated port's out items are its inputs), scoped like the kind lists. With scope all and library true, the specification's input."
+basis = "Type::input, deriveTypeInput"
+ocl = '''
+scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature
+    ->select(f | let d : FeatureDirectionKind = directionOf(f) in
+                 d = FeatureDirectionKind::_'in' or d = FeatureDirectionKind::inout)
+'''
+
+[[member]]
+name = "findOutputs"
+on = "Type"
+params = ["scope", "visibility", "library"]
+returns = "Sequence(Feature)"
+doc = "The features directed out or inout relative to this type, directionOf taking conjugation into account (a conjugated port's in items are its outputs), scoped like the kind lists. With scope all and library true, the specification's output."
+basis = "Type::output, deriveTypeOutput"
+ocl = '''
+scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature
+    ->select(f | let d : FeatureDirectionKind = directionOf(f) in
+                 d = FeatureDirectionKind::out or d = FeatureDirectionKind::inout)
+'''
+
+[[member]]
+name = "findSubsettingFeaturesOf"
+on = "Type"
+params = [{ name = "feature", type = "Feature", doc = "The feature the answers are or specialize." }, "scope", "visibility", "library"]
+returns = "Sequence(Feature)"
+doc = "The features of this type that are, or specialize, feature (the wheels among a vehicle's parts), scoped."
+ocl = '''
+scopedFeatureMemberships(scope, visibility, library).ownedMemberFeature->select(f | f.specializes(feature))
+'''
+
+[[member]]
+name = "findResultExpression"
+on = ["Function", "Expression"]
+returns = "Expression[0..1]"
+doc = "The result expression of a calculation or constraint, owned or inherited; the specification has resultExpression only on analysis cases."
+ocl = '''
+let rs : Sequence(ResultExpressionMembership) = featureMembership->selectByKind(ResultExpressionMembership) in
+if rs->isEmpty() then null else rs->first().ownedResultExpression endif
+'''
+
+[[member]]
+name = "findTypeArgument"
+on = "OperatorExpression"
+returns = "Type[0..1]"
+doc = "The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x as T, m meta T give T): the grammar puts it in the second owned feature."
+ocl = '''
+if Set{'istype', 'hastype', '@', '@@', 'as', 'meta'}->excludes(operator) or ownedFeature->size() < 2 then null
+else let ts : Sequence(FeatureTyping) = ownedFeature->at(2).ownedTyping in
+     if ts->isEmpty() then null else ts->first().type endif endif
+'''
+
+[[member]]
+name = "findInitialStates"
+on = ["StateUsage", "StateDefinition"]
+returns = "Sequence(StateUsage)"
+doc = "Initial states, by a priority chain over the notation's forms: first start then off; and, only if that gives none, entry; then off; (the Annex A form, an entry action with a transition from it, is not recognized)."
+ocl = '''
+let entry : ActionUsage =
+    if oclIsKindOf(StateUsage) then oclAsType(StateUsage).entryAction
+    else oclAsType(StateDefinition).entryAction endif in
+let successions : Sequence(SuccessionAsUsage) = ownedFeature->selectByKind(SuccessionAsUsage)
+    ->select(s | s.targetFeature->size() = 1
+                 and s.targetFeature->first().featureTarget.oclIsKindOf(StateUsage)) in
+let fromStart : Sequence(StateUsage) = successions
+    ->select(s | s.sourceFeature.featureTarget.isLibraryElement
+                 and s.sourceFeature.featureTarget.name = 'start')
+    ->collect(s | s.targetFeature->first().featureTarget.oclAsType(StateUsage)) in
+let fromEntry : Sequence(StateUsage) = successions
+    ->select(s | entry <> null and s.sourceFeature.featureTarget = entry)
+    ->collect(s | s.targetFeature->first().featureTarget.oclAsType(StateUsage)) in
+if fromStart->notEmpty() then fromStart else fromEntry endif
+'''
+
+[[member]]
+name = "findAcceptedTypes"
+on = "AcceptActionUsage"
+returns = "Sequence(Type)"
+doc = "What an accept action accepts: its payload's types."
+ocl = '''
+payloadParameter.type
+'''
+
+[[member]]
+name = "findAcceptedTypes"
+on = "TransitionUsage"
+returns = "Sequence(Type)"
+doc = "What a transition's triggers accept."
+ocl = '''
+triggerAction->collect(a | a.findAcceptedTypes())
+'''
+
+[[member]]
+name = "findIsAcceptedType"
+on = "AcceptActionUsage"
+params = [{ name = "type", type = "Type", doc = "The type of what arrives: an item, a signal or an event." }]
+returns = "Boolean"
+doc = "Whether this accept action accepts a value of type: whether type specializes one of its accepted types (findAcceptedTypes)."
+ocl = '''
+findAcceptedTypes()->exists(a | type.specializes(a))
+'''
+
+[[member]]
+name = "findIsAcceptedType"
+on = "TransitionUsage"
+params = [{ name = "type", type = "Type", doc = "The type of what arrives: an item, a signal or an event." }]
+returns = "Boolean"
+doc = "Whether this transition's triggers accept a value of type: whether type specializes one of their accepted types (findAcceptedTypes)."
+ocl = '''
+findAcceptedTypes()->exists(a | type.specializes(a))
+'''
+
+# Structure and annotations
+
+[[member]]
+name = "findPath"
+on = "Feature"
+returns = "Sequence(Feature)"
+doc = "A feature chain as its features (battery.powerOut gives [battery, powerOut]); else [self]."
+ocl = '''
+if chainingFeature->isEmpty() then Sequence{self} else chainingFeature endif
+'''
+
+[[member]]
+name = "findVariation"
+on = "Usage"
+returns = "Type[0..1]"
+doc = "The variation a variant belongs to (variation part def V { variant part a; }: a gives V; an enumeration's values give the enumeration); none for a usage that is not a variant."
+ocl = '''
+if owningMembership <> null and owningMembership.oclIsKindOf(VariantMembership)
+then owningNamespace.oclAsType(Type) else null endif
+'''
+
+[[member]]
+name = "findAppliedMetadata"
+on = "Element"
+returns = "Sequence(MetadataFeature)"
+doc = "Metadata applied to an element by an owned annotation, or as an owned member annotating it (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not found."
+ocl = '''
+ownedAnnotation.annotatingElement->selectByKind(MetadataFeature)
+->union(if oclIsKindOf(Namespace)
+        then oclAsType(Namespace).ownedMember->selectByKind(MetadataFeature)
+                 ->select(f | f.annotatedElement->includes(self))
+        else Sequence{} endif)
+'''
+
+[[member]]
+name = "findMemberMetadata"
+on = "Namespace"
+returns = "Sequence(MetadataUsage)"
+doc = "The metadata usages this namespace owns, whatever they annotate (metadata M about other; included). Owned only: metadata is about the element that owns it, so it is never read through inheritance or imports."
+basis = "deriveDefinitionOwnedMetadata, deriveUsageNestedMetadata as revised (SYSML21-569: over ownedMember; the 2025-02 derivation over ownedUsage is always empty, SYSML21-419)"
+ocl = '''
+ownedMember->selectByKind(MetadataUsage)
+'''
+
+[[member]]
+name = "findDocText"
+on = "Element"
+returns = "Sequence(String)"
+doc = "The bodies of the element's documentation comments, in order."
+ocl = '''
+documentation.body
+'''

@@ -19,6 +19,7 @@ use sysmlv2_model::json::{DerivedValue, ElementRef, PropertyError, Reference};
 use crate::{str_of, Bool, Handles, Int, Real, Ref, Session, Status, Str};
 
 /// What a read produced before conversion to a specific ABI shape.
+#[derive(Clone)]
 pub enum Answer {
     Absent,
     Elements(Vec<ElementRef>),
@@ -38,8 +39,17 @@ fn outside(s: &mut Session, name: &str, id: &str) -> Status {
     s.fail(Status::Unresolved, format!("{name}: reference to element {id}, which this session has not loaded"))
 }
 
-/// The answer for `name` on `e`, or the status to return.
-fn answer(s: &mut Session, e: ElementRef, name: &str) -> Result<Answer, Status> {
+/// The answer for `name` on `e`, or the status to return; an answer read before is kept (`Session::reads`).
+pub(crate) fn answer(s: &mut Session, e: ElementRef, name: &str) -> Result<Answer, Status> {
+    if let Some(kept) = s.reads.get(&e).and_then(|m| m.get(name)) {
+        return Ok(kept.clone());
+    }
+    let read = read_once(s, e, name)?;
+    s.reads.entry(e).or_default().insert(name.to_string(), read.clone());
+    Ok(read)
+}
+
+fn read_once(s: &mut Session, e: ElementRef, name: &str) -> Result<Answer, Status> {
     match s.model().property(e, name) {
         Ok(v) => from_json(s, name, v),
         Err(PropertyError::UnresolvedReference(spelling)) => Err(unresolved(s, name, &spelling)),

@@ -1,0 +1,517 @@
+<title>{{TITLE}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a sticky header with the language switch; a sidebar (sections, member index) beside the
+   reference on wide screens, folded above it on narrow ones. Blueprint-blue accent on cool paper. */
+:root {
+  --bg: #f5f7fa; --surface: #ffffff; --ink: #17212b; --muted: #5b6774; --rule: #d8dee6;
+  --accent: #1d5d8b; --accent-soft: #e2edf6; --code-bg: #eef2f6;
+  --ok: #2b7a4b; --ok-soft: #e1f2e8; --warn: #9a6200; --warn-soft: #fbefd9; --bad: #b0281f; --bad-soft: #f9e1df;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1318; --surface: #151c23; --ink: #e3e9ef; --muted: #9aa6b3; --rule: #27323d;
+  --accent: #7cb6e2; --accent-soft: #19293a; --code-bg: #1b232c;
+  --ok: #6cc391; --ok-soft: #173326; --warn: #e3b252; --warn-soft: #3a2c10; --bad: #f0897f; --bad-soft: #3d1b19;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1318; --surface: #151c23; --ink: #e3e9ef; --muted: #9aa6b3; --rule: #27323d;
+  --accent: #7cb6e2; --accent-soft: #19293a; --code-bg: #1b232c;
+  --ok: #6cc391; --ok-soft: #173326; --warn: #e3b252; --warn-soft: #3a2c10; --bad: #f0897f; --bad-soft: #3d1b19;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); margin: 0; }
+a { color: var(--accent); }
+code, pre, .mono { font-family: var(--mono); font-size: 0.86em; }
+h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px; display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; }
+header.top h1 { font-size: 1.15rem; }
+header.top .sub { color: var(--muted); font-size: 0.82rem; }
+.langs { display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.langs button { font: 600 0.8rem var(--body); background: transparent; color: var(--muted); border: 0;
+  padding: 6px 11px; cursor: pointer; }
+.langs button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.langs button:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 60px; max-width: 1320px; margin: 0 auto; }
+nav.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 64px); align-self: start;
+  max-height: calc(100vh - 84px); overflow: auto; font-size: 0.86rem; }
+nav.side .sections a { display: block; padding: 3px 0; text-decoration: none; color: var(--ink); }
+nav.side .sections a .tag { color: var(--muted); font-size: 0.75rem; margin-left: 4px; }
+nav.side h4 { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; font-family: var(--body); }
+#filter { width: 100%; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); font: 0.85rem var(--body); }
+#index { margin-top: 8px; }
+#index .ctx { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; margin: 10px 0 2px; }
+#index a { display: block; padding: 1px 0; text-decoration: none; color: var(--ink); font-family: var(--mono); font-size: 0.78rem; overflow-wrap: anywhere; }
+main { min-width: 0; }
+section.top-level { margin-bottom: 44px; scroll-margin-top: 80px; }
+section.top-level > h2 { font-size: 1.6rem; margin-bottom: 4px; }
+.jira { display: inline-block; font: 600 0.72rem var(--body); letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 2px 7px; margin-bottom: 8px; }
+.lead { color: var(--muted); max-width: 72ch; margin: 6px 0 16px; }
+.prose { max-width: 72ch; }
+.prose p { margin: 0 0 10px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0 18px; }
+.stat { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; }
+.stat b { display: block; font: 700 1.35rem var(--display); font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 0.8rem; }
+.tablewrap { overflow-x: auto; margin: 8px 0 16px; }
+table { border-collapse: collapse; font-size: 0.86rem; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 0.74rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+h3.ctx-head { font-size: 1.15rem; margin: 30px 0 10px; padding-top: 8px; border-top: 2px solid var(--ink); scroll-margin-top: 80px; }
+h3.ctx-head .mono { font-size: 0.9em; }
+.entry { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 80px; }
+.entry-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.entry-head h4 { font: 600 1.02rem var(--mono); overflow-wrap: anywhere; }
+.entry-head .on { color: var(--muted); font-size: 0.8rem; }
+.sig { background: var(--code-bg); border-radius: 6px; padding: 8px 10px; margin: 10px 0; overflow-x: auto; white-space: pre; font: 0.8rem/1.5 var(--mono); }
+.doc { margin: 6px 0 8px; max-width: 75ch; }
+.kv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 12px; font-size: 0.86rem; margin: 8px 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+details { margin: 6px 0; }
+details > summary { cursor: pointer; color: var(--accent); font-size: 0.86rem; }
+details pre { background: var(--code-bg); border-radius: 6px; padding: 10px; overflow-x: auto; font-size: 0.8rem; margin: 6px 0; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge { font: 600 0.72rem var(--body); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.badge.ok { color: var(--ok); background: var(--ok-soft); }
+.badge.warn { color: var(--warn); background: var(--warn-soft); }
+.badge.bad { color: var(--bad); background: var(--bad-soft); }
+.badge.none { color: var(--muted); background: var(--code-bg); }
+.ex { border-top: 1px dashed var(--rule); padding: 8px 0; font-size: 0.86rem; scroll-margin-top: 80px; }
+.ex:first-child { border-top: 0; }
+.ex .call { font-family: var(--mono); font-size: 0.8rem; overflow-wrap: anywhere; }
+.ex .expect { margin-top: 2px; }
+.ex .note { color: var(--muted); font-style: italic; }
+.ex .row { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; }
+.detail { color: var(--muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+button.comment { font: 600 0.75rem var(--body); color: var(--accent); background: transparent; border: 1px solid var(--rule);
+  border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+button.comment:hover { background: var(--accent-soft); }
+.kinds td code { white-space: nowrap; }
+.code-tabs pre { background: var(--code-bg); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-size: 0.8rem; margin: 6px 0 14px; }
+.task h4 { font-family: var(--body); font-weight: 600; font-size: 0.95rem; margin-top: 16px; }
+.muted { color: var(--muted); }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); }
+  nav.side { position: static; max-height: none; }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .kv dt { margin-top: 4px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<header class="top">
+  <div>
+    <h1 id="page-title">{{TITLE}}</h1>
+    <div class="sub" id="page-sub">The SysML v2 SDK's convenience members: what they answer, in every language, on every backend</div>
+  </div>
+  <div class="langs" role="group" aria-label="Language of the signatures" id="langs"></div>
+</header>
+
+<div class="wrap">
+  <nav class="side" aria-label="Contents">
+    <div class="sections" id="sections"></div>
+    <h4>Members</h4>
+    <input id="filter" type="search" placeholder="Filter members (e.g. part, bound)" aria-label="Filter members">
+    <div id="index"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script id="data" type="application/json">{{DATA}}</script>
+<script>
+(function () {
+  "use strict";
+  const D = JSON.parse(document.getElementById("data").textContent);
+  const R = D.review || {};
+  const LANGS = [["python", "Python"], ["java", "Java"], ["ts", "TypeScript"], ["cs", "C#"], ["cpp", "C++"]];
+  const CTX_ORDER = ["Element", "Namespace", "Type", "Feature", "Usage", "Expression", "OperatorExpression",
+    "Function", "Behavior", "Step", "StateDefinition", "StateUsage", "AcceptActionUsage", "TransitionUsage"];
+  const FAMILY = {
+    kindLists: { title: "Kind lists", doc: "The features of a type, by kind: the parts, ports, attributes and the rest of a definition or usage, its own, inherited, or both." },
+    memberLists: { title: "Member lists", doc: "The members of a namespace, by kind, through any membership: usages in a package, variants, enumeration literals, aliases and imported members." },
+    definitionLists: { title: "Definition lists", doc: "The definitions in a package or any other namespace, by kind." }
+  };
+  const VARIANT = {
+    list: "The list", exact: "Exact metaclass", semantic: "By library type", semanticTest: "Test by library type", byName: "By name",
+    nameMap: "Map by name"
+  };
+  let lang = "java";
+  try { const s = localStorage.getItem("ref-lang"); if (s && LANGS.some(l => l[0] === s)) lang = s; } catch (e) { /* storage unavailable */ }
+
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const el = (tag, attrs, html) => { const e = document.createElement(tag); if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; };
+  const anchor = m => "m-" + m.name + "-" + m.on;
+  const byName = {};
+  for (const m of D.members) (byName[m.name] = byName[m.name] || []).push(m);
+  const exByMember = {};
+  for (const x of D.examples) (exByMember[x.member] = exByMember[x.member] || []).push(x);
+  const backends = Object.keys(D.backends || {});
+
+  // ------------------------------------------------------------------ formatting
+  function typeText(t) {
+    if (!t) return "nothing";
+    let s = t.type;
+    if (t.kind === "map") s = "a map from names to " + s;
+    else if (t.many) s = "a list of " + s;
+    else if (t.optional) s = s + ", or none";
+    return s;
+  }
+  function value(v) {
+    if (v === null || v === undefined) return "none";
+    if (Array.isArray(v)) return "[" + v.map(value).join(", ") + "]";
+    if (typeof v === "object") return "{" + Object.entries(v).map(([k, x]) => k + " = " + value(x)).join(", ") + "}";
+    return String(v);
+  }
+  function callText(x) {
+    const m = (byName[x.member] || [])[0];
+    const name = m ? m.spellings[lang] : x.member;
+    const args = x.args ? Object.entries(x.args).map(([k, v]) => k + " = " + value(v)).join(", ") : "";
+    const via = x.via ? " → " + [].concat(x.via).join(" → ") : "";
+    return name + "(" + args + ")  on " + x.at + via;
+  }
+  function expectText(x) {
+    if (x.refused) return "refused (the contract gives no answer)";
+    if (x.none) return "none";
+    const rec = (byName[x.member] || [])[0];
+    if ("expect" in x && rec && rec.returns.kind === "map")
+      return "{" + x.expect.map(([k, v]) => k + ": " + value(v)).join(", ") + "}";
+    if ("expect" in x) return value(x.expect);
+    const parts = [];
+    if (x.includes) parts.push("includes " + value(x.includes));
+    if (x.excludes) parts.push("excludes " + value(x.excludes));
+    return parts.join("; ");
+  }
+  function outcomeBadge(backend, o) {
+    const label = D.backends[backend];
+    if (!o) return '<span class="badge none">' + esc(label) + ": not run</span>";
+    if (o.outcome === "agrees") return '<span class="badge ok">' + esc(label) + ": agrees</span>";
+    if (o.outcome === "mismatch") return '<span class="badge bad" title="' + esc(o.detail) + '">' + esc(label) + ": mismatch</span>";
+    return '<span class="badge warn" title="' + esc(o.detail) + '">' + esc(label) + ": cannot answer</span>";
+  }
+  function memberBadges(name) {
+    const xs = exByMember[name] || [];
+    return backends.map(b => {
+      const n = xs.length, ok = xs.filter(x => x.outcomes[b] && x.outcomes[b].outcome === "agrees").length;
+      const bad = xs.filter(x => x.outcomes[b] && x.outcomes[b].outcome === "mismatch").length;
+      const cls = bad ? "bad" : ok === n ? "ok" : "warn";
+      return '<span class="badge ' + cls + '">' + esc(D.backends[b]) + ": " + ok + "/" + n + "</span>";
+    }).join("");
+  }
+  function exampleHtml(x) {
+    const outs = backends.map(b => outcomeBadge(b, x.outcomes[b])).join("");
+    const details = backends.filter(b => x.outcomes[b] && x.outcomes[b].outcome !== "agrees")
+      .map(b => '<div class="detail">' + esc(D.backends[b]) + ": " + esc(x.outcomes[b].detail) + "</div>").join("");
+    return '<div class="ex" id="' + esc(x.id) + '"><div class="row"><div class="call">' + esc(callText(x)) + "</div>" +
+      '<button class="comment" type="button" hidden>Comment</button></div>' +
+      '<div class="expect">→ ' + esc(expectText(x)) + "</div>" +
+      (x.note ? '<div class="note">' + esc(x.note) + "</div>" : "") +
+      '<div class="badges" style="margin-top:4px">' + outs + "</div>" + details +
+      '<div class="detail">Model <a href="#model-' + esc(x.model) + '">' + esc(x.model) + "</a></div></div>";
+  }
+  function sigHtml(m) {
+    const s = (m.sigs[lang] || []);
+    return '<div class="sig">' + esc(s.join("\n")) + "</div>";
+  }
+
+  // ------------------------------------------------------------------ sections
+  const main = document.getElementById("main");
+  const sectionsNav = document.getElementById("sections");
+  function addSection(id, title, tag, lead, extraIds) {
+    const s = el("section", { class: "top-level", id: id });
+    (extraIds || []).forEach(x => s.appendChild(el("span", { id: x })));
+    if (tag) s.appendChild(el("div", { class: "jira" }, esc(tag)));
+    s.appendChild(el("h2", null, esc(title)));
+    if (lead) s.appendChild(el("p", { class: "lead" }, lead));
+    main.appendChild(s);
+    sectionsNav.appendChild(el("a", { href: "#" + id }, esc(title) + (tag ? '<span class="tag">' + esc(tag) + "</span>" : "")));
+    return s;
+  }
+  const tagOf = key => (R.sections && R.sections[key] && R.sections[key].tag) || "";
+  const leadOf = (key, fallback) => (R.sections && R.sections[key] && R.sections[key].lead) || fallback;
+
+  function renderOverview() {
+    const s = addSection("overview", R.overviewTitle || "Overview", "", null);
+    const prose = el("div", { class: "prose" }, (R.intro || []).map(p => "<p>" + p + "</p>").join(""));
+    s.appendChild(prose);
+    const c = D.counts;
+    const stats = el("div", { class: "stats" });
+    stats.innerHTML = '<div class="stat"><b>' + c.members + "</b><span>members</span></div>" +
+      '<div class="stat"><b>' + c.contexts + "</b><span>classes they are on</span></div>" +
+      '<div class="stat"><b>' + D.examples.length + "</b><span>examples with answers</span></div>" +
+      backends.map(b => {
+        const ok = D.examples.filter(x => x.outcomes[b] && x.outcomes[b].outcome === "agrees").length;
+        return '<div class="stat"><b>' + ok + "/" + D.examples.length + "</b><span>answered as expected: " + esc(D.backends[b]) + "</span></div>";
+      }).join("");
+    s.appendChild(stats);
+    if (R.jira && R.jira.length) {
+      s.appendChild(el("h3", { style: "font-size:1.05rem;margin:14px 0 4px" }, "Where to look, by Jira issue"));
+      const t = el("div", { class: "tablewrap" });
+      t.innerHTML = "<table><thead><tr><th>Issue</th><th>What to review</th><th>Section</th></tr></thead><tbody>" +
+        R.jira.map(j => "<tr><td>" + esc(j.issue) + "</td><td>" + esc(j.review) + "</td><td>" +
+          (j.section ? '<a href="#' + esc(j.section) + '">' + esc(j.sectionTitle || j.section) + "</a>" : '<span class="muted">' + esc(j.none || "") + "</span>") +
+          "</td></tr>").join("") + "</tbody></table>";
+      s.appendChild(t);
+    }
+    if (R.howTo && R.howTo.length) {
+      s.appendChild(el("h3", { style: "font-size:1.05rem;margin:14px 0 4px" }, "How to comment"));
+      s.appendChild(el("div", { class: "prose" }, R.howTo.map(p => "<p>" + p + "</p>").join("")));
+    }
+  }
+
+  function contexts() {
+    const seen = {};
+    D.members.forEach(m => seen[m.on] = true);
+    const all = Object.keys(seen);
+    return CTX_ORDER.filter(c => seen[c]).concat(all.filter(c => CTX_ORDER.indexOf(c) < 0).sort());
+  }
+
+  function familyEntry(on, fam, recs) {
+    const e = el("div", { class: "entry", id: "f-" + fam + "-" + on });
+    const kinds = [];
+    recs.forEach(m => { if (kinds.indexOf(m.kind) < 0) kinds.push(m.kind); });
+    const variants = [];
+    recs.forEach(m => { if (variants.indexOf(m.variant) < 0) variants.push(m.variant); });
+    const rep = recs.filter(m => m.kind === (fam === "definitionLists" ? "partDefs" : "parts"));
+    let h = '<div class="entry-head"><h4>' + esc(FAMILY[fam].title) + '</h4><span class="on">on ' + esc(on) + " · " + recs.length + " members</span></div>";
+    h += '<p class="doc">' + esc(FAMILY[fam].doc) + "</p>";
+    h += '<p class="doc muted">One row per kind below; the signatures shown are those of the ' +
+      esc(fam === "definitionLists" ? "part definitions" : "parts") + " row. Every kind has the same shape.</p>";
+    rep.forEach(m => {
+      h += '<div style="margin-top:10px"><b>' + esc(VARIANT[m.variant] || m.variant) + "</b>: " + esc(m.doc) + "</div>" + sigHtml(m);
+    });
+    const params = (rep[0] && rep[0].params) || [];
+    if (params.length) h += paramsHtml(rep.reduce((a, m) => a.length >= m.params.length ? a : m.params, []));
+    const t = "<div class=\"tablewrap kinds\"><table><thead><tr><th>Kind</th><th>Metaclass</th>" +
+      variants.map(v => "<th>" + esc(VARIANT[v] || v) + "</th>").join("") + "<th>Library type</th><th>Examples</th></tr></thead><tbody>" +
+      kinds.map(k => {
+        const ms = recs.filter(m => m.kind === k);
+        const meta = ms[0].kindMetaclass || "";
+        const lib = (ms.find(m => m.libraryType) || {}).libraryType || "";
+        const cells = variants.map(v => { const m = ms.find(x => x.variant === v); return "<td>" + (m ? '<a href="#' + anchor(m) + '"><code>' + esc(m.spellings[lang]) + "</code></a>" : "") + "</td>"; }).join("");
+        const xs = ms.reduce((a, m) => a.concat(exByMember[m.name] || []), []);
+        const badges = backends.map(b => { const ok = xs.filter(x => x.outcomes[b] && x.outcomes[b].outcome === "agrees").length; return '<span class="badge ' + (ok === xs.length ? "ok" : "warn") + '">' + esc(D.backends[b]) + " " + ok + "/" + xs.length + "</span>"; }).join(" ");
+        return "<tr><td>" + esc(k) + "</td><td><code>" + esc(meta) + "</code></td>" + cells + "<td><code>" + esc(lib) + "</code></td><td><div class=\"badges\">" + badges + "</div></td></tr>";
+      }).join("") + "</tbody></table></div>";
+    h += t;
+    e.innerHTML = h;
+    // Each member of the family keeps an anchor and its examples, folded.
+    const more = el("details");
+    more.appendChild(el("summary", null, "Every member of the family, with its examples"));
+    recs.forEach(m => more.appendChild(memberEntry(m, true)));
+    e.appendChild(more);
+    return e;
+  }
+
+  function paramsHtml(params) {
+    if (!params.length) return "";
+    return '<dl class="kv">' + params.map(p => {
+      const literals = D.enums[p.type.type] ? " (" + D.enums[p.type.type].literals.join(", ") + ")" : "";
+      const doc = (p.doc || "") + literals;
+      return "<dt><code>" + esc(p.name) + "</code></dt><dd>" + esc(p.type.type) + (p.default != null ? ", default <code>" + esc(String(p.default)) + "</code>" : "") +
+        (doc ? ". " + esc(doc) : "") + "</dd>";
+    }).join("") + "</dl>";
+  }
+
+  function memberEntry(m, compact) {
+    const e = el("div", { class: "entry", id: anchor(m) });
+    let h = '<div class="entry-head"><h4>' + esc(m.spellings[lang]) + '</h4><span class="on">on ' + esc(m.on) +
+      (m.family ? " · " + esc(FAMILY[m.family].title) + " (" + esc(m.kind) + ")" : "") + "</span></div>";
+    h += sigHtml(m);
+    h += '<p class="doc">' + esc(m.doc) + "</p>";
+    if (!compact || !m.family) h += paramsHtml(m.params || []);
+    h += '<dl class="kv"><dt>Answers</dt><dd>' + esc(typeText(m.returns)) + "</dd>";
+    h += "<dt>Refused</dt><dd>" + (m.refusable ? "Where its definition gives no answer (see the definition), and " : "") +
+      "where the backend cannot answer what it reads (Backends).</dd>";
+    if (m.reads && m.reads.length) h += "<dt>Reads</dt><dd>" + m.reads.map(r => "<code>" + esc(r) + "</code>").join(", ") + "</dd>";
+    if (m.helpers && m.helpers.length) h += "<dt>Helpers</dt><dd>" + m.helpers.map(x => '<a href="#h-' + esc(x) + '"><code>' + esc(x) + "</code></a>").join(", ") + "</dd>";
+    h += '<dt>Examples</dt><dd><div class="badges">' + memberBadges(m.name) + "</div></dd></dl>";
+    if (m.ocl) h += "<details><summary>Definition (OCL)</summary><pre>" + esc(m.ocl) + "</pre>" + (m.basis ? '<div class="detail">Basis: ' + esc(m.basis) + "</div>" : "") + "</details>";
+    if (m.prose) h += "<details><summary>Definition</summary><pre>" + esc(m.prose) + "</pre></details>";
+    const xs = exByMember[m.name] || [];
+    if (xs.length) h += "<details" + (compact ? "" : " open") + "><summary>" + xs.length + " example" + (xs.length > 1 ? "s" : "") + "</summary>" + xs.map(exampleHtml).join("") + "</details>";
+    h += '<div style="margin-top:8px"><button class="comment" type="button" hidden>Comment on this member</button></div>';
+    e.innerHTML = h;
+    return e;
+  }
+
+  function renderReference() {
+    const s = addSection("issue-3", "Reference", tagOf("reference"), leadOf("reference",
+      "Every member, by the class it is on. Signatures in the language chosen above; the definition in OCL over the specification's properties; the examples with each backend's answer."));
+    const conv = el("div", { class: "prose" });
+    conv.innerHTML = "<h3 style=\"font-size:1.05rem;margin:4px 0 6px\">Conventions</h3>" +
+      "<p><b>Scope.</b> " + esc(D.enums.Scope.doc) + "</p>" +
+      "<p><b>Visibility.</b> " + esc(D.enums.VisibilityFilter.doc) + "</p>" +
+      "<p><b>Library.</b> Without <code>library</code>, the members a type inherits from the standard library's types are left out.</p>" +
+      "<p><b>Answers.</b> A member answers what its definition gives: a list, an element, a value, or none (null, None, undefined, nullopt). It never answers part of a list. " +
+      "Where the definition gives no answer (the literal of a value that is not a literal), it is refused (<code>Refused</code>). " +
+      "Where the backend cannot compute what the member reads, it is not answered (<code>NotAnswered</code>), with the reason.</p>";
+    s.appendChild(conv);
+    const idx = document.getElementById("index");
+    idx.innerHTML = "";
+    contexts().forEach(on => {
+      const recs = D.members.filter(m => m.on === on);
+      const head = el("h3", { class: "ctx-head", id: "c-" + on }, 'On <span class="mono">' + esc(on) + "</span>");
+      s.appendChild(head);
+      idx.appendChild(el("div", { class: "ctx" }, esc(on)));
+      const fams = [];
+      recs.forEach(m => { if (m.family && fams.indexOf(m.family) < 0) fams.push(m.family); });
+      fams.forEach(f => {
+        s.appendChild(familyEntry(on, f, recs.filter(m => m.family === f)));
+        idx.appendChild(el("a", { href: "#f-" + f + "-" + on, "data-key": (FAMILY[f].title + " " + recs.filter(m => m.family === f).map(m => m.spellings[lang]).join(" ")).toLowerCase() }, esc(FAMILY[f].title) + " (" + recs.filter(m => m.family === f).length + ")"));
+      });
+      recs.filter(m => !m.family).forEach(m => {
+        s.appendChild(memberEntry(m, false));
+        idx.appendChild(el("a", { href: "#" + anchor(m), "data-key": (m.spellings[lang] + " " + m.name).toLowerCase() }, esc(m.spellings[lang])));
+      });
+    });
+    s.appendChild(el("h3", { class: "ctx-head", id: "helpers" }, "Helpers of the definitions"));
+    s.appendChild(el("p", { class: "lead" }, "Named parts of the definitions above. They are not members: no language has them."));
+    D.helpers.forEach(hp => {
+      const e = el("div", { class: "entry", id: "h-" + hp.name });
+      e.innerHTML = '<div class="entry-head"><h4>' + esc(hp.name) + '</h4><span class="on">on ' + esc(hp.on) + "</span></div>" +
+        (hp.doc ? '<p class="doc">' + esc(hp.doc) + "</p>" : "") + "<pre style=\"background:var(--code-bg);border-radius:6px;padding:10px;overflow-x:auto;font-size:0.8rem\">" + esc(hp.ocl) + "</pre>" +
+        (hp.basis ? '<div class="detail">Basis: ' + esc(hp.basis) + "</div>" : "");
+      s.appendChild(e);
+    });
+  }
+
+  function renderFirstSteps() {
+    const steps = R.firstSteps;
+    if (!steps || !steps.length) return;
+    const s = addSection("issue-4", "First steps", tagOf("firstSteps"), leadOf("firstSteps",
+      "The same tasks in the five languages, as a user writes them. The reference shows every member in the language chosen at the top."));
+    if (R.firstStepsIntro) s.appendChild(el("div", { class: "prose" }, R.firstStepsIntro.map(p => "<p>" + p + "</p>").join("")));
+    if (R.firstStepsModel) {
+      const d = el("details", { open: "" });
+      d.appendChild(el("summary", null, "The model the snippets read (garage.sysml)"));
+      d.appendChild(el("pre", null, esc(R.firstStepsModel)));
+      s.appendChild(d);
+    }
+    steps.forEach(st => {
+      const t = el("div", { class: "task" });
+      t.innerHTML = "<h4>" + esc(st.task) + "</h4>" + (st.note ? '<p class="doc muted">' + esc(st.note) + "</p>" : "") +
+        '<div class="code-tabs"><pre>' + esc(st.code[lang] || "") + "</pre></div>";
+      s.appendChild(t);
+    });
+  }
+
+  function renderBackends() {
+    if (!backends.length) return;
+    const s = addSection("issue-5", "Backends", tagOf("backends"), leadOf("backends",
+      "Each backend's answers on the examples. A backend that cannot compute what a member reads does not answer it, and says why."), ["issue-6"]);
+    const sum = el("div", { class: "tablewrap" });
+    sum.innerHTML = "<table><thead><tr><th>Backend</th><th>Agree</th><th>Cannot answer</th><th>Mismatch</th></tr></thead><tbody>" +
+      backends.map(b => {
+        const c = { agrees: 0, "refused by the backend": 0, mismatch: 0 };
+        D.examples.forEach(x => { if (x.outcomes[b]) c[x.outcomes[b].outcome] = (c[x.outcomes[b].outcome] || 0) + 1; });
+        return "<tr><td>" + esc(D.backends[b]) + '</td><td class="num">' + c.agrees + '</td><td class="num">' + c["refused by the backend"] + '</td><td class="num">' + c.mismatch + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    s.appendChild(sum);
+    backends.forEach(b => {
+      const refused = D.examples.filter(x => x.outcomes[b] && x.outcomes[b].outcome !== "agrees");
+      if (!refused.length) return;
+      const groups = {};
+      refused.forEach(x => {
+        const d = x.outcomes[b].detail;
+        const m = /:\s*([A-Za-z]+(?:\(\))?) is not answered/.exec(d);
+        const key = m ? m[1] : d.split(":").slice(1, 2).join(":").trim() || d;
+        (groups[key] = groups[key] || []).push(x);
+      });
+      s.appendChild(el("h3", { style: "font-size:1.05rem;margin:18px 0 4px" }, esc(D.backends[b]) + ": what it cannot answer yet"));
+      const issues = (R.backendIssues && R.backendIssues[b]) || {};
+      const t = el("div", { class: "tablewrap" });
+      t.innerHTML = "<table><thead><tr><th>Not answered</th><th>Examples</th><th>Issue</th><th>Members affected</th></tr></thead><tbody>" +
+        Object.entries(groups).sort((a, c) => c[1].length - a[1].length).map(([k, xs]) => {
+          const mem = [];
+          xs.forEach(x => { if (mem.indexOf(x.member) < 0) mem.push(x.member); });
+          return "<tr><td><code>" + esc(k) + '</code></td><td class="num">' + xs.length + "</td><td>" + esc(issues[k] || "") + "</td><td>" +
+            mem.map(n => '<a href="#' + anchor(byName[n][0]) + '"><code>' + esc(byName[n][0].spellings[lang]) + "</code></a>").join(", ") + "</td></tr>";
+        }).join("") + "</tbody></table>";
+      s.appendChild(t);
+    });
+  }
+
+  function renderExamples() {
+    const s = addSection("issue-7", "Examples", tagOf("examples"), leadOf("examples",
+      "Every example, by model: the model's text, then each call and the contract's answer, with what each backend answers."));
+    Object.entries(D.models).forEach(([name, model]) => {
+      const xs = D.examples.filter(x => x.model === name);
+      const h = el("h3", { class: "ctx-head", id: "model-" + name }, 'Model <span class="mono">' + esc(name) + "</span>");
+      s.appendChild(h);
+      if (model.doc) s.appendChild(el("p", { class: "lead" }, esc(model.doc)));
+      const d = el("details");
+      d.appendChild(el("summary", null, "The model's text"));
+      d.appendChild(el("pre", null, esc(model.text)));
+      s.appendChild(d);
+      const box = el("div", { class: "entry" });
+      box.innerHTML = '<div class="detail" style="margin-bottom:4px">' + xs.length + " examples</div>" + xs.map(exampleHtml).join("");
+      s.appendChild(box);
+    });
+  }
+
+  function renderVersioning() {
+    if (!R.versioning) return;
+    const s = addSection("versioning", "Versioning", tagOf("versioning"), null);
+    s.appendChild(el("div", { class: "prose" }, R.versioning.map(p => "<p>" + p + "</p>").join("")));
+  }
+
+  // ------------------------------------------------------------------ the page
+  function render() {
+    const keepY = window.scrollY;
+    main.innerHTML = ""; sectionsNav.innerHTML = "";
+    renderOverview(); renderReference(); renderFirstSteps(); renderBackends(); renderExamples(); renderVersioning();
+    applyFilter();
+    wireComments();
+    window.scrollTo(0, keepY);
+  }
+  const langs = document.getElementById("langs");
+  LANGS.forEach(([k, label]) => {
+    const b = el("button", { type: "button", "aria-pressed": String(k === lang), "data-lang": k }, esc(label));
+    b.addEventListener("click", () => {
+      lang = k;
+      try { localStorage.setItem("ref-lang", k); } catch (e) { /* storage unavailable */ }
+      langs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.lang === lang)));
+      render();
+    });
+    langs.appendChild(b);
+  });
+  const filter = document.getElementById("filter");
+  function applyFilter() {
+    const q = filter.value.trim().toLowerCase();
+    document.querySelectorAll("#index a").forEach(a => { a.hidden = q && a.dataset.key.indexOf(q) < 0; });
+  }
+  filter.addEventListener("input", applyFilter);
+
+  // Comments: the shell's own composer, anchored at the entry or example (composer-only grant).
+  let comments = null;
+  function wireComments() {
+    if (!comments) return;
+    document.querySelectorAll("button.comment").forEach(b => {
+      b.hidden = false;
+      b.onclick = async () => {
+        const target = b.closest(".ex") || b.closest(".entry");
+        try { await comments.openComposer({ element: target }); }
+        catch (e) { if (e && (e.code === "unavailable" || e.code === "not_granted" || e.code === "forbidden")) document.querySelectorAll("button.comment").forEach(x => x.hidden = true); }
+      };
+    });
+  }
+  render();
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("comments").then(c => { if (c) { comments = c; wireComments(); } }).catch(() => {});
+  }
+  if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+})();
+</script>

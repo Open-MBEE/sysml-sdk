@@ -119,4 +119,329 @@ public interface Feature extends Type {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * Whether a type of this feature conforms to Actions::Action; refused where the model's library
+     * has no Actions::Action.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticAction() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_ACTION)); }
+    /**
+     * Whether a type of this feature conforms to Allocations::Allocation; refused where the model's
+     * library has no Allocations::Allocation.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticAllocation() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_ALLOCATION)); }
+    /**
+     * Whether a type of this feature conforms to AnalysisCases::AnalysisCase; refused where the
+     * model's library has no AnalysisCases::AnalysisCase.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticAnalysisCase() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_ANALYSIS_CASE)); }
+    /**
+     * Whether a type of this feature conforms to Base::DataValue; refused where the model's library
+     * has no Base::DataValue.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticAttribute() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_ATTRIBUTE)); }
+    /**
+     * Whether a type of this feature conforms to Calculations::Calculation; refused where the
+     * model's library has no Calculations::Calculation.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticCalculation() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_CALCULATION)); }
+    /**
+     * Whether a type of this feature conforms to Cases::Case; refused where the model's library has
+     * no Cases::Case.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticCase() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_CASE)); }
+    /**
+     * Whether a type of this feature conforms to Requirements::ConcernCheck; refused where the
+     * model's library has no Requirements::ConcernCheck.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticConcern() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_CONCERN)); }
+    /**
+     * Whether a type of this feature conforms to Connections::Connection; refused where the model's
+     * library has no Connections::Connection.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticConnection() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_CONNECTION)); }
+    /**
+     * Whether a type of this feature conforms to Constraints::ConstraintCheck; refused where the
+     * model's library has no Constraints::ConstraintCheck.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticConstraint() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_CONSTRAINT)); }
+    /**
+     * Whether a type of this feature conforms to Flows::MessageAction; refused where the model's
+     * library has no Flows::MessageAction.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticFlow() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_FLOW)); }
+    /**
+     * Whether a type of this feature conforms to Interfaces::Interface; refused where the model's
+     * library has no Interfaces::Interface.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticInterface() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_INTERFACE)); }
+    /**
+     * Whether a type of this feature conforms to Items::Item; refused where the model's library has
+     * no Items::Item.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticItem() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_ITEM)); }
+    /**
+     * Whether a type of this feature conforms to Occurrences::Occurrence; refused where the model's
+     * library has no Occurrences::Occurrence.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticOccurrence() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_OCCURRENCE)); }
+    /**
+     * Whether a type of this feature conforms to Parts::Part; refused where the model's library has
+     * no Parts::Part.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticPart() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_PART)); }
+    /**
+     * Whether a type of this feature conforms to Ports::Port; refused where the model's library has
+     * no Ports::Port.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticPort() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_PORT)); }
+    /**
+     * Whether a type of this feature conforms to Views::Rendering; refused where the model's
+     * library has no Views::Rendering.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticRendering() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_RENDERING)); }
+    /**
+     * Whether a type of this feature conforms to Requirements::RequirementCheck; refused where the
+     * model's library has no Requirements::RequirementCheck.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticRequirement() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_REQUIREMENT)); }
+    /**
+     * Whether a type of this feature conforms to States::StateAction; refused where the model's
+     * library has no States::StateAction.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticState() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_STATE)); }
+    /**
+     * Whether a type of this feature conforms to UseCases::UseCase; refused where the model's
+     * library has no UseCases::UseCase.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticUseCase() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_USE_CASE)); }
+    /**
+     * Whether a type of this feature conforms to VerificationCases::VerificationCase; refused where
+     * the model's library has no VerificationCases::VerificationCase.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticVerificationCase() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_VERIFICATION_CASE)); }
+    /**
+     * Whether a type of this feature conforms to Views::View; refused where the model's library has
+     * no Views::View.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticView() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_VIEW)); }
+    /**
+     * Whether a type of this feature conforms to Views::ViewpointCheck; refused where the model's
+     * library has no Views::ViewpointCheck.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsSemanticViewpoint() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_SEMANTIC_VIEWPOINT)); }
+    /**
+     * The types this feature is declared with.
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default TypeList findDeclaredTypes() { return new TypeList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_DECLARED_TYPES))); }
+    /**
+     * The features this feature subsets as written (redefinitions and reference subsettings left
+     * out).
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findSubsettedFeatures() { return new FeatureList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_SUBSETTED_FEATURES))); }
+    /**
+     * The features this feature redefines as written.
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findRedefinedFeatures() { return new FeatureList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_REDEFINED_FEATURES))); }
+    /**
+     * The feature this feature references (::&gt;), or none.
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default Feature findReferencedFeature() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_REFERENCED_FEATURE)); }
+    /**
+     * The feature a chain of written redefinitions starts from, following the first at each step
+     * (Truck::mass to Frame::mass); itself when it redefines nothing.
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default Feature findRedefinitionRoot() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_REDEFINITION_ROOT)); }
+    /**
+     * The value expression this feature is declared with (=, :=, default), or none.
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default Expression findValue() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_VALUE)); }
+    /**
+     * Whether the value is a default (default = or default :=).
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findHasDefaultValue() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_HAS_DEFAULT_VALUE)); }
+    /**
+     * Whether the value is an initial value (:=).
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findHasInitialValue() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_HAS_INITIAL_VALUE)); }
+    /**
+     * Ordered: declared, or through a feature it subsets or redefines, implied ones included, as
+     * the Pilot's FeatureUtil.checkIsOrdered.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsEffectivelyOrdered() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_EFFECTIVELY_ORDERED)); }
+    /**
+     * A feature chain as its features (battery.powerOut gives [battery, powerOut]); else [self].
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findPath() { return new FeatureList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_PATH))); }
 }

@@ -54,7 +54,7 @@ public:
         const Str* source_names; const Str* source_texts; std::size_t sources_len;
         Str library_dir;
     };
-    static constexpr int OK = 0, NOT_IMPLEMENTED = 1, NOT_APPLICABLE = 2, INVALID_HANDLE = 3, UNRESOLVED = 7;
+    static constexpr int OK = 0, NOT_IMPLEMENTED = 1, NOT_APPLICABLE = 2, INVALID_HANDLE = 3, UNRESOLVED = 7, REFUSED = 8;
 
     /// One loaded library, shared by every session created from it.
     class Library {
@@ -75,6 +75,25 @@ public:
         }
         Library(const Library&) = delete;
         Library& operator=(const Library&) = delete;
+
+        /// Whether the library has the convenience members this SDK was generated with.
+        void check_convenience() {
+            if (convenience_checked_) return;
+            void* d = nullptr;
+            void* n = nullptr;
+            try {
+                d = sym("sysmlv2_convenience_digest");
+                n = sym("sysmlv2_convenience_digest_len");
+            } catch (const sdk_error&) {
+                throw sdk_error("this binding library has no convenience members; rebuild it (abi/)");
+            }
+            std::string have(reinterpret_cast<const char* (*)()>(d)(), reinterpret_cast<std::size_t (*)()>(n)());
+            if (have != toolkit_table::CONVENIENCE_DIGEST)
+                throw sdk_error("binding library was generated with convenience members " + have.substr(0, 12)
+                                + ", this SDK with " + std::string(toolkit_table::CONVENIENCE_DIGEST.substr(0, 12))
+                                + "; regenerate one side");
+            convenience_checked_ = true;
+        }
 
         void* sym(const char* name) {
             auto it = syms_.find(name);
@@ -136,6 +155,7 @@ public:
         }
 
     private:
+        bool convenience_checked_ = false;
         void* handle_ = nullptr;
         std::unordered_map<std::string, void*> syms_;
     };
@@ -260,6 +280,66 @@ public:
         return unpack(e->code, o, st, where);
     }
 
+    /// A convenience member, through its binding library function: a scope or visibility filter as
+    /// the literal's index, a boolean as a C bool, a string as text, an element as its handle.
+    nlohmann::json find(const std::string& handle, const Find& member, const nlohmann::json& args) const override {
+        lib_->check_convenience();
+        const std::string where = metaclass(handle) + "." + member.name + "()";
+        const std::string_view result = member.result;
+        const char code = result == "elements" ? 'H' : result == "element" ? 'R' : result == "bool" ? 'B'
+                        : result == "int" || result == "unlimited" ? 'I' : result == "real" ? 'F'
+                        : result == "strings" ? 'T' : result == "map" ? 'M' : 'S';
+        const std::size_t n = member.param_kinds.size();
+        std::vector<std::string> texts(n);
+        std::vector<Str> strs(n);
+        std::vector<std::uint64_t> words(n);
+        std::string sig;
+        auto index_of = [](const std::string& v, std::initializer_list<const char*> literals) {
+            std::uint64_t i = 0;
+            for (const char* l : literals) {
+                if (v == l) return i;
+                ++i;
+            }
+            throw std::invalid_argument("not a literal: " + v);
+        };
+        for (std::size_t i = 0; i < n; ++i) {
+            const std::string_view kind = member.param_kinds[i];
+            const nlohmann::json& a = args[i];
+            if (kind == "scope") {
+                words[i] = index_of(a.get<std::string>(), {"owned", "inherited", "all"}); sig += 'E';
+            } else if (kind == "visibility") {
+                words[i] = index_of(a.get<std::string>(), {"any", "protected", "public"}); sig += 'E';
+            } else if (kind == "bool") {
+                words[i] = a.is_boolean() && a.get<bool>() ? 1 : 0; sig += 'B';
+            } else if (kind == "str") {
+                texts[i] = a.get<std::string>();
+                strs[i] = Str{reinterpret_cast<const std::uint8_t*>(texts[i].data()), texts[i].size(), true, nullptr};
+                words[i] = reinterpret_cast<std::uintptr_t>(&strs[i]); sig += 'P';
+            } else {
+                if (!(a.is_object() && a.contains("@id")))
+                    throw std::invalid_argument(where + ": " + member.param_names[i] + " must be an element");
+                words[i] = std::stoull(a["@id"].get<std::string>()); sig += 'U';
+            }
+        }
+        void* f = lib_->sym(("sysmlv2_conv_" + std::string(member.symbol)).c_str());
+        const std::uint64_t h = std::stoull(handle);
+        auto p = [&](std::size_t i) { return reinterpret_cast<void*>(static_cast<std::uintptr_t>(words[i])); };
+        auto e = [&](std::size_t i) { return static_cast<std::uint32_t>(words[i]); };
+        auto b = [&](std::size_t i) { return words[i] != 0; };
+        Out o{};
+        int st;
+        if (sig.empty()) st = reinterpret_cast<int (*)(void*, std::uint64_t, void*)>(f)(session_, h, &o);
+        else if (sig == "E") st = reinterpret_cast<int (*)(void*, std::uint64_t, std::uint32_t, void*)>(f)(session_, h, e(0), &o);
+        else if (sig == "P") st = reinterpret_cast<int (*)(void*, std::uint64_t, void*, void*)>(f)(session_, h, p(0), &o);
+        else if (sig == "U") st = reinterpret_cast<int (*)(void*, std::uint64_t, std::uint64_t, void*)>(f)(session_, h, words[0], &o);
+        else if (sig == "PE") st = reinterpret_cast<int (*)(void*, std::uint64_t, void*, std::uint32_t, void*)>(f)(session_, h, p(0), e(1), &o);
+        else if (sig == "EEB") st = reinterpret_cast<int (*)(void*, std::uint64_t, std::uint32_t, std::uint32_t, bool, void*)>(f)(session_, h, e(0), e(1), b(2), &o);
+        else if (sig == "PEEB") st = reinterpret_cast<int (*)(void*, std::uint64_t, void*, std::uint32_t, std::uint32_t, bool, void*)>(f)(session_, h, p(0), e(1), e(2), b(3), &o);
+        else if (sig == "UEEB") st = reinterpret_cast<int (*)(void*, std::uint64_t, std::uint64_t, std::uint32_t, std::uint32_t, bool, void*)>(f)(session_, h, words[0], e(1), e(2), b(3), &o);
+        else throw sdk_error(where + ": no call shape for parameters '" + sig + "'");
+        return unpack(code, o, st, where);
+    }
+
     std::string metaclass(const std::string& handle) const override {
         auto it = metaclass_.find(handle);
         if (it != metaclass_.end()) return it->second;
@@ -333,6 +413,7 @@ private:
         if (st == NOT_IMPLEMENTED) throw not_implemented_in_toolkit(msg.empty() ? where + ": not implemented by the SysML Toolkit" : msg);
         if (st == INVALID_HANDLE) throw gone(msg.empty() ? where + ": invalid handle" : msg);
         if (st == UNRESOLVED) throw unresolved_reference(msg.empty() ? where + ": a reference did not resolve" : msg);
+        if (st == REFUSED) throw refused(msg.empty() ? where + ": refused" : msg);
         throw sdk_error(where + ": status " + std::to_string(st) + ": " + msg);
     }
 
@@ -368,7 +449,8 @@ private:
 
     /// The result in `o` as the backend contract carries it, after checking the status.
     nlohmann::json unpack(char code, Out& o, int st, const std::string& where) const {
-        if (!check(st, where)) return code == 'H' || code == 'T' ? nlohmann::json::array() : nlohmann::json(nullptr);
+        if (!check(st, where))
+            return code == 'H' || code == 'T' || code == 'M' ? nlohmann::json::array() : nlohmann::json(nullptr);
         switch (code) {
             case 'H': { nlohmann::json a = nlohmann::json::array(); for (auto& h : take_handles(o.h)) a.push_back({{"@id", h}}); return a; }
             case 'R': return o.r.present ? nlohmann::json{{"@id", std::to_string(o.r.value)}} : nlohmann::json(nullptr);
@@ -376,6 +458,17 @@ private:
             case 'T': {  // a list of strings (a requirement's `text`), as JSON text
                 auto s = take_str(o.s);
                 return s ? nlohmann::json::parse(*s) : nlohmann::json::array();
+            }
+            case 'M': {  // a name-keyed map: JSON pairs of a name and a handle
+                nlohmann::json pairs = nlohmann::json::array();
+                auto s = take_str(o.s);
+                if (s)
+                    for (const auto& p : nlohmann::json::parse(*s)) {
+                        nlohmann::json ref = nlohmann::json::object();
+                        ref["@id"] = p.at(1);
+                        pairs.push_back(nlohmann::json::array({p.at(0), ref}));
+                    }
+                return pairs;
             }
             case 'B': return o.b.present ? nlohmann::json(o.b.value) : nlohmann::json(nullptr);
             case 'I': return o.i.present ? nlohmann::json(o.i.value) : nlohmann::json(nullptr);

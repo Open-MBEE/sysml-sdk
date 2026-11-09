@@ -89,10 +89,7 @@ public static class ToolkitChecks
             var memberships = sports.inheritedMemberships(Array.Empty<Namespace>(), Array.Empty<SpecType>(), false);
             Check(memberships.Count == 2 && memberships[0].memberName == "wheels", "inheritedMemberships");
         });
-        var opRefused = false;
-        try { _ = sports.isCompatibleWith(carDef); }
-        catch (NotImplementedInToolkitException e) { opRefused = e.Message.Contains("isCompatibleWith"); }
-        Check(opRefused, "an operation the SysML Toolkit cannot answer as specified is refused");
+        Check(sports.isCompatibleWith(carDef) == true, "a specialization is compatible with its general type");
         Check(be.FullJson().StartsWith("["), "FullJson");
         // Text beyond ASCII crosses to the SysML Toolkit as UTF-8, measured in bytes, and comes
         // back intact; a requirement's text is a list of strings; every element has the members

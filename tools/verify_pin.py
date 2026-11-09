@@ -4,6 +4,10 @@ Hashes are SHA-256 over newline-normalized bytes (CRLF -> LF), so the
 pins are stable regardless of the platform or checkout that produced
 the vendored copies. Run by CI before the regenerate-and-diff drift
 check.
+
+Files a pin lists under "downloads" are not in the repository (the tool
+that reads them downloads them); a downloaded copy that is present is
+checked too.
 """
 
 import hashlib
@@ -29,6 +33,14 @@ def main():
             got = normalized_sha256(pin_file.parent / rel)
             if got != want:
                 bad.append(f"{pin_file.parent.name}/{rel}: {got} != pinned {want}")
+        for rel, entry in pin.get("downloads", {}).items():
+            path = pin_file.parent / rel
+            if not path.is_file():
+                continue
+            total += 1
+            got = normalized_sha256(path)
+            if got != entry["sha256"]:
+                bad.append(f"{pin_file.parent.name}/{rel} (downloaded): {got} != pinned {entry['sha256']}")
         src = pin.get("sourceCommit", pin.get("version", "?"))
         print(f"PIN {pin_file.parent.name}: {len(pin['files'])} files @ {src[:12]}")
     if bad:

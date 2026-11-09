@@ -1,6 +1,7 @@
 // Node smoke test for the TS/JS SDK backend — mirrors ../demo.py.
 import { readFileSync } from "node:fs";
-import { Model, PayloadLibrary, UnresolvedReference, elementsOfType, is } from "./runtime.mjs";
+import { ElementList, Model, NotAnswered, PayloadLibrary, Refused, Scope, UnresolvedReference, VisibilityFilter, elementsOfType, is }
+  from "./runtime.mjs";
 
 const payload = JSON.parse(
   readFileSync(new URL("../data/bigger.full.json", import.meta.url), "utf-8"));
@@ -49,6 +50,24 @@ const calc = m.resolve("Demo::Vehicle::K");
 if (calc.$metaclass !== "CalculationDefinition") throw new Error("K");
 if (calc.input.map((w) => w.declaredName).join() !== "x") throw new Error("K.input");
 console.log("K.input -> [x] OK");
+
+// A payload holds property values only: every convenience member is refused by the backend
+// (NotAnswered, not the contract's Refused), naming the member, on an element and over a list, whatever
+// the arguments. The same checks run in every language.
+for (const [member, call] of [
+  ["findPartDefs", () => m.resolve("Demo").findPartDefs()],
+  ["findPartDef", () => m.resolve("Demo").findPartDef("Vehicle", Scope.ALL)],
+  ["findParts", () => vehicle.findParts(Scope.ALL, VisibilityFilter.PUBLIC, true)],
+  ["findDocText", () => vehicle.findDocText()],
+  ["findParts", () => ElementList.from([vehicle, m.resolve("Demo::Base")]).findParts()],
+]) {
+  try { call(); throw new Error(`${member} answered on a payload model`); }
+  catch (e) {
+    if (!(e instanceof NotAnswered) || e instanceof Refused) throw e;
+    if (!e.message.startsWith(`${member}: the convenience members are not available on payload models`)) throw e;
+  }
+}
+console.log("convenience members on a payload model -> NotAnswered (as designed)");
 
 // Elements come in document order; an id given twice keeps its first place and its last element.
 const ordered = Model.fromFullJson([

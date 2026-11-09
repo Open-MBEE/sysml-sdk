@@ -11,7 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from naming import JAVA_PACKAGE, JAVA_SRC, abi_params, op_key, result_code
+from naming import convenience_digest, JAVA_PACKAGE, JAVA_SRC, abi_params, op_key, result_code
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -42,6 +42,7 @@ def main() -> None:
         " * operation, its parameters' C types joined by ';'; plus bases. */",
         "final class ToolkitTable {",
         f'    static final String NAMES_DIGEST = "{digest}";',
+        f'    static final String CONVENIENCE_DIGEST = "{convenience_digest(json.loads((ROOT / "convenience.json").read_text(encoding="utf-8")))}";',
         "    static final Map<String, String[]> FUNCS = new HashMap<>();",
         "    static final Map<String, String[]> BASES = new HashMap<>();",
         "    private ToolkitTable() {}",
