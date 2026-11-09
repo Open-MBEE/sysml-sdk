@@ -86,4 +86,11 @@ public final class PayloadBackend implements Backend {
         throw new NotImplementedInToolkitException(op + "(): operations are not available on "
             + "payload models; load the model through the SysML Toolkit backend");
     }
+
+    /** Nor a convenience member. */
+    @Override
+    public Object find(String handle, Find member, List<Object> args) {
+        throw new NotAnsweredException(member.name() + ": the convenience members are not available on payload "
+            + "models; load the model through the SysML Toolkit or the Pilot Implementation");
+    }
 }

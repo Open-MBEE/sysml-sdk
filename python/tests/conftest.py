@@ -57,6 +57,57 @@ def payload_library():
     return _library
 
 
+# ---------------------------------------------------------------- the Pilot Implementation
+
+def pilot_at_hand():
+    """Why the Pilot backend's live tests cannot run, or None when they can: they need a Java
+    runtime and a Pilot (SYSML_PILOT_HOME, or one in the user's cache), so that the tests never
+    download the Pilot by themselves.
+
+    With SYSML_REQUIRE_PILOT=1 nothing is a reason to skip: the engine downloads the Pilot when it is
+    absent, and a missing Java runtime fails the tests.
+    """
+    if os.environ.get("SYSML_REQUIRE_PILOT") == "1":
+        return None
+    from sysml.library import _cache_root
+    from sysml.pilot import BackendError, java_executable
+
+    try:
+        java_executable()
+    except BackendError as e:
+        return str(e)
+    if os.environ.get("SYSML_PILOT_HOME"):
+        return None
+    if any(_cache_root().glob("pilot-*/.complete")):
+        return None
+    return "no Pilot at hand (set SYSML_PILOT_HOME, or SYSML_REQUIRE_PILOT=1 to download it)"
+
+
+def pilot_server(tmp_dir: Path) -> str:
+    """The Pilot engine's jar: SYSML_PILOT_SERVER, the one an installed package carries, else built
+    from the Java sources into `tmp_dir` (a JDK's javac on the PATH or under JAVA_HOME)."""
+    from sysml.pilot import BackendError, server_jar
+
+    try:
+        return server_jar()
+    except BackendError:
+        pass
+    import subprocess
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    from package import pilot_server as build  # noqa: E402
+
+    with open(os.devnull, "w") as quiet:
+        saved = sys.stdout
+        sys.stdout = quiet
+        try:
+            return str(build(tmp_dir))
+        except (OSError, subprocess.CalledProcessError) as e:
+            raise RuntimeError(f"cannot build the Pilot engine's jar: {e}") from None
+        finally:
+            sys.stdout = saved
+
+
 # ---------------------------------------------------------------- expected SysML Toolkit refusals
 
 import pytest  # noqa: E402

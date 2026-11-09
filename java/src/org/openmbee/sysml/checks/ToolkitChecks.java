@@ -105,13 +105,7 @@ public final class ToolkitChecks {
                 List<Membership> memberships = sports.inheritedMemberships(List.of(), List.of(), false);
                 check(memberships.size() == 2 && "wheels".equals(memberships.get(0).getMemberName()), "inheritedMemberships");
             });
-            boolean opRefused = false;
-            try {
-                sports.isCompatibleWith(carDef);
-            } catch (NotImplementedInToolkitException e) {
-                opRefused = e.getMessage().contains("isCompatibleWith");
-            }
-            check(opRefused, "an operation the SysML Toolkit cannot answer as specified is refused");
+            check(Boolean.TRUE.equals(sports.isCompatibleWith(carDef)), "a specialization is compatible with its general type");
 
             check(be.fullJson().startsWith("["), "fullJson");
         }

@@ -190,7 +190,7 @@ def check_toolkit_report(expected_name: str, *args: str) -> None:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
     from compare_report import check
 
-    problems, stopped = check(run_demo(*args), EXAMPLE / "expected" / expected_name)
+    problems, stopped = check(run_demo(*args), EXAMPLE / "expected" / expected_name, "--library" in args)
     assert not problems, "\n".join(problems)
     if stopped:
         pytest.xfail("; ".join(stopped))
@@ -204,6 +204,12 @@ def test_report_from_payload():
 @needs_toolkit
 def test_report_from_toolkit():
     check_toolkit_report("report.txt")
+
+
+@needs_toolkit
+@pytest.mark.skipif(not ANNEX_A.exists(), reason="sysml-toolkit checkout with spec-refs/SysML-v2-Release not beside this repository")
+def test_report_from_toolkit_with_the_library():
+    check_toolkit_report("report.txt", "--library", str(RELEASE / "sysml.library"))
 
 
 @needs_toolkit

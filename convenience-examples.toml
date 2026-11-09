@@ -1,0 +1,1876 @@
+# Examples of the convenience members: small models, the element asked, and the contract's answer.
+#
+# Read with convenience.toml by tools/extract_convenience.py, which attaches every example to its member
+# in convenience.json and checks it against the member's signature (every member has one at least). The
+# answers are derived by hand from the members' OCL and the standard library's declarations; the backends
+# are tested against them. `python/tests/test_convenience_examples.py` checks the examples' models on the
+# backends at hand: that each element an example names is there, and has the metaclass given for it.
+#
+# An example names its model, the element asked (`at`, a qualified name), and optionally:
+#   via     a path from that element to the one asked, of specification properties: "prop" or
+#           "prop[Metaclass]" (only the values of that metaclass); every step must give one element;
+#   args    the arguments by parameter name (elements by qualified name; the others take their defaults);
+# and one of:
+#   expect  the answer: a Boolean, number or string; "*" for unbounded; an element by qualified name, or
+#           one without a name as {"@type" = metaclass, property = value, ...}; a list of those; a
+#           name-keyed map as a list of [name, element] pairs. The extractor marks an answer whose
+#           order the specification leaves open (a member or definition list outside the owned scope,
+#           a name-keyed map: the order of membership) as unordered, and the tests compare it as a set;
+#   none    true: the answer is null (none; TOML has no null);
+#   refused true: the member refuses (its OCL gives invalid);
+#   includes / excludes  elements a list has / does not have (where the whole list is the library's).
+#
+# The families' examples come from one row of facts per kind (`demos`): the holder (`at`), its owned
+# members' metaclasses (in order), the answers of the list, exact and semantic variants, a name to look
+# up, and a feature of the kind semantically (`semanticYes`) and one not (`semanticNo`). Names are
+# relative to the holder. The extractor checks the list and exact answers against the metaclasses. The
+# name-keyed maps' answers are the list's, each under its one name: the holders give their members no
+# alias and no short name (the examples below show those).
+
+# ------------------------------------------------------------------ models
+
+[models.KindLists]
+doc = "One holder per kind: members of the kind, of a subkind, of another kind, and a reference typed by the kind's definition."
+text = '''
+package KindLists {
+    // Definitions the usages below are typed by.
+    part def P;
+    item def It;
+    occurrence def O;
+    attribute def AT;
+    enum def E { enum x; }
+    port def Q;
+    connection def Cn;
+    interface def I;
+    allocation def Al;
+    flow def F;
+    action def A;
+    state def S;
+    calc def C;
+    case def K;
+    analysis def An;
+    verification def Vc;
+    use case def U;
+    constraint def Ct;
+    requirement def R;
+    concern def Cc;
+    view def Vw;
+    viewpoint def Vp;
+    rendering def Rd;
+    metadata def M;
+
+    // One holder per kind: members of the kind, a member of a subkind, a member of another kind, and a
+    // reference typed by the kind's definition (of the kind semantically, not by its metaclass).
+    part def ForFeatures { part p : P; attribute a : AT; }
+    part def ForUsages { part p : P; attribute a : AT; }
+    part def ForActions { action a : A; state s : S; calc c : C; part p : P; ref r : A; }
+    part def ForAllocations { allocation al : Al; part p : P; ref r : Al; }
+    part def ForAnalysisCases { analysis an : An; part p : P; ref r : An; }
+    part def ForAttributes { attribute a : AT; enum e : E; part p : P; ref r : AT; }
+    part def ForCalculations { calc c : C; case k : K; action a : A; ref r : C; }
+    part def ForCases { case k : K; use case u : U; calc c : C; ref r : K; }
+    part def ForConcerns { concern cc : Cc; requirement rq : R; ref r : Cc; }
+    part def ForConnections { connection c : Cn; interface i : I; part p : P; ref r : Cn; }
+    part def ForConstraints { constraint ct : Ct; requirement rq : R; part p : P; ref r : Ct; }
+    part def ForEnumerations { enum e : E; attribute a : AT; }
+    part def ForFlows { flow f : F; succession flow sf : F; action a : A; ref r : F; }
+    part def ForInterfaces { interface i : I; connection c : Cn; ref r : I; }
+    part def ForItems { item it : It; part p : P; attribute a : AT; ref r : It; }
+    part def ForMetadata { metadata md : M; part p : P; }
+    part def ForOccurrences { occurrence o : O; part p : P; attribute a : AT; ref r : O; }
+    part def ForParts { part p : P; connection c : Cn; item it : It; ref r : P; }
+    part def ForPorts { port q : Q; part p : P; ref r : Q; }
+    part def ForReferences { ref r : P; part p : P; }
+    part def ForRenderings { rendering rd : Rd; part p : P; ref r : Rd; }
+    part def ForRequirements { requirement rq : R; concern cc : Cc; constraint ct : Ct; ref r : R; }
+    part def ForStates { state s : S; exhibit state es : S; action a : A; ref r : S; }
+    state def ForTransitions { state off; state on; transition t first off then on; }
+    use case def ForUseCases { use case uc : U; include use case iu : U; case k : K; ref r : U; }
+    part def ForVerificationCases { verification v : Vc; part p : P; ref r : Vc; }
+    part def ForViews { view vw : Vw; part p : P; ref r : Vw; }
+    part def ForViewpoints { viewpoint vp : Vp; requirement rq : R; ref r : Vp; }
+}
+'''
+
+[models.DefinitionLists]
+doc = "One package per definition kind: definitions of the kind, of a subkind, of another kind, and a definition of a more general kind specializing one of the kind; a package importing another; short names, a name clash, and aliases across an import."
+text = '''
+package DefinitionLists {
+    // One package per kind: definitions of the kind, of a subkind, of another kind, and a definition
+    // of a more general kind that specializes one of the kind (of the kind semantically only).
+    package ForDefinitions { part def P; attribute def AT; }
+    package ForActionDefs { action def A; state def S; part def P; occurrence def X :> A; }
+    package ForAllocationDefs { allocation def Al; part def P; connection def X :> Al; }
+    package ForAnalysisCaseDefs { analysis def An; part def P; case def X :> An; }
+    package ForAttributeDefs { attribute def AT; enum def E { enum x; } part def P; }
+    package ForCalculationDefs { calc def C; case def K; action def A; action def X :> C; }
+    package ForCaseDefs { case def K; use case def U; calc def C; calc def X :> K; }
+    package ForConcernDefs { concern def Cc; requirement def R; requirement def X :> Cc; }
+    package ForConnectionDefs { connection def Cn; interface def I; part def P; }
+    package ForConstraintDefs { constraint def Ct; requirement def R; part def P; }
+    package ForEnumerationDefs { enum def E { enum x; } attribute def AT; }
+    package ForFlowDefs { flow def F; action def A; }
+    package ForInterfaceDefs { interface def I; connection def Cn; connection def X :> I; }
+    package ForItemDefs { item def It; part def P; attribute def AT; occurrence def X :> It; }
+    package ForMetadataDefs { metadata def M; item def It; }
+    package ForOccurrenceDefs { occurrence def O; part def P; attribute def AT; }
+    package ForPartDefs { part def P; connection def Cn; item def It; item def X :> P; }
+    package ForPortDefs { port def Q; part def P; }
+    package ForRenderingDefs { rendering def Rd; part def P; part def X :> Rd; }
+    package ForRequirementDefs { requirement def R; concern def Cc; constraint def Ct; constraint def X :> R; }
+    package ForStateDefs { state def S; action def A; action def X :> S; }
+    package ForUseCaseDefs { use case def U; case def K; case def X :> U; }
+    package ForVerificationCaseDefs { verification def Vc; case def K; case def X :> Vc; }
+    package ForViewDefs { view def Vw; part def P; part def X :> Vw; }
+    package ForViewpointDefs { viewpoint def Vp; requirement def R; requirement def X :> Vp; }
+
+    // Scope: owned, imported only, or both; an alias makes Local a member twice.
+    package Imports { public import ForPartDefs::*; part def Local; alias LocalAlias for Local; }
+
+    // Names: a short name is a name too. Two definitions with one name, both part definitions: whether
+    // a namespace may hold them (whether distinguishability considers the metaclass) is an open
+    // question; the backends load them, and a map refuses the name either way.
+    package ShortNames { part def <w> Wheel; }
+    package Clash { connection def Twin; view def Twin; }
+
+    // Aliases across an import: a package's own alias for a definition it imports, and an imported alias
+    // for a definition the package owns. A map's keys are every name a definition has in the namespace.
+    package Aliased { public import ForPartDefs::*; alias Primary for ForPartDefs::P; }
+    package Owner { part def Wheel; public import Aliases::*; }
+    package Aliases { alias Rim for Owner::Wheel; }
+}
+'''
+
+[models.Scopes]
+doc = "Owned, inherited and redefined members, their visibility, and a usage; a supertype that imports a feature; a conjugated port definition."
+text = '''
+package Scopes {
+    part def P;
+    part def Base { part a : P; protected part b : P; private part c : P; }
+    part def Derived :> Base { part d : P; part :>> a; private part e : P; }
+    part instance : Derived { part f : P; }
+
+    // A supertype that imports a feature: Heir inherits q1 by name, but q1 is not a feature of Heir.
+    package Lib { part def Q { part q1 : P; } }
+    part def Importer { public import Lib::Q::*; part own : P; }
+    part def Heir :> Importer;
+
+    // A conjugated port definition: its original type's features are its inherited features.
+    port def Pt { in item i; out item o; }
+}
+'''
+
+[models.Members]
+doc = "Members that are not features of their namespace: usages in a package, variants, enumeration literals, an alias, an imported member."
+text = '''
+package Members {
+    part def Wheel;
+    package Lib { part spareWheel : Wheel; }
+    part car : Wheel;
+    enum def Color { enum red; enum green; }
+    variation part def Body { variant part sedan; variant part coupe; }
+    part def Car {
+        public import Lib::*;
+        part engine;
+        alias motor for engine;
+    }
+}
+'''
+
+[models.MetaDefs]
+doc = "Metadata in a metadata definition, in a part definition and in a metadata usage's body, and inherited."
+text = '''
+package MetaDefs {
+    metadata def N;
+    metadata def M {
+        attribute level : ScalarValues::Integer;
+        metadata n : N;
+        @N;
+    }
+    metadata def Tagged :> M;
+    part def P {
+        metadata m : M { :>> level = 1; metadata inner : N; }
+    }
+    part def Q :> P;
+}
+'''
+
+[models.Typing]
+doc = "Typing, specialization, subsetting, redefinition, reference subsetting, a conjugated port definition and a feature chain."
+text = '''
+package Typing {
+    part def Vehicle;
+    part def Car :> Vehicle;
+    part def Engine;
+    port def Plug;
+    part def Wheel;
+    part def Frame {
+        attribute mass : ScalarValues::Real;
+        part wheels : Wheel[4];
+        part engine : Engine;
+    }
+    part def Body :> Frame {
+        attribute :>> mass;
+        part frontWheels :> wheels;
+        ref part spare ::> wheels;
+        part motor :> engine;
+    }
+    part def Truck :> Body { attribute :>> mass; }
+    part def Battery { port powerOut : Plug; }
+    part def Pack { part battery : Battery; port output :> battery.powerOut; }
+}
+'''
+
+[models.Values]
+doc = "Values: literals, signs, units, expressions, references, defaults, initial values, classification and cast."
+text = '''
+package Values {
+    private import SI::*;
+    part def Car;
+    part def Settings {
+        attribute count = 4;
+        attribute ratio = 0.5;
+        attribute enabled = true;
+        attribute label = "front";
+        attribute offset = -5;
+        attribute mass = 1500 [kg];
+        attribute drag = -5 [kg];
+        attribute speed = 3 [m/s];
+        attribute twice = 2 * count;
+        attribute other = count;
+        attribute none;
+        attribute fallback default = 3;
+        ref part car : Car;
+        attribute isCar = car istype Car;
+        attribute asCar = car as Car;
+    }
+    part def Tank { attribute level := 2; }
+}
+'''
+
+[models.Bounds]
+doc = "Multiplicities: a single bound, a range, unbounded, an expression, ordered, and a type without one."
+text = '''
+package Bounds {
+    part def W;
+    part def V {
+        attribute n : ScalarValues::Integer;
+        part two : W[2];
+        part upToThree : W[0..3];
+        part atLeastOne : W[1..*];
+        part many : W[*];
+        part counted : W[n];
+        part sorted : W[*] ordered;
+        part sortedToo :> sorted;
+        ref part plain : W;
+    }
+}
+'''
+
+[models.Behaviour]
+doc = "Parameters, inputs and outputs, result expressions, initial states, accepted types, and features specializing another."
+text = '''
+package Behaviour {
+    private import ScalarValues::*;
+    item def Fuel;
+    attribute def Sig;
+    attribute def SubSig :> Sig;
+    port def Socket { in item plugIn : Fuel; out attribute status : Sig; inout item exchange : Fuel; }
+    action def Pump { in item fuelIn : Fuel; out item fuelOut : Fuel; attribute rate : Real; }
+    action pump : Pump { in item fuelIn; }
+    calc def Double { in x : Real; 2 * x }
+    constraint def Positive { in x : Real; x > 0 }
+    calc half { in x : Real; x / 2 }
+    part def Wheel;
+    part def Vehicle { part wheels : Wheel[4]; part frontWheels :> wheels[2]; part engine; }
+    action def Listen { action acc accept sig : Sig; }
+    state def Machine { entry; then off; state off; state on; transition t first off accept Sig then on; }
+    state def Machine2 { state off; state on; first start then off; }
+    state def Machine3 { entry; then on; state off; state on; first start then off; }
+    state lamp { entry; then dark; state dark; state lit; }
+}
+'''
+
+[models.Structure]
+doc = "Packages, variants, enumeration literals, applied metadata and documentation."
+text = '''
+package Structure {
+    metadata def Safety;
+    package Outer { package Inner; part def P; }
+    variation part def Body { variant part sedan; variant part coupe; }
+    enum def Color { enum red; enum green; }
+    #Safety part def Brake;
+    part def Car {
+        @Safety;
+        doc /* A car. */
+        part body : Body;
+    }
+    part def Truck {
+        doc
+        /*
+         * A truck.
+         * It has six wheels.
+         */
+    }
+}
+'''
+
+# ------------------------------------------------------------------ the families' examples
+
+[demos.kindLists]
+model = "KindLists"
+
+[demos.kindLists.kinds.features]
+at = "KindLists::ForFeatures"
+metaclasses = { p = "PartUsage", a = "AttributeUsage" }
+list = ["p", "a"]
+lookup = "a"
+
+[demos.kindLists.kinds.usages]
+at = "KindLists::ForUsages"
+metaclasses = { p = "PartUsage", a = "AttributeUsage" }
+list = ["p", "a"]
+lookup = "a"
+
+[demos.kindLists.kinds.actions]
+at = "KindLists::ForActions"
+metaclasses = { a = "ActionUsage", s = "StateUsage", c = "CalculationUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["a", "s", "c"]
+exact = ["a"]
+semantic = ["a", "s", "c", "r"]
+lookup = "s"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.allocations]
+at = "KindLists::ForAllocations"
+metaclasses = { al = "AllocationUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["al"]
+semantic = ["al", "r"]
+lookup = "al"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.analysisCases]
+at = "KindLists::ForAnalysisCases"
+metaclasses = { an = "AnalysisCaseUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["an"]
+semantic = ["an", "r"]
+lookup = "an"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.attributes]
+at = "KindLists::ForAttributes"
+metaclasses = { a = "AttributeUsage", e = "EnumerationUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["a", "e"]
+exact = ["a"]
+semantic = ["a", "e", "r"]
+lookup = "e"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.calculations]
+at = "KindLists::ForCalculations"
+metaclasses = { c = "CalculationUsage", k = "CaseUsage", a = "ActionUsage", r = "ReferenceUsage" }
+list = ["c", "k"]
+exact = ["c"]
+semantic = ["c", "k", "r"]
+lookup = "k"
+semanticYes = "r"
+semanticNo = "a"
+
+[demos.kindLists.kinds.cases]
+at = "KindLists::ForCases"
+metaclasses = { k = "CaseUsage", u = "UseCaseUsage", c = "CalculationUsage", r = "ReferenceUsage" }
+list = ["k", "u"]
+exact = ["k"]
+semantic = ["k", "u", "r"]
+lookup = "u"
+semanticYes = "r"
+semanticNo = "c"
+
+[demos.kindLists.kinds.concerns]
+at = "KindLists::ForConcerns"
+metaclasses = { cc = "ConcernUsage", rq = "RequirementUsage", r = "ReferenceUsage" }
+list = ["cc"]
+semantic = ["cc", "r"]
+lookup = "cc"
+semanticYes = "r"
+semanticNo = "rq"
+
+[demos.kindLists.kinds.connections]
+at = "KindLists::ForConnections"
+metaclasses = { c = "ConnectionUsage", i = "InterfaceUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["c", "i"]
+exact = ["c"]
+semantic = ["c", "i", "r"]
+lookup = "i"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.constraints]
+at = "KindLists::ForConstraints"
+metaclasses = { ct = "ConstraintUsage", rq = "RequirementUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["ct", "rq"]
+exact = ["ct"]
+semantic = ["ct", "rq", "r"]
+lookup = "rq"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.enumerations]
+at = "KindLists::ForEnumerations"
+metaclasses = { e = "EnumerationUsage", a = "AttributeUsage" }
+list = ["e"]
+lookup = "e"
+
+[demos.kindLists.kinds.flows]
+at = "KindLists::ForFlows"
+metaclasses = { f = "FlowUsage", sf = "SuccessionFlowUsage", a = "ActionUsage", r = "ReferenceUsage" }
+list = ["f", "sf"]
+exact = ["f"]
+semantic = ["f", "sf", "r"]
+lookup = "sf"
+semanticYes = "r"
+semanticNo = "a"
+
+[demos.kindLists.kinds.interfaces]
+at = "KindLists::ForInterfaces"
+metaclasses = { i = "InterfaceUsage", c = "ConnectionUsage", r = "ReferenceUsage" }
+list = ["i"]
+semantic = ["i", "r"]
+lookup = "i"
+semanticYes = "r"
+semanticNo = "c"
+
+[demos.kindLists.kinds.items]
+at = "KindLists::ForItems"
+metaclasses = { it = "ItemUsage", p = "PartUsage", a = "AttributeUsage", r = "ReferenceUsage" }
+list = ["it", "p"]
+exact = ["it"]
+semantic = ["it", "p", "r"]
+lookup = "p"
+semanticYes = "r"
+semanticNo = "a"
+
+[demos.kindLists.kinds.occurrences]
+at = "KindLists::ForOccurrences"
+metaclasses = { o = "OccurrenceUsage", p = "PartUsage", a = "AttributeUsage", r = "ReferenceUsage" }
+list = ["o", "p"]
+exact = ["o"]
+semantic = ["o", "p", "r"]
+lookup = "p"
+semanticYes = "r"
+semanticNo = "a"
+
+[demos.kindLists.kinds.parts]
+at = "KindLists::ForParts"
+metaclasses = { p = "PartUsage", c = "ConnectionUsage", it = "ItemUsage", r = "ReferenceUsage" }
+list = ["p", "c"]
+exact = ["p"]
+semantic = ["p", "c", "r"]
+lookup = "c"
+semanticYes = "r"
+semanticNo = "it"
+
+[demos.kindLists.kinds.ports]
+at = "KindLists::ForPorts"
+metaclasses = { q = "PortUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["q"]
+semantic = ["q", "r"]
+lookup = "q"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.references]
+at = "KindLists::ForReferences"
+metaclasses = { r = "ReferenceUsage", p = "PartUsage" }
+list = ["r"]
+lookup = "r"
+
+[demos.kindLists.kinds.renderings]
+at = "KindLists::ForRenderings"
+metaclasses = { rd = "RenderingUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["rd"]
+semantic = ["rd", "r"]
+lookup = "rd"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.requirements]
+at = "KindLists::ForRequirements"
+metaclasses = { rq = "RequirementUsage", cc = "ConcernUsage", ct = "ConstraintUsage", r = "ReferenceUsage" }
+list = ["rq", "cc"]
+exact = ["rq"]
+semantic = ["rq", "cc", "r"]
+lookup = "cc"
+semanticYes = "r"
+semanticNo = "ct"
+
+[demos.kindLists.kinds.states]
+at = "KindLists::ForStates"
+metaclasses = { s = "StateUsage", es = "ExhibitStateUsage", a = "ActionUsage", r = "ReferenceUsage" }
+list = ["s", "es"]
+exact = ["s"]
+semantic = ["s", "es", "r"]
+lookup = "es"
+semanticYes = "r"
+semanticNo = "a"
+
+[demos.kindLists.kinds.transitions]
+at = "KindLists::ForTransitions"
+metaclasses = { off = "StateUsage", on = "StateUsage", t = "TransitionUsage" }
+list = ["t"]
+lookup = "t"
+
+[demos.kindLists.kinds.useCases]
+at = "KindLists::ForUseCases"
+metaclasses = { uc = "UseCaseUsage", iu = "IncludeUseCaseUsage", k = "CaseUsage", r = "ReferenceUsage" }
+list = ["uc", "iu"]
+exact = ["uc"]
+semantic = ["uc", "iu", "r"]
+lookup = "iu"
+semanticYes = "r"
+semanticNo = "k"
+
+[demos.kindLists.kinds.verificationCases]
+at = "KindLists::ForVerificationCases"
+metaclasses = { v = "VerificationCaseUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["v"]
+semantic = ["v", "r"]
+lookup = "v"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.views]
+at = "KindLists::ForViews"
+metaclasses = { vw = "ViewUsage", p = "PartUsage", r = "ReferenceUsage" }
+list = ["vw"]
+semantic = ["vw", "r"]
+lookup = "vw"
+semanticYes = "r"
+semanticNo = "p"
+
+[demos.kindLists.kinds.viewpoints]
+at = "KindLists::ForViewpoints"
+metaclasses = { vp = "ViewpointUsage", rq = "RequirementUsage", r = "ReferenceUsage" }
+list = ["vp"]
+semantic = ["vp", "r"]
+lookup = "vp"
+semanticYes = "r"
+semanticNo = "rq"
+
+# The member lists on the same holders, whose owned members are all features; the examples below show
+# the members that are not.
+[demos.memberLists]
+from = "kindLists"
+
+[demos.definitionLists]
+model = "DefinitionLists"
+
+[demos.definitionLists.kinds.definitions]
+at = "DefinitionLists::ForDefinitions"
+metaclasses = { P = "PartDefinition", AT = "AttributeDefinition" }
+list = ["P", "AT"]
+lookup = "AT"
+
+[demos.definitionLists.kinds.actionDefs]
+at = "DefinitionLists::ForActionDefs"
+metaclasses = { A = "ActionDefinition", S = "StateDefinition", P = "PartDefinition", X = "OccurrenceDefinition" }
+list = ["A", "S"]
+exact = ["A"]
+semantic = ["A", "S", "X"]
+lookup = "S"
+
+[demos.definitionLists.kinds.allocationDefs]
+at = "DefinitionLists::ForAllocationDefs"
+metaclasses = { Al = "AllocationDefinition", P = "PartDefinition", X = "ConnectionDefinition" }
+list = ["Al"]
+semantic = ["Al", "X"]
+lookup = "Al"
+
+[demos.definitionLists.kinds.analysisCaseDefs]
+at = "DefinitionLists::ForAnalysisCaseDefs"
+metaclasses = { An = "AnalysisCaseDefinition", P = "PartDefinition", X = "CaseDefinition" }
+list = ["An"]
+semantic = ["An", "X"]
+lookup = "An"
+
+[demos.definitionLists.kinds.attributeDefs]
+at = "DefinitionLists::ForAttributeDefs"
+metaclasses = { AT = "AttributeDefinition", E = "EnumerationDefinition", P = "PartDefinition" }
+list = ["AT", "E"]
+exact = ["AT"]
+semantic = ["AT", "E"]
+lookup = "E"
+
+[demos.definitionLists.kinds.calculationDefs]
+at = "DefinitionLists::ForCalculationDefs"
+metaclasses = { C = "CalculationDefinition", K = "CaseDefinition", A = "ActionDefinition", X = "ActionDefinition" }
+list = ["C", "K"]
+exact = ["C"]
+semantic = ["C", "K", "X"]
+lookup = "K"
+
+[demos.definitionLists.kinds.caseDefs]
+at = "DefinitionLists::ForCaseDefs"
+metaclasses = { K = "CaseDefinition", U = "UseCaseDefinition", C = "CalculationDefinition", X = "CalculationDefinition" }
+list = ["K", "U"]
+exact = ["K"]
+semantic = ["K", "U", "X"]
+lookup = "U"
+
+[demos.definitionLists.kinds.concernDefs]
+at = "DefinitionLists::ForConcernDefs"
+metaclasses = { Cc = "ConcernDefinition", R = "RequirementDefinition", X = "RequirementDefinition" }
+list = ["Cc"]
+semantic = ["Cc", "X"]
+lookup = "Cc"
+
+[demos.definitionLists.kinds.connectionDefs]
+at = "DefinitionLists::ForConnectionDefs"
+metaclasses = { Cn = "ConnectionDefinition", I = "InterfaceDefinition", P = "PartDefinition" }
+list = ["Cn", "I"]
+exact = ["Cn"]
+semantic = ["Cn", "I"]
+lookup = "I"
+
+[demos.definitionLists.kinds.constraintDefs]
+at = "DefinitionLists::ForConstraintDefs"
+metaclasses = { Ct = "ConstraintDefinition", R = "RequirementDefinition", P = "PartDefinition" }
+list = ["Ct", "R"]
+exact = ["Ct"]
+semantic = ["Ct", "R"]
+lookup = "R"
+
+[demos.definitionLists.kinds.enumerationDefs]
+at = "DefinitionLists::ForEnumerationDefs"
+metaclasses = { E = "EnumerationDefinition", AT = "AttributeDefinition" }
+list = ["E"]
+lookup = "E"
+
+[demos.definitionLists.kinds.flowDefs]
+at = "DefinitionLists::ForFlowDefs"
+metaclasses = { F = "FlowDefinition", A = "ActionDefinition" }
+list = ["F"]
+semantic = ["F"]
+lookup = "F"
+
+[demos.definitionLists.kinds.interfaceDefs]
+at = "DefinitionLists::ForInterfaceDefs"
+metaclasses = { I = "InterfaceDefinition", Cn = "ConnectionDefinition", X = "ConnectionDefinition" }
+list = ["I"]
+semantic = ["I", "X"]
+lookup = "I"
+
+[demos.definitionLists.kinds.itemDefs]
+at = "DefinitionLists::ForItemDefs"
+metaclasses = { It = "ItemDefinition", P = "PartDefinition", AT = "AttributeDefinition", X = "OccurrenceDefinition" }
+list = ["It", "P"]
+exact = ["It"]
+semantic = ["It", "P", "X"]
+lookup = "P"
+
+[demos.definitionLists.kinds.metadataDefs]
+at = "DefinitionLists::ForMetadataDefs"
+metaclasses = { M = "MetadataDefinition", It = "ItemDefinition" }
+list = ["M"]
+lookup = "M"
+
+[demos.definitionLists.kinds.occurrenceDefs]
+at = "DefinitionLists::ForOccurrenceDefs"
+metaclasses = { O = "OccurrenceDefinition", P = "PartDefinition", AT = "AttributeDefinition" }
+list = ["O", "P"]
+exact = ["O"]
+semantic = ["O", "P"]
+lookup = "P"
+
+[demos.definitionLists.kinds.partDefs]
+at = "DefinitionLists::ForPartDefs"
+metaclasses = { P = "PartDefinition", Cn = "ConnectionDefinition", It = "ItemDefinition", X = "ItemDefinition" }
+list = ["P", "Cn"]
+exact = ["P"]
+semantic = ["P", "Cn", "X"]
+lookup = "Cn"
+
+[demos.definitionLists.kinds.portDefs]
+at = "DefinitionLists::ForPortDefs"
+metaclasses = { Q = "PortDefinition", P = "PartDefinition" }
+list = ["Q"]
+exact = ["Q"]
+semantic = ["Q"]
+lookup = "Q"
+
+[demos.definitionLists.kinds.renderingDefs]
+at = "DefinitionLists::ForRenderingDefs"
+metaclasses = { Rd = "RenderingDefinition", P = "PartDefinition", X = "PartDefinition" }
+list = ["Rd"]
+semantic = ["Rd", "X"]
+lookup = "Rd"
+
+[demos.definitionLists.kinds.requirementDefs]
+at = "DefinitionLists::ForRequirementDefs"
+metaclasses = { R = "RequirementDefinition", Cc = "ConcernDefinition", Ct = "ConstraintDefinition", X = "ConstraintDefinition" }
+list = ["R", "Cc"]
+exact = ["R"]
+semantic = ["R", "Cc", "X"]
+lookup = "Cc"
+
+[demos.definitionLists.kinds.stateDefs]
+at = "DefinitionLists::ForStateDefs"
+metaclasses = { S = "StateDefinition", A = "ActionDefinition", X = "ActionDefinition" }
+list = ["S"]
+semantic = ["S", "X"]
+lookup = "S"
+
+[demos.definitionLists.kinds.useCaseDefs]
+at = "DefinitionLists::ForUseCaseDefs"
+metaclasses = { U = "UseCaseDefinition", K = "CaseDefinition", X = "CaseDefinition" }
+list = ["U"]
+semantic = ["U", "X"]
+lookup = "U"
+
+[demos.definitionLists.kinds.verificationCaseDefs]
+at = "DefinitionLists::ForVerificationCaseDefs"
+metaclasses = { Vc = "VerificationCaseDefinition", K = "CaseDefinition", X = "CaseDefinition" }
+list = ["Vc"]
+semantic = ["Vc", "X"]
+lookup = "Vc"
+
+[demos.definitionLists.kinds.viewDefs]
+at = "DefinitionLists::ForViewDefs"
+metaclasses = { Vw = "ViewDefinition", P = "PartDefinition", X = "PartDefinition" }
+list = ["Vw"]
+semantic = ["Vw", "X"]
+lookup = "Vw"
+
+[demos.definitionLists.kinds.viewpointDefs]
+at = "DefinitionLists::ForViewpointDefs"
+metaclasses = { Vp = "ViewpointDefinition", R = "RequirementDefinition", X = "RequirementDefinition" }
+list = ["Vp"]
+semantic = ["Vp", "X"]
+lookup = "Vp"
+
+# ------------------------------------------------------------------ the shared arguments, on findParts
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Derived"
+expect = ["Scopes::Derived::d", "Scopes::Derived::a", "Scopes::Derived::e"]
+note = "Owned, by default: the redefining a among them, the private e too."
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { scope = "inherited" }
+expect = ["Scopes::Base::b"]
+note = "Base::a is redefined in Derived, so not inherited as it is; the private c is not inherited."
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { scope = "all" }
+expect = ["Scopes::Derived::d", "Scopes::Derived::a", "Scopes::Derived::e", "Scopes::Base::b"]
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { scope = "all", visibility = "public" }
+expect = ["Scopes::Derived::d", "Scopes::Derived::a"]
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { scope = "all", visibility = "protected" }
+expect = ["Scopes::Derived::d", "Scopes::Derived::a", "Scopes::Base::b"]
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { scope = "inherited", library = true }
+includes = ["Scopes::Base::b", "Parts::Part::start", "Items::Item::subparts"]
+excludes = ["Scopes::Base::a"]
+note = "With the standard library's members: those Derived inherits through Parts::Part."
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::instance"
+expect = ["Scopes::instance::f"]
+note = "On a usage: the specification's nestedPart."
+
+[[example]]
+member = "findParts"
+model = "Members"
+at = "Members::Body"
+expect = []
+note = "Variants are not features of their variation: findMemberParts finds them."
+
+[[example]]
+member = "findEnumerations"
+model = "Members"
+at = "Members::Color"
+expect = []
+note = "Enumeration literals are variants, not features: findMemberEnumerations finds them."
+
+[[example]]
+member = "findPart"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { name = "a" }
+expect = "Scopes::Derived::a"
+note = "The redefining feature, found by its effective name."
+
+[[example]]
+member = "findPart"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { name = "b" }
+none = true
+note = "Not owned: inherited."
+
+[[example]]
+member = "findPart"
+model = "Scopes"
+at = "Scopes::Derived"
+args = { name = "b", scope = "inherited" }
+expect = "Scopes::Base::b"
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Heir"
+args = { scope = "inherited" }
+expect = ["Scopes::Importer::own"]
+note = "q1, which Importer imports, is inherited by name but owned by Q, which is not a supertype of Heir, so it is not a feature of Heir (KERML11-191). findMemberParts has it."
+
+[[example]]
+member = "findParts"
+model = "Scopes"
+at = "Scopes::Heir"
+args = { scope = "all" }
+expect = ["Scopes::Importer::own"]
+note = "All is the owned features followed by the inherited ones."
+
+[[example]]
+member = "findMemberParts"
+model = "Scopes"
+at = "Scopes::Heir"
+args = { scope = "inherited" }
+expect = ["Scopes::Importer::own", "Scopes::Lib::Q::q1"]
+note = "By name, q1 is inherited: Importer imports it publicly."
+
+[[example]]
+member = "findItems"
+model = "Scopes"
+at = "Scopes::Pt"
+via = ["conjugatedPortDefinition"]
+args = { scope = "all" }
+expect = ["Scopes::Pt::i", "Scopes::Pt::o"]
+note = "A conjugated port definition's features are its original type's, its only supertype."
+
+[[example]]
+member = "findItems"
+model = "Scopes"
+at = "Scopes::Pt"
+via = ["conjugatedPortDefinition"]
+expect = []
+note = "It owns none."
+
+# ------------------------------------------------------------------ member lists
+
+[[example]]
+member = "findMemberParts"
+model = "Members"
+at = "Members"
+expect = ["Members::car"]
+note = "A package's usages, owned by OwningMemberships."
+
+[[example]]
+member = "findMemberParts"
+model = "Members"
+at = "Members::Body"
+expect = ["Members::Body::sedan", "Members::Body::coupe"]
+note = "Variants, owned by VariantMemberships."
+
+[[example]]
+member = "findMemberEnumerations"
+model = "Members"
+at = "Members::Color"
+expect = ["Members::Color::red", "Members::Color::green"]
+
+[[example]]
+member = "findMemberAttributes"
+model = "Members"
+at = "Members::Color"
+expect = ["Members::Color::red", "Members::Color::green"]
+
+[[example]]
+member = "findMemberParts"
+model = "Members"
+at = "Members::Car"
+expect = ["Members::Car::engine"]
+note = "engine once, though the alias motor is a membership of it too."
+
+[[example]]
+member = "findMemberParts"
+model = "Members"
+at = "Members::Car"
+args = { scope = "inherited" }
+expect = ["Members::Lib::spareWheel"]
+note = "Imported; the parts Car inherits from Parts::Part are the standard library's."
+
+[[example]]
+member = "findMemberParts"
+model = "Members"
+at = "Members::Car"
+args = { scope = "all" }
+expect = ["Members::Car::engine", "Members::Lib::spareWheel"]
+
+[[example]]
+member = "findMemberPart"
+model = "Members"
+at = "Members::Car"
+args = { name = "motor" }
+expect = "Members::Car::engine"
+note = "Through the alias's name."
+
+[[example]]
+member = "findMemberPart"
+model = "Members"
+at = "Members::Car"
+args = { name = "spareWheel", scope = "all" }
+expect = "Members::Lib::spareWheel"
+
+[[example]]
+member = "findMemberPart"
+model = "Members"
+at = "Members"
+args = { name = "car" }
+expect = "Members::car"
+
+[[example]]
+member = "findMemberMetadata"
+model = "MetaDefs"
+at = "MetaDefs::M"
+expect = ["MetaDefs::M::n", { "@type" = "MetadataUsage", metaclass = "MetaDefs::N" }]
+note = "In a metadata definition, as in any body: owned through OwningMemberships, annotating M."
+
+[[example]]
+member = "findMemberMetadata"
+model = "MetaDefs"
+at = "MetaDefs::P::m"
+expect = ["MetaDefs::P::m::inner"]
+note = "In a metadata usage's body; its :>> level = 1 is a ReferenceUsage, not metadata."
+
+[[example]]
+member = "findMemberMetadata"
+model = "MetaDefs"
+at = "MetaDefs::Tagged"
+expect = []
+note = "Owned only: M's metadata annotates M, not its specializations."
+
+[[example]]
+member = "findMemberMetadata"
+model = "KindLists"
+at = "KindLists::ForMetadata"
+expect = ["KindLists::ForMetadata::md"]
+
+[[example]]
+member = "findMemberMetadata"
+model = "Structure"
+at = "Structure::Car"
+expect = [{ "@type" = "MetadataUsage", metaclass = "Structure::Safety" }]
+
+# ------------------------------------------------------------------ definition lists
+
+[[example]]
+member = "findPartDefs"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+expect = ["DefinitionLists::Imports::Local"]
+
+[[example]]
+member = "findPartDefs"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+args = { scope = "inherited" }
+expect = ["DefinitionLists::ForPartDefs::P", "DefinitionLists::ForPartDefs::Cn"]
+note = "Imported only; the alias LocalAlias names an owned member, so Local is not here."
+
+[[example]]
+member = "findPartDefs"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+args = { scope = "all" }
+expect = ["DefinitionLists::Imports::Local", "DefinitionLists::ForPartDefs::P", "DefinitionLists::ForPartDefs::Cn"]
+note = "Local once, though the alias LocalAlias is a membership of it too."
+
+[[example]]
+member = "findPartDef"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+args = { name = "P", scope = "all" }
+expect = "DefinitionLists::ForPartDefs::P"
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+expect = [["Local", "DefinitionLists::Imports::Local"], ["LocalAlias", "DefinitionLists::Imports::Local"]]
+note = "Owned, by default: Local under its own name and under the alias's."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+args = { scope = "inherited" }
+expect = [["P", "DefinitionLists::ForPartDefs::P"], ["Cn", "DefinitionLists::ForPartDefs::Cn"]]
+note = "Imported only."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Imports"
+args = { scope = "all" }
+expect = [["Local", "DefinitionLists::Imports::Local"], ["LocalAlias", "DefinitionLists::Imports::Local"], ["P", "DefinitionLists::ForPartDefs::P"], ["Cn", "DefinitionLists::ForPartDefs::Cn"]]
+note = "The owned memberships' names (the alias among them) and the imported ones', in an order the specification leaves to the backend."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::ShortNames"
+expect = [["Wheel", "DefinitionLists::ShortNames::Wheel"], ["w", "DefinitionLists::ShortNames::Wheel"]]
+note = "The short name is a key too, after the name."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Clash"
+refused = true
+note = "Twin names a connection definition and a view definition, both part definitions; the map would keep one."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Aliased"
+expect = []
+note = "The package owns no part definition: its alias Primary names an imported one, so it is not a key under owned."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Aliased"
+args = { scope = "inherited" }
+expect = [["Primary", "DefinitionLists::ForPartDefs::P"], ["P", "DefinitionLists::ForPartDefs::P"], ["Cn", "DefinitionLists::ForPartDefs::Cn"]]
+note = "Imported P under the package's own alias too, which comes first as an owned membership."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Owner"
+expect = [["Wheel", "DefinitionLists::Owner::Wheel"], ["Rim", "DefinitionLists::Owner::Wheel"]]
+note = "Owned Wheel under the imported alias Rim too."
+
+[[example]]
+member = "findPartDefsByName"
+model = "DefinitionLists"
+at = "DefinitionLists::Owner"
+args = { scope = "inherited" }
+expect = []
+note = "Rim is imported, but it names an owned definition, which the inherited scope leaves out."
+
+[[example]]
+member = "findPortDefs"
+model = "DefinitionLists"
+at = "DefinitionLists::ForPortDefs::Q"
+expect = ["DefinitionLists::ForPortDefs::Q::'~Q'"]
+note = "A port definition owns its conjugated port definition."
+
+[[example]]
+member = "findPortDefsExact"
+model = "DefinitionLists"
+at = "DefinitionLists::ForPortDefs::Q"
+expect = []
+note = "The conjugated port definition is a ConjugatedPortDefinition, a subkind."
+
+[[example]]
+member = "findPackages"
+model = "Structure"
+at = "Structure::Outer"
+expect = ["Structure::Outer::Inner"]
+
+[[example]]
+member = "findPackage"
+model = "Structure"
+at = "Structure::Outer"
+args = { name = "Inner" }
+expect = "Structure::Outer::Inner"
+
+[[example]]
+member = "findPackage"
+model = "Structure"
+at = "Structure::Outer"
+args = { name = "P" }
+none = true
+note = "P is a part definition."
+
+# ------------------------------------------------------------------ typing and specialization
+
+[[example]]
+member = "findDeclaredTypes"
+model = "Typing"
+at = "Typing::Frame::engine"
+expect = ["Typing::Engine"]
+
+[[example]]
+member = "findDeclaredTypes"
+model = "Typing"
+at = "Typing::Body::motor"
+expect = []
+note = "Typed only through the feature it subsets."
+
+[[example]]
+member = "findDeclaredSupertypes"
+model = "Typing"
+at = "Typing::Car"
+expect = ["Typing::Vehicle"]
+
+[[example]]
+member = "findDeclaredSupertypes"
+model = "Typing"
+at = "Typing::Vehicle"
+expect = []
+note = "Its supertype Parts::Part is implied."
+deviates = { pilot = "The Pilot Implementation's supertypes(true) includes an implied specialization once it is in the model." }
+
+[[example]]
+member = "findDeclaredSupertypes"
+model = "Typing"
+at = "Typing::Plug::'~Plug'"
+expect = ["Typing::Plug"]
+note = "A conjugated type's supertype is its original type."
+deviates = { pilot = "The Pilot Implementation gives a conjugated type no supertypes." }
+
+[[example]]
+member = "findDeclaredSupertypes"
+model = "Typing"
+at = "Typing::Pack::output"
+via = ["ownedSubsetting", "subsettedFeature"]
+expect = ["Typing::Battery::powerOut"]
+note = "The feature chain battery.powerOut: its last feature."
+deviates = { pilot = "The Pilot Implementation's supertypes(true) includes the chain's implied subsetting once it is in the model." }
+
+[[example]]
+member = "findImpliedSupertypes"
+model = "Typing"
+at = "Typing::Vehicle"
+expect = ["Parts::Part"]
+deviates = { pilot = "The Pilot Implementation's supertypes(true) includes the implied specialization, so none is left over." }
+
+[[example]]
+member = "findImpliedSupertypes"
+model = "Typing"
+at = "Typing::Car"
+expect = []
+
+[[example]]
+member = "findDeclaredAndImpliedSupertypes"
+model = "Typing"
+at = "Typing::Vehicle"
+expect = ["Parts::Part"]
+
+[[example]]
+member = "findDeclaredAndImpliedSupertypes"
+model = "Typing"
+at = "Typing::Car"
+expect = ["Typing::Vehicle"]
+
+[[example]]
+member = "findSubsettedFeatures"
+model = "Typing"
+at = "Typing::Body::frontWheels"
+expect = ["Typing::Frame::wheels"]
+
+[[example]]
+member = "findSubsettedFeatures"
+model = "Typing"
+at = "Typing::Body::mass"
+expect = []
+note = "A redefinition is not counted here."
+
+[[example]]
+member = "findSubsettedFeatures"
+model = "Typing"
+at = "Typing::Body::spare"
+expect = []
+note = "A reference subsetting is not counted here: findReferencedFeature."
+
+[[example]]
+member = "findRedefinedFeatures"
+model = "Typing"
+at = "Typing::Body::mass"
+expect = ["Typing::Frame::mass"]
+
+[[example]]
+member = "findRedefinedFeatures"
+model = "Typing"
+at = "Typing::Truck::mass"
+expect = ["Typing::Body::mass"]
+
+[[example]]
+member = "findReferencedFeature"
+model = "Typing"
+at = "Typing::Body::spare"
+expect = "Typing::Frame::wheels"
+
+[[example]]
+member = "findReferencedFeature"
+model = "Typing"
+at = "Typing::Body::motor"
+none = true
+
+[[example]]
+member = "findRedefinitionRoot"
+model = "Typing"
+at = "Typing::Truck::mass"
+expect = "Typing::Frame::mass"
+
+[[example]]
+member = "findRedefinitionRoot"
+model = "Typing"
+at = "Typing::Frame::mass"
+expect = "Typing::Frame::mass"
+
+[[example]]
+member = "findEffectiveFeature"
+model = "Typing"
+at = "Typing::Body"
+args = { feature = "Typing::Frame::mass" }
+expect = "Typing::Body::mass"
+
+[[example]]
+member = "findEffectiveFeature"
+model = "Typing"
+at = "Typing::Truck"
+args = { feature = "Typing::Frame::mass" }
+expect = "Typing::Truck::mass"
+
+[[example]]
+member = "findEffectiveFeature"
+model = "Typing"
+at = "Typing::Body"
+args = { feature = "Typing::Frame::wheels" }
+expect = "Typing::Frame::wheels"
+note = "Inherited as it is."
+
+[[example]]
+member = "findEffectiveFeature"
+model = "Typing"
+at = "Typing::Vehicle"
+args = { feature = "Typing::Frame::mass" }
+none = true
+
+[[example]]
+member = "findPath"
+model = "Typing"
+at = "Typing::Pack::output"
+via = ["ownedSubsetting", "subsettedFeature"]
+expect = ["Typing::Pack::battery", "Typing::Battery::powerOut"]
+
+[[example]]
+member = "findPath"
+model = "Typing"
+at = "Typing::Pack::battery"
+expect = ["Typing::Pack::battery"]
+
+# ------------------------------------------------------------------ values
+
+[[example]]
+member = "findValue"
+model = "Values"
+at = "Values::Settings::count"
+expect = { "@type" = "LiteralInteger", value = 4 }
+
+[[example]]
+member = "findValue"
+model = "Values"
+at = "Values::Settings::mass"
+expect = { "@type" = "OperatorExpression", operator = "[" }
+
+[[example]]
+member = "findValue"
+model = "Values"
+at = "Values::Settings::none"
+none = true
+
+[[example]]
+member = "findHasDefaultValue"
+model = "Values"
+at = "Values::Settings::fallback"
+expect = true
+
+[[example]]
+member = "findHasDefaultValue"
+model = "Values"
+at = "Values::Settings::count"
+expect = false
+
+[[example]]
+member = "findHasInitialValue"
+model = "Values"
+at = "Values::Tank::level"
+expect = true
+
+[[example]]
+member = "findHasInitialValue"
+model = "Values"
+at = "Values::Settings::count"
+expect = false
+
+[[example]]
+member = "findHasUnit"
+model = "Values"
+at = "Values::Settings::mass"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = true
+
+[[example]]
+member = "findHasUnit"
+model = "Values"
+at = "Values::Settings::drag"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = true
+note = "-5 [kg] is -(5 [kg])."
+
+[[example]]
+member = "findHasUnit"
+model = "Values"
+at = "Values::Settings::count"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = false
+
+[[example]]
+member = "findIsLiteral"
+model = "Values"
+at = "Values::Settings::count"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = true
+
+[[example]]
+member = "findIsLiteral"
+model = "Values"
+at = "Values::Settings::offset"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = true
+note = "A sign on a number literal."
+
+[[example]]
+member = "findIsLiteral"
+model = "Values"
+at = "Values::Settings::mass"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = false
+note = "A value with a unit is not a literal."
+
+[[example]]
+member = "findIsLiteral"
+model = "Values"
+at = "Values::Settings::twice"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = false
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::count"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = 4
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::ratio"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = 0.5
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::enabled"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = true
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::label"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = "front"
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::offset"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = -5
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::mass"
+via = ["ownedMembership[FeatureValue]", "value"]
+refused = true
+note = "A unit is never dropped: findUnit gives it."
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::twice"
+via = ["ownedMembership[FeatureValue]", "value"]
+refused = true
+
+[[example]]
+member = "findLiteral"
+model = "Values"
+at = "Values::Settings::other"
+via = ["ownedMembership[FeatureValue]", "value"]
+refused = true
+
+[[example]]
+member = "findUnit"
+model = "Values"
+at = "Values::Settings::mass"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = "SI::kilogram"
+note = "kg is an alias of SI::kilogram."
+
+[[example]]
+member = "findUnit"
+model = "Values"
+at = "Values::Settings::drag"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = "SI::kilogram"
+
+[[example]]
+member = "findUnit"
+model = "Values"
+at = "Values::Settings::count"
+via = ["ownedMembership[FeatureValue]", "value"]
+none = true
+note = "A literal without a unit."
+
+[[example]]
+member = "findUnit"
+model = "Values"
+at = "Values::Settings::speed"
+via = ["ownedMembership[FeatureValue]", "value"]
+refused = true
+note = "The unit m/s is an expression."
+
+[[example]]
+member = "findUnit"
+model = "Values"
+at = "Values::Settings::twice"
+via = ["ownedMembership[FeatureValue]", "value"]
+refused = true
+
+[[example]]
+member = "findTypeArgument"
+model = "Values"
+at = "Values::Settings::isCar"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = "Values::Car"
+
+[[example]]
+member = "findTypeArgument"
+model = "Values"
+at = "Values::Settings::asCar"
+via = ["ownedMembership[FeatureValue]", "value"]
+expect = "Values::Car"
+
+[[example]]
+member = "findTypeArgument"
+model = "Values"
+at = "Values::Settings::twice"
+via = ["ownedMembership[FeatureValue]", "value"]
+none = true
+
+# ------------------------------------------------------------------ multiplicity and order
+
+[[example]]
+member = "findLowerBound"
+model = "Bounds"
+at = "Bounds::V::two"
+expect = 2
+note = "[2] has only an upper bound: the lower bound is the same."
+
+[[example]]
+member = "findLowerBound"
+model = "Bounds"
+at = "Bounds::V::upToThree"
+expect = 0
+
+[[example]]
+member = "findLowerBound"
+model = "Bounds"
+at = "Bounds::V::many"
+expect = 0
+
+[[example]]
+member = "findLowerBound"
+model = "Bounds"
+at = "Bounds::V::counted"
+refused = true
+note = "The bound is an expression."
+
+[[example]]
+member = "findLowerBound"
+model = "Bounds"
+at = "Bounds::W"
+none = true
+note = "A type without a multiplicity."
+
+[[example]]
+member = "findUpperBound"
+model = "Bounds"
+at = "Bounds::V::upToThree"
+expect = 3
+
+[[example]]
+member = "findUpperBound"
+model = "Bounds"
+at = "Bounds::V::atLeastOne"
+expect = "*"
+
+[[example]]
+member = "findUpperBound"
+model = "Bounds"
+at = "Bounds::V::counted"
+refused = true
+
+[[example]]
+member = "findUpperBound"
+model = "Bounds"
+at = "Bounds::W"
+none = true
+
+[[example]]
+member = "findLowerBoundExpr"
+model = "Bounds"
+at = "Bounds::V::upToThree"
+expect = { "@type" = "LiteralInteger", value = 0 }
+
+[[example]]
+member = "findLowerBoundExpr"
+model = "Bounds"
+at = "Bounds::V::two"
+expect = { "@type" = "LiteralInteger", value = 2 }
+
+[[example]]
+member = "findLowerBoundExpr"
+model = "Bounds"
+at = "Bounds::V::many"
+none = true
+
+[[example]]
+member = "findLowerBoundExpr"
+model = "Bounds"
+at = "Bounds::V::counted"
+expect = { "@type" = "FeatureReferenceExpression", referent = "Bounds::V::n" }
+
+[[example]]
+member = "findUpperBoundExpr"
+model = "Bounds"
+at = "Bounds::V::many"
+expect = { "@type" = "LiteralInfinity" }
+
+[[example]]
+member = "findUpperBoundExpr"
+model = "Bounds"
+at = "Bounds::V::counted"
+expect = { "@type" = "FeatureReferenceExpression", referent = "Bounds::V::n" }
+
+[[example]]
+member = "findUpperBoundExpr"
+model = "Bounds"
+at = "Bounds::W"
+none = true
+
+[[example]]
+member = "findHasLiteralLowerBound"
+model = "Bounds"
+at = "Bounds::V::many"
+expect = true
+
+[[example]]
+member = "findHasLiteralLowerBound"
+model = "Bounds"
+at = "Bounds::V::counted"
+expect = false
+
+[[example]]
+member = "findHasLiteralLowerBound"
+model = "Bounds"
+at = "Bounds::W"
+expect = false
+
+[[example]]
+member = "findHasLiteralUpperBound"
+model = "Bounds"
+at = "Bounds::V::many"
+expect = true
+
+[[example]]
+member = "findHasLiteralUpperBound"
+model = "Bounds"
+at = "Bounds::V::counted"
+expect = false
+
+[[example]]
+member = "findIsEffectivelyOrdered"
+model = "Bounds"
+at = "Bounds::V::sorted"
+expect = true
+
+[[example]]
+member = "findIsEffectivelyOrdered"
+model = "Bounds"
+at = "Bounds::V::sortedToo"
+expect = true
+note = "It subsets an ordered feature."
+
+[[example]]
+member = "findIsEffectivelyOrdered"
+model = "Bounds"
+at = "Bounds::V::many"
+expect = false
+
+# ------------------------------------------------------------------ behaviour
+
+[[example]]
+member = "findParameters"
+model = "Behaviour"
+at = "Behaviour::Pump"
+expect = ["Behaviour::Pump::fuelIn", "Behaviour::Pump::fuelOut"]
+note = "rate has no direction."
+
+[[example]]
+member = "findParameters"
+model = "Behaviour"
+at = "Behaviour::pump"
+expect = ["Behaviour::pump::fuelIn"]
+note = "On a step: its own parameters."
+
+[[example]]
+member = "findInputs"
+model = "Behaviour"
+at = "Behaviour::Pump"
+expect = ["Behaviour::Pump::fuelIn"]
+note = "fuelOut is out; rate has no direction."
+
+[[example]]
+member = "findInputs"
+model = "Behaviour"
+at = "Behaviour::Socket"
+expect = ["Behaviour::Socket::plugIn", "Behaviour::Socket::exchange"]
+note = "An inout feature is an input and an output."
+
+[[example]]
+member = "findInputs"
+model = "Behaviour"
+at = "Behaviour::Socket::'~Socket'"
+args = { scope = "all" }
+expect = ["Behaviour::Socket::status", "Behaviour::Socket::exchange"]
+note = "Conjugation reverses in and out: the conjugated port's inputs are the original's outputs."
+
+[[example]]
+member = "findOutputs"
+model = "Behaviour"
+at = "Behaviour::Pump"
+expect = ["Behaviour::Pump::fuelOut"]
+
+[[example]]
+member = "findOutputs"
+model = "Behaviour"
+at = "Behaviour::Socket"
+expect = ["Behaviour::Socket::status", "Behaviour::Socket::exchange"]
+
+[[example]]
+member = "findOutputs"
+model = "Behaviour"
+at = "Behaviour::Socket::'~Socket'"
+args = { scope = "all" }
+expect = ["Behaviour::Socket::plugIn", "Behaviour::Socket::exchange"]
+note = "Conjugation reverses in and out."
+
+[[example]]
+member = "findSubsettingFeaturesOf"
+model = "Behaviour"
+at = "Behaviour::Vehicle"
+args = { feature = "Behaviour::Vehicle::wheels" }
+expect = ["Behaviour::Vehicle::wheels", "Behaviour::Vehicle::frontWheels"]
+note = "A feature specializes itself."
+
+[[example]]
+member = "findResultExpression"
+model = "Behaviour"
+at = "Behaviour::Double"
+expect = { "@type" = "OperatorExpression", operator = "*" }
+
+[[example]]
+member = "findResultExpression"
+model = "Behaviour"
+at = "Behaviour::Positive"
+expect = { "@type" = "OperatorExpression", operator = ">" }
+
+[[example]]
+member = "findResultExpression"
+model = "Behaviour"
+at = "Behaviour::half"
+expect = { "@type" = "OperatorExpression", operator = "/" }
+note = "On a calculation usage."
+
+[[example]]
+member = "findInitialStates"
+model = "Behaviour"
+at = "Behaviour::Machine"
+expect = ["Behaviour::Machine::off"]
+note = "entry; then off;"
+
+[[example]]
+member = "findInitialStates"
+model = "Behaviour"
+at = "Behaviour::Machine2"
+expect = ["Behaviour::Machine2::off"]
+note = "first start then off;"
+
+[[example]]
+member = "findInitialStates"
+model = "Behaviour"
+at = "Behaviour::Machine3"
+expect = ["Behaviour::Machine3::off"]
+note = "Both forms: first start then off; comes first."
+
+[[example]]
+member = "findInitialStates"
+model = "Behaviour"
+at = "Behaviour::lamp"
+expect = ["Behaviour::lamp::dark"]
+note = "On a state usage."
+
+[[example]]
+member = "findAcceptedTypes"
+model = "Behaviour"
+at = "Behaviour::Listen::acc"
+expect = ["Behaviour::Sig"]
+
+[[example]]
+member = "findAcceptedTypes"
+model = "Behaviour"
+at = "Behaviour::Machine::t"
+expect = ["Behaviour::Sig"]
+note = "A transition's trigger."
+
+[[example]]
+member = "findIsAcceptedType"
+model = "Behaviour"
+at = "Behaviour::Listen::acc"
+args = { type = "Behaviour::Sig" }
+expect = true
+
+[[example]]
+member = "findIsAcceptedType"
+model = "Behaviour"
+at = "Behaviour::Listen::acc"
+args = { type = "Behaviour::SubSig" }
+expect = true
+note = "A specialization of the accepted type is accepted."
+
+[[example]]
+member = "findIsAcceptedType"
+model = "Behaviour"
+at = "Behaviour::Listen::acc"
+args = { type = "Behaviour::Fuel" }
+expect = false
+
+[[example]]
+member = "findIsAcceptedType"
+model = "Behaviour"
+at = "Behaviour::Machine::t"
+args = { type = "Behaviour::Sig" }
+expect = true
+note = "A transition's trigger."
+
+[[example]]
+member = "findIsAcceptedType"
+model = "Behaviour"
+at = "Behaviour::Machine::t"
+args = { type = "Behaviour::Fuel" }
+expect = false
+
+# ------------------------------------------------------------------ structure and annotations
+
+[[example]]
+member = "findVariation"
+model = "Structure"
+at = "Structure::Body::sedan"
+expect = "Structure::Body"
+
+[[example]]
+member = "findVariation"
+model = "Structure"
+at = "Structure::Color::red"
+expect = "Structure::Color"
+
+[[example]]
+member = "findVariation"
+model = "Structure"
+at = "Structure::Car::body"
+none = true
+
+[[example]]
+member = "findAppliedMetadata"
+model = "Structure"
+at = "Structure::Car"
+expect = [{ "@type" = "MetadataUsage", metaclass = "Structure::Safety" }]
+note = "@Safety; in the body."
+
+[[example]]
+member = "findAppliedMetadata"
+model = "Structure"
+at = "Structure::Brake"
+expect = [{ "@type" = "MetadataUsage", metaclass = "Structure::Safety" }]
+note = "#Safety before the declaration."
+
+[[example]]
+member = "findAppliedMetadata"
+model = "Structure"
+at = "Structure::Truck"
+expect = []
+
+[[example]]
+member = "findDocText"
+model = "Structure"
+at = "Structure::Car"
+expect = ["A car. "]
+note = "The comment's body: the white space after /* goes, the white space before */ stays (KerML 8.2.3.3.2)."
+
+[[example]]
+member = "findDocText"
+model = "Structure"
+at = "Structure::Truck"
+expect = ["A truck.\nIt has six wheels.\n"]
+
+[[example]]
+member = "findDocText"
+model = "Structure"
+at = "Structure::Brake"
+expect = []

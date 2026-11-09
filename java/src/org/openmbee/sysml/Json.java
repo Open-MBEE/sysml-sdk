@@ -29,6 +29,70 @@ public final class Json {
         return v;
     }
 
+    /** The JSON text of a value of the shapes {@link #parse} returns (any Map, Iterable, Number,
+     * CharSequence, Boolean or null); a number that is not finite is written as null. */
+    public static String write(Object value) {
+        StringBuilder b = new StringBuilder();
+        write(b, value);
+        return b.toString();
+    }
+
+    private static void write(StringBuilder b, Object v) {
+        if (v == null) {
+            b.append("null");
+        } else if (v instanceof Boolean || v instanceof Long || v instanceof Integer || v instanceof Short || v instanceof Byte) {
+            b.append(v);
+        } else if (v instanceof Double || v instanceof Float) {
+            double d = ((Number) v).doubleValue();
+            b.append(Double.isFinite(d) ? Double.toString(d) : "null");
+        } else if (v instanceof Number n) {  // BigInteger, BigDecimal
+            b.append(n);
+        } else if (v instanceof Map<?, ?> m) {
+            b.append('{');
+            boolean first = true;
+            for (Map.Entry<?, ?> e : m.entrySet()) {
+                if (!first) b.append(',');
+                first = false;
+                string(b, String.valueOf(e.getKey()));
+                b.append(':');
+                write(b, e.getValue());
+            }
+            b.append('}');
+        } else if (v instanceof Iterable<?> it) {
+            b.append('[');
+            boolean first = true;
+            for (Object x : it) {
+                if (!first) b.append(',');
+                first = false;
+                write(b, x);
+            }
+            b.append(']');
+        } else {
+            string(b, v.toString());
+        }
+    }
+
+    private static void string(StringBuilder b, String s) {
+        b.append('"');
+        for (int k = 0; k < s.length(); k++) {
+            char c = s.charAt(k);
+            switch (c) {
+                case '"' -> b.append("\\\"");
+                case '\\' -> b.append("\\\\");
+                case '\n' -> b.append("\\n");
+                case '\r' -> b.append("\\r");
+                case '\t' -> b.append("\\t");
+                case '\b' -> b.append("\\b");
+                case '\f' -> b.append("\\f");
+                default -> {
+                    if (c < 0x20) b.append(String.format("\\u%04x", (int) c));
+                    else b.append(c);
+                }
+            }
+        }
+        b.append('"');
+    }
+
     private RuntimeException err(String what) {
         return new IllegalArgumentException("JSON: " + what + " at offset " + i);
     }

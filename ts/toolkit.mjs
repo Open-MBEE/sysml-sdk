@@ -11,10 +11,10 @@
 // The wasm module imports three wasm-bindgen glue functions that a SysML Toolkit dependency
 // pulls in; no-op stubs satisfy them. Layouts below are wasm32 (4-byte pointers, 8-byte u64).
 
-import { Gone, NotImplementedInToolkit, UnresolvedReference } from "./runtime.mjs";
-import { BASES, FUNCS, NAMES_DIGEST } from "./toolkit_table.mjs";
+import { Gone, NotImplementedInToolkit, Refused, UnresolvedReference } from "./runtime.mjs";
+import { BASES, CONVENIENCE_DIGEST, FUNCS, NAMES_DIGEST } from "./toolkit_table.mjs";
 
-const OK = 0, NOT_IMPLEMENTED = 1, NOT_APPLICABLE = 2, INVALID_HANDLE = 3, UNRESOLVED = 7;
+const OK = 0, NOT_IMPLEMENTED = 1, NOT_APPLICABLE = 2, INVALID_HANDLE = 3, UNRESOLVED = 7, REFUSED = 8;
 
 // Struct sizes and offsets on wasm32 (ABI section 4).
 const STR = { size: 16, ptr: 0, len: 4, present: 8, owner: 12 };
@@ -84,6 +84,19 @@ export class ToolkitLibrary {
     const packaged = join(here, "sysmlv2_abi.wasm");
     if (existsSync(packaged)) return ToolkitLibrary.load(packaged);
     return ToolkitLibrary.load(join(here, "..", "abi", "target", "wasm32-unknown-unknown", "release", "sysmlv2_abi.wasm"));
+  }
+
+  /** Whether the module has the convenience members this SDK was generated with. */
+  checkConvenience() {
+    if (this.convenienceChecked) return;
+    if (typeof this.w.sysmlv2_convenience_digest !== "function")
+      throw new ToolkitError("this binding library has no convenience members; rebuild it (abi/)");
+    const p = this.w.sysmlv2_convenience_digest(), n = this.w.sysmlv2_convenience_digest_len();
+    const have = this.dec.decode(new Uint8Array(this.w.memory.buffer, p, n));
+    if (have !== CONVENIENCE_DIGEST)
+      throw new ToolkitError(`binding library was generated with convenience members ${have.slice(0, 12)}, ` +
+        `this SDK with ${CONVENIENCE_DIGEST.slice(0, 12)}; regenerate one side`);
+    this.convenienceChecked = true;
   }
 
   view() { return new DataView(this.w.memory.buffer); }
@@ -245,6 +258,7 @@ export class ToolkitBackend {
     if (st === NOT_IMPLEMENTED) throw new NotImplementedInToolkit(msg || `${where}: not implemented by the SysML Toolkit`);
     if (st === INVALID_HANDLE) throw new Gone(msg || `${where}: invalid handle`);
     if (st === UNRESOLVED) throw new UnresolvedReference(msg || `${where}: a reference did not resolve`);
+    if (st === REFUSED) throw new Refused(msg || `${where}: refused`);
     throw new ToolkitError(`${where}: status ${st}: ${msg}`);
   }
 
@@ -255,11 +269,11 @@ export class ToolkitBackend {
   /** Call `symbol` with (session, handle, ...args, out) and unpack the result by `code`. */
   #invoke(symbol, code, handle, args, where) {
     const w = this.lib.w;
-    const size = { H: HANDLES.size, S: STR.size, T: STR.size, B: BOOL.size }[code] ?? NUM.size;
+    const size = { H: HANDLES.size, S: STR.size, T: STR.size, M: STR.size, B: BOOL.size }[code] ?? NUM.size;
     const out = w.sysmlv2_alloc(size);
     try {
       const st = w[symbol](this.s, BigInt(handle), ...args, out);
-      if (!this.#check(st, where)) return code === "H" || code === "T" ? [] : null;
+      if (!this.#check(st, where)) return code === "H" || code === "T" || code === "M" ? [] : null;
       const v = this.lib.view();
       switch (code) {
         case "H": return this.lib.takeHandles(out).map((h) => ({ "@id": h }));
@@ -269,8 +283,17 @@ export class ToolkitBackend {
           const text = this.lib.takeStr(out);
           return text == null ? [] : JSON.parse(text);
         }
+        case "M": { // a name-keyed map: JSON pairs of a name and a handle
+          const text = this.lib.takeStr(out);
+          return text == null ? [] : JSON.parse(text).map(([name, h]) => [name, { "@id": h }]);
+        }
         case "B": return v.getUint8(out + BOOL.present) ? v.getUint8(out + BOOL.value) !== 0 : null;
         case "I": return v.getUint8(out + NUM.present) ? Number(v.getBigInt64(out + NUM.value, true)) : null;
+        case "U": { // an UnlimitedNatural: INT64_MAX is *
+          if (!v.getUint8(out + NUM.present)) return null;
+          const n = v.getBigInt64(out + NUM.value, true);
+          return n === 9223372036854775807n ? "*" : Number(n);
+        }
         default:  return v.getUint8(out + NUM.present) ? v.getFloat64(out + NUM.value, true) : null;
       }
     } finally {
@@ -328,6 +351,34 @@ export class ToolkitBackend {
       for (const [addr, size] of owned) w.sysmlv2_dealloc(addr, size);
     }
   }
+
+  /**
+   * A convenience member, through its binding library function: a scope or visibility filter as the
+   * literal's index, a boolean as a C bool, a string as text, an element as its handle.
+   */
+  find(handle, member, values) {
+    this.lib.checkConvenience();
+    const [name, symbol, params, result] = member;
+    const strs = [];
+    try {
+      const args = params.map(([, kind], i) => {
+        const v = values[i];
+        if (kind === "scope") return ["owned", "inherited", "all"].indexOf(v);
+        if (kind === "visibility") return ["any", "protected", "public"].indexOf(v);
+        if (kind === "bool") return v ? 1 : 0;
+        if (kind === "str") { const s = this.lib.putStr(v); strs.push(s); return s.addr; }
+        return BigInt(v.$handle);
+      });
+      const code = { elements: "H", element: "R", bool: "B", int: "I", unlimited: "U", real: "F",
+                     strings: "T", literal: "S", map: "M" }[result];
+      return this.#invoke(`sysmlv2_conv_${symbol}`, code, handle, args, `${this.metaclass(handle)}.${name}()`);
+    } finally {
+      for (const s of strs) this.lib.dropStr(s);
+    }
+  }
+
+  /** A convenience member on each element: one binding library call per element (in process). */
+  findEach(handles, member, values) { return handles.map((h) => this.find(h, member, values)); }
 
   #declaring(mc, prop) {
     const key = `${mc}::${prop}`;

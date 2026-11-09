@@ -373,8 +373,10 @@ export function enclosingStates(state, machine) {
  *           guard that is not known to be false may hold.
  *
  * Entering a state enters every region of a parallel state, or else its initial states
- * (initialStates) and the targets of the transitions from its entry action (the form
- * `entry action initial; transition initial then off;`), and so on down. A transition from a state
+ * (initialStates) and the targets of the transitions from its entry action, and so on down.
+ * The transitions from the entry action (`entry action initial; transition initial then
+ * off;`) are the form the specification's Annex A model uses, followed here so that
+ * model can be explored; the SDK's findInitialStates does not count them. A transition from a state
  * is taken from any of its substates too, and entering a nested target makes the states enclosing
  * it active. Regions of a parallel state are explored independently of each other.
  *
@@ -450,6 +452,15 @@ export function hasDefaultMultiplicity(usage) {
   return kind && (is(usage.owningType, "Definition") || is(usage.owningType, "Usage"));
 }
 
+/** The multiplicity `usage` declares, or null. SysML gives a usage that declares none the default
+ * [1..1]; the SysML Toolkit and the Pilot Implementation write it as a member without bounds whose
+ * subsetting of `Base::exactlyOne` is implied. That member is no declaration (see multiplicityOf). */
+export function declaredMultiplicity(usage) {
+  const multiplicity = usage.multiplicity;
+  if (multiplicity == null || is(multiplicity, "MultiplicityRange")) return multiplicity;
+  return multiplicity.ownedSubsetting.every((s) => s.isImplied) ? null : multiplicity;
+}
+
 /** What says how many instances a usage stands for, by SysML's rule for usages: its own
  * multiplicity; else that of the usages it explicitly subsets or redefines, nearest first (in a
  * valid model a redefinition only narrows what it redefines, so the nearest is the tightest); else
@@ -459,7 +470,8 @@ export function multiplicityOf(usage) {
   const todo = [usage];
   while (todo.length > 0) {
     const current = todo.shift();
-    if (current.multiplicity != null) return current.multiplicity;
+    const declared = declaredMultiplicity(current);
+    if (declared != null) return declared;
     const subsetted = explicitSubsettings(current);
     if (subsetted.length === 0) return hasDefaultMultiplicity(current) ? DEFAULT_ONE : null;
     for (const feature of subsetted) {

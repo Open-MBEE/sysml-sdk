@@ -98263,7 +98263,7 @@
  "meta": {
   "specRefs": "20250201",
   "table": "0.7.1",
-  "toolkitCommit": "69e44d72e54126157fbd4e473f9e4f97ffdf7a07",
+  "toolkitCommit": "339ef0e073d06e553e81c079755ddfcd224e4b92",
   "xmiErrata": [
    "Feature::isCompatibleWith",
    "Type::isCompatibleWith"

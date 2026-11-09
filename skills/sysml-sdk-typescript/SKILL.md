@@ -1,17 +1,22 @@
 ---
 name: sysml-sdk-typescript
-description: Writes JavaScript or TypeScript code (Node or browser) that reads, navigates and queries SysML v2 and KerML models with the sysml package, through the OpenMBEE SysML Toolkit compiled to WebAssembly or from a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml text or SysML v2 JSON in JS/TS, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
+description: Writes JavaScript or TypeScript code (Node or browser) that reads, navigates and queries SysML v2 and KerML models with the sysml package, through the OpenMBEE SysML Toolkit compiled to WebAssembly, the SysML v2 Pilot Implementation, or a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml text or SysML v2 JSON in JS/TS, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
 ---
 
 # SysML v2 SDK for JavaScript and TypeScript
 
 The SDK is the OMG metamodel as typed element objects: every KerML and SysML metaclass, property and
-operation, under its specification name. A model comes from one of two backends:
+operation, under its specification name. A model comes from one of three backends:
 
 - **the SysML Toolkit**, compiled to WebAssembly (the same module in Node and browsers): reads SysML
   text, resolves names, computes derived properties and evaluates operations, and refuses what it
   cannot derive completely;
+- **the SysML v2 Pilot Implementation**, run in a Java process (Node): reads the text too, and
+  computes every property and operation with its own code;
 - **a payload**: a full-form interchange JSON export from any SysML v2 tool.
+
+Besides the specification's members, the classes have `find` convenience members (`findParts()`,
+`findPartDefs()`, `findValue()`, ...) for what takes several steps in the specification.
 
 The SDK never guesses. A member the SysML Toolkit does not answer throws `NotImplementedInToolkit`
 with the reason the SysML Toolkit gives; a reference that does not resolve throws
@@ -21,7 +26,7 @@ described below, or report them.
 ## Setup
 
 ```sh
-npm install ./sysml-0.1.0.tgz    # carries the WebAssembly module and the standard library models
+npm install ./sysml-0.2.0.tgz    # carries the WebAssembly module and the standard library models
 ```
 
 ES modules only: name files `.mjs`, or set `"type": "module"` in `package.json`. Node 20+.
@@ -42,7 +47,7 @@ const libraryJson = await standardLibraryJson();   // the library as JSON, for a
 `standardLibraryJson()` downloads the JSON from the SDK's GitHub release on its first call (checked
 against the SHA-256 GitHub states, kept in the user cache; later calls read the cache) and throws
 `LibraryUnavailable` with instructions when it cannot. Offline, `SYSML_LIBRARY_JSON` names a copy
-(the `sysml.library.full.json` of the release's `sysml_library-0.1.0.zip`). Call only the one the
+(the `sysml.library.full.json` of the release's `sysml_library-0.2.0.zip`). Call only the one the
 chosen backend needs. In a browser neither works (no file system): fetch the library's files for
 `librarySources`, and a library JSON you host.
 
@@ -92,6 +97,30 @@ const model = Model.fromFullJson(JSON.parse(readFileSync("model.json", "utf8")),
   `elementsOfType` skip them); a qualified name is looked up in the payload first. The library JSON
   lists each library element's own members only, not what it inherits.
 
+Through the SysML v2 Pilot Implementation, which runs in a Java process (Node only):
+
+```js
+import { BackendError, Model, PilotBackend } from "sysml";
+
+const pilot = await PilotBackend.open({ paths: ["model.sysml"] });   // or sources: { "model.sysml": text }
+const model = new Model(pilot);
+// ...
+pilot.close();
+```
+
+- It needs a Java 21 or newer runtime (`JAVA_HOME`, or `java` on the path). The first use downloads
+  the Pilot (about 130 MB) into the user cache; `SYSML_PILOT_HOME` names a Pilot already at hand.
+  Opening takes seconds even for a small model.
+- It reads with its own standard library: pass no library.
+- It answers rather than refuses: the derived reads the SysML Toolkit refuses (`type`,
+  `inheritedFeature`, `connectorEnd`, ...) and the operations it does not evaluate are answered, so
+  the workarounds below are not needed. Its answers are the Pilot's own; where they differ from the
+  SysML Toolkit's, say which backend produced the result.
+- The model it reads is elaborated: it holds the implied relationships and implicit elements too
+  (more elements in `all()` than the text declares).
+- A failure inside the Pilot, an operation it lacks, or a Pilot that cannot be found or started
+  raises `BackendError`.
+
 ## The shape of the API
 
 - **Find:** `model.resolve("Pkg::Part::feature")` (or `null`), `elementsOfType(model, "PartUsage")`
@@ -138,33 +167,98 @@ const model = Model.fromFullJson(JSON.parse(readFileSync("model.json", "utf8")),
   `TypeMap` maps metaclass names to interfaces. `resolve` returns `AnyElement | null`: narrow it
   with `is(...)` before use.
 
+## Convenience members
+
+Besides the specification's members, the classes have `find` members (312), each defined by the SDK
+over the specification's properties and operations; `classes.d.ts` has every signature with its
+definition. Use one wherever it answers: one call instead of a walk.
+
+```js
+import { NotAnswered, Refused, Scope, VisibilityFilter } from "sysml";
+
+d.findParts();                       // the part usages d owns (a connection is a part too)
+d.findPartsExact();                  // exactly PartUsage; d.findPart("engine"): by name, or null
+d.findParts(Scope.ALL);              // owned, then inherited; Scope.INHERITED: inherited only
+d.findPartsSemantic();               // the features typed by a part definition
+pkg.findPartDefs();                  // the part definitions a namespace owns; findPartDef(name)
+pkg.findPartDefsByName();            // a Map from every name and short name to its definition
+pkg.findPartDefs().findPorts();      // a list carries its elements' members: calls chain
+feature.findDeclaredTypes();         // the types as written; t.findDeclaredSupertypes()
+feature.findRedefinitionRoot();      // the feature its written redefinitions start from
+feature.findValue();                 // the value expression (=, :=, default), or null
+expr.findLiteral();                  // a number, boolean or string (Infinity for *), a sign folded
+t.findLowerBound(); t.findUpperBound();   // t's own multiplicity; null without one
+```
+
+- The feature kinds (27): `findAttributes`, `findPorts`, `findItems`, `findActions`, `findStates`,
+  `findConnections`, `findRequirements`, `findConstraints`, ... Every list takes `scope`,
+  `visibility` (`VisibilityFilter.PUBLIC`, `PROTECTED`; `ANY` by default) and `library` (`true`
+  keeps what the standard library's types contribute, left out by default). On a namespace:
+  `find<Kind>Defs()`, `find<Kind>Def(name)`, `find<Kind>DefsByName()`, and the usages it has through
+  any membership, `findMember<Kinds>()`.
+- Also: `findSubsettedFeatures()`, `findRedefinedFeatures()`, `findReferencedFeature()`,
+  `findEffectiveFeature(f)`, `findUnit()` (`1500 [kg]`: `SI::kilogram`), `findParameters()`,
+  `findInputs()`, `findOutputs()`, `findInitialStates()`, `findAcceptedTypes()`,
+  `findIsAcceptedType(t)`, `findResultExpression()`, `findPath()`, `findAppliedMetadata()`,
+  `findDocText()`.
+- `Refused` (a `NotAnswered`): the member's definition gives no answer for this element
+  (`findLiteral()` of `2 * x`, or of a value with a unit). `NotAnswered`: the backend cannot answer
+  something the member reads, named in the message (`NotImplementedInToolkit` from the SysML
+  Toolkit).
+- **On the Pilot Implementation** every member answers.
+- **On the SysML Toolkit**, the members answer: every list, lookup and exact list in the owned scope;
+  the definition lists and name maps of a package; the types, supertypes, subsettings and
+  redefinitions as written; values, unsigned literals and own bounds; paths, metadata and
+  documentation. They are refused, with the reason: the inherited scope and `Scope.ALL` of feature
+  and member lists and the semantic lists (`specializes()`), `findEffectiveFeature`, the implied
+  supertypes, `findParameters`, `findInputs` and `findOutputs` (`directionOf()`), the accepted types
+  (`payloadParameter`), `findInitialStates`, `findResultExpression`, and a literal with a sign or a
+  unit (`argument`). For those, use the helpers below: `featuresWithInherited`, `acceptedTypes`,
+  `initialStates`, `number`.
+- `findLowerBound()`/`findUpperBound()` read the type's own multiplicity only; for SysML's default
+  and the multiplicity a usage takes from what it redefines, use `multiplicityOf` below.
+- Outside the owned scope, a member or definition list is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+
 ## When the SysML Toolkit refuses a read (read this before writing queries)
 
 The SysML Toolkit's checked reader answers a property only where it can derive it completely. In
-this release it refuses most of what builds on inheritance, so plan for it:
+this release it answers most reads (all but 3.6 % on the specification's Annex A model), refuses a
+few properties wherever they apply, and refuses some on particular elements, so plan for it:
 
-- **refused on nearly every element:** `feature`, `inheritedFeature`, `inheritedMembership`,
-  `featureMembership`, `member`, `membership`, `importedMembership`, `endFeature`, `input`,
-  `output`, `usage`, `directedUsage`, `definition` and the kind-specific definitions
-  (`partDefinition`, `portDefinition`, `itemDefinition`, `requirementDefinition`, ...),
-  `parameter` and `featuringType`;
-- **refused on features, even with a written typing:** `type`. Assume it is refused and use
-  `typesOf` below;
-- **refused on connectors, accept actions, requirements and satisfy relations:** `sourceFeature`,
-  `targetFeature`, `connectorEnd`, `relatedFeature`, `payloadParameter`, `subjectParameter`,
-  `actorParameter`, `stakeholderParameter`, `satisfyingFeature`;
-- **answered:** what the model states itself: `ownedMember`, `ownedFeature`, `ownedMembership`, the
-  owned lists (`ownedUsage`, `ownedPart`, `nestedUsage`, `nestedPart`, `nestedAttribute`,
-  `nestedState`, `nestedTransition`, ...; owned members only, so an empty `nestedPart` does not mean
-  a usage has no parts), `owner`, `owningNamespace`, `owningType`, `name`, `declaredName`,
-  `qualifiedName`, `documentation`, `multiplicity`, `direction`, `isComposite`, `isEnd`,
-  `isImplied`, `entryAction`, `isParallel`, `triggerAction`, a transition's `source` and `target`,
-  `satisfiedRequirement`, `chainingFeature`, and the specific owned relationships with their ends:
-  `ownedTyping` (`type`), `ownedSubclassification` (`superclassifier`), `ownedSpecialization`
-  (`general`), `ownedSubsetting` (`subsettedFeature`; it holds the redefinitions too),
-  `ownedRedefinition` (`redefinedFeature`), `ownedReferenceSubsetting` (`referencedFeature`), and a
-  port definition's `conjugatedPortDefinition` / `originalPortDefinition`. (`ownedMember`,
-  `ownedFeature` and `ownedMembership` are refused on a `FeatureReferenceExpression`.)
+- **refused wherever they apply (on the Annex A model):** `featuringType`, `parameter`,
+  `isModelLevelEvaluable`, `individualDefinition`, `defaultFeaturingType`, `actionDefinition`,
+  `stateDefinition`, `calculationDefinition`, `flowDefinition`, `enumerationDefinition`, a metadata
+  usage's `metadataDefinition` and `metaclass`, `actorParameter`, `stakeholderParameter`,
+  `framedConcern`, `objectiveRequirement`, `step`, `expression`, `calculation`, `interaction`,
+  `flowEnd`, `sourceOutputFeature` and `targetInputFeature`;
+- **refused on some elements:** `type`, `definition` and `behavior` on action, perform action,
+  state, exhibit state, transition, flow, accept, send, allocation and use case usages and on
+  enumeration values, and `type` on some parameters and reference usages (use `typesOf` below
+  there); the inherited and imported member lists (`feature`, `inheritedFeature`,
+  `featureMembership`, `inheritedMembership`, `member`, `membership`, `importedMembership`, `input`,
+  `output` and `endFeature`) on a definition with a `public import` in its body, or one that
+  specializes it; on expressions (operator, invocation, feature reference and feature chain
+  expressions, literals) their owned lists (`ownedMember`, `ownedFeature`, `ownedMembership` and
+  `ownedElement`), `directedFeature` and a literal's `result`; `result` on some requirement,
+  constraint and case usages and on calculation, requirement and case definitions;
+  `isImpliedIncluded`; an end feature's `isConstant`; a connector's `association`; `argument` on a
+  type test (`istype`, `@`);
+- **answered:** everything else, among it the inherited and imported member lists and `type` on most
+  elements, a connector's ends (`sourceFeature`, `targetFeature`, `connectorEnd` and
+  `relatedFeature`), `payloadParameter`, `payloadType`, `subjectParameter`, `requirementDefinition`
+  and `satisfyingFeature`, and what the model states itself: `ownedMember`, `ownedFeature`,
+  `ownedMembership`, the owned lists (`ownedUsage`, `ownedPart`, `nestedUsage`, `nestedPart`,
+  `nestedAttribute`, `nestedState`, `nestedTransition`, ...; owned members only, so an empty
+  `nestedPart` does not mean a usage has no parts), `owner`, `owningNamespace`, `owningType`,
+  `name`, `declaredName`, `qualifiedName`, `documentation`, `multiplicity`, `direction`,
+  `isComposite`, `isEnd`, `isImplied`, `entryAction`, `isParallel`, `triggerAction`, a transition's
+  `source` and `target`, `satisfiedRequirement`, `chainingFeature`, and the specific owned
+  relationships with their ends: `ownedTyping` (`type`), `ownedSubclassification`
+  (`superclassifier`), `ownedSpecialization` (`general`), `ownedSubsetting` (`subsettedFeature`; it
+  holds the redefinitions too), `ownedRedefinition` (`redefinedFeature`), `ownedReferenceSubsetting`
+  (`referencedFeature`), and a port definition's `conjugatedPortDefinition` /
+  `originalPortDefinition`.
 
 The refusal's message names the member and the SysML Toolkit's reason (`property has an incomplete
 derivation`, `Type features are incomplete: IncompleteProvider`, `incomplete operation evidence`):
@@ -270,7 +364,8 @@ function multiplicityOf(usage) {
   const todo = [usage];
   while (todo.length) {
     const u = todo.shift();
-    if (u.multiplicity != null) return bounds(u.multiplicity);
+    // A multiplicity without bounds is the default member SysML implies (`Base::exactlyOne`): the rule below gives it.
+    if (u.multiplicity != null && is(u.multiplicity, "MultiplicityRange")) return bounds(u.multiplicity);
     const generals = writtenGenerals(u);
     if (!generals.length) {
       const kind = ["AttributeUsage", "ItemUsage", "PortUsage"].some((k) => is(u, k)) && !is(u, "ConnectionUsage");   // a PartUsage is an ItemUsage
@@ -322,22 +417,19 @@ function subjectOf(requirement) {
   return null;
 }
 
-// The states a state machine (a state usage or definition) starts in: the targets of its
-// successions from its entry action (`entry; then off;`) or from the library's `start`
-// (`first start then off;`), and of its transitions from its entry action
-// (`entry action initial; transition initial then off;`).
+// The states a state machine (a state usage or definition) starts in, as findInitialStates defines
+// them: the targets of its successions from the library's `start` (`first start then off;`), and
+// only where there are none, from its entry action (`entry; then off;`).
 function initialStates(machine) {
-  const entry = machine.entryAction, out = [];
+  const entry = machine.entryAction, fromStart = [], fromEntry = [];
   for (const f of machine.ownedFeature) {
-    if (is(f, "TransitionUsage")) {
-      if (entry && f.source === entry && is(f.target, "StateUsage")) out.push(f.target);
-    } else if (is(f, "SuccessionAsUsage")) {
-      const e = ends(f);
-      if (e.length === 2 && is(e[1], "StateUsage")
-          && ((entry && e[0] === entry) || (e[0].isLibraryElement && e[0].name === "start"))) out.push(e[1]);
-    }
+    if (!is(f, "SuccessionAsUsage")) continue;
+    const e = ends(f);
+    if (e.length !== 2 || !is(e[1], "StateUsage")) continue;
+    if (e[0].isLibraryElement && e[0].name === "start") fromStart.push(e[1]);
+    else if (entry && e[0] === entry) fromEntry.push(e[1]);
   }
-  return out;
+  return fromStart.length ? fromStart : fromEntry;
 }
 
 // The states of a state machine reachable from its initial states along its own transitions, in the
@@ -361,7 +453,10 @@ function reachableStates(machine) {
 function number(expr) {
   if (is(expr, "LiteralInteger") || is(expr, "LiteralRational")) return expr.value;
   if (is(expr, "OperatorExpression") && (expr.operator === "-" || expr.operator === "+")) {
-    const operands = expr.ownedFeature.flatMap((f) => f.ownedMembership.filter((m) => is(m, "FeatureValue")).map((m) => m.value));
+    // The operands' parameters through the owned relationships: the SysML Toolkit refuses an operator
+    // expression's ownedFeature in this release.
+    const params = expr.ownedRelationship.filter((r) => is(r, "ParameterMembership")).flatMap((r) => r.ownedRelatedElement);
+    const operands = params.flatMap((f) => f.ownedMembership.filter((m) => is(m, "FeatureValue")).map((m) => m.value));
     if (operands.length === 1) return expr.operator === "-" ? -number(operands[0]) : number(operands[0]);
   }
   throw new Error(`not a literal number: ${expr.$metaclass}`);
@@ -437,10 +532,10 @@ flow.payloadType;                            // [the flowing item's definition]
 const machine = model.resolve("Pkg::Controller::modes");   // an ExhibitStateUsage or StateUsage
 machine.nestedState;                         // its own states
 machine.isParallel; machine.entryAction;
-const initial = initialStates(machine);      // `entry; then off;`, `first start then off;`, ...
+const initial = initialStates(machine);      // `first start then off;`, else `entry; then off;`
 const reachable = reachableStates(machine);  // from the initial states along the transitions
 for (const t of machine.nestedTransition) {  // t.source, t.target: the states it leaves and enters; t.guardExpression
-  // an initial transition (`transition init then off;`) leaves the entry action, not a state
+  // a transition from the entry action leaves an action, not a state
   const signals = t.triggerAction.length ? acceptedTypes(t.triggerAction[0]) : [];   // [ItemDefinition, ...]
   if (t.triggerAction.length) t.triggerAction[0].payloadArgument;   // TriggerInvocationExpression for `accept at`/`when` (.kind)
 }

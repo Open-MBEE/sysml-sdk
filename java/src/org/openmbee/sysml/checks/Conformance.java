@@ -27,7 +27,7 @@ import org.openmbee.sysml.NotImplementedInToolkitException;
 import org.openmbee.sysml.classes.ClassMap;
 
 public final class Conformance {
-    public static final String TABLE_SHA256 = "17644f3a5d70189d76b5ecb95c2089aeda1f93b6705f8bce5eeae1faf023758b";
+    public static final String TABLE_SHA256 = "28d1d7f6523803e35df85303c4cea45320cfd6c9330217b4824817005331557f";
 
     private Conformance() { }
 

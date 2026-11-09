@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>OpenMBEE.SysML</RootNamespace>
     <Description>Spec-shaped SysML v2 SDK: generated metaclass surface over the SysML Toolkit, or over interchange payloads</Description>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>SysML;SysMLv2;KerML;MBSE</PackageTags>
   </PropertyGroup>
@@ -32,6 +32,12 @@
     <EmbeddedResource Include="stdlib\**\*" LogicalName="stdlib/%(RecursiveDir)%(Filename)%(Extension)" />
     <None Include="stdlib\LICENSE;stdlib\NOTICE" Pack="true" PackagePath="stdlib\" Condition="Exists('stdlib')" />
   </ItemGroup>
+  <!-- The Pilot engine (sysml-pilot-server.jar), when tools/package.py stages it here: embedded, and
+       copied out by PilotBackend to run in a Java process. -->
+  <ItemGroup>
+    <EmbeddedResource Include="pilot\sysml-pilot-server.jar" LogicalName="pilot/sysml-pilot-server.jar" Condition="Exists('pilot\sysml-pilot-server.jar')" />
+  </ItemGroup>
+
   <PropertyGroup Condition="Exists('stdlib')">
     <PackageLicenseExpression>Apache-2.0 AND EPL-2.0</PackageLicenseExpression>
   </PropertyGroup>

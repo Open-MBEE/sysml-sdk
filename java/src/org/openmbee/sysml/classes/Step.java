@@ -121,4 +121,61 @@ public interface Step extends Feature {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * The directed features, scoped like the kind lists: those whose direction relative to this
+     * behaviour or step, directionOf, is not null. With scope all and library true, the
+     * specification's parameter.
+     *
+     * @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+     *     of features gives its own first; a list of members or definitions, outside the owned
+     *     scope, is in the backend's order. For a namespace's members, inherited includes imported.
+     * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+     *     only.
+     * @param library Whether members inherited from the standard library's types are kept (a user's
+     *     library package counts as model).
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findParameters(org.openmbee.sysml.Scope scope, org.openmbee.sysml.VisibilityFilter visibility, boolean library) { return new FeatureList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_PARAMETERS, scope, visibility, library))); }
+    /**
+     * The directed features, scoped like the kind lists: those whose direction relative to this
+     * behaviour or step, directionOf, is not null. With scope all and library true, the
+     * specification's parameter. Leaves library at its default, false.
+     *
+     * @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+     *     of features gives its own first; a list of members or definitions, outside the owned
+     *     scope, is in the backend's order. For a namespace's members, inherited includes imported.
+     * @param visibility Which visibilities a list keeps: every one, public and protected, or public
+     *     only.
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findParameters(org.openmbee.sysml.Scope scope, org.openmbee.sysml.VisibilityFilter visibility) { return findParameters(scope, visibility, false); }
+    /**
+     * The directed features, scoped like the kind lists: those whose direction relative to this
+     * behaviour or step, directionOf, is not null. With scope all and library true, the
+     * specification's parameter. Leaves visibility and library at their defaults:
+     * VisibilityFilter.ANY and false.
+     *
+     * @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+     *     of features gives its own first; a list of members or definitions, outside the owned
+     *     scope, is in the backend's order. For a namespace's members, inherited includes imported.
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findParameters(org.openmbee.sysml.Scope scope) { return findParameters(scope, org.openmbee.sysml.VisibilityFilter.ANY, false); }
+    /**
+     * The directed features, scoped like the kind lists: those whose direction relative to this
+     * behaviour or step, directionOf, is not null. With scope all and library true, the
+     * specification's parameter. Leaves scope, visibility and library at their defaults:
+     * Scope.OWNED, VisibilityFilter.ANY and false.
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default FeatureList findParameters() { return findParameters(org.openmbee.sysml.Scope.OWNED, org.openmbee.sysml.VisibilityFilter.ANY, false); }
 }

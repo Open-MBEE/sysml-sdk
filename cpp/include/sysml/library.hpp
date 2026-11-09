@@ -26,7 +26,7 @@
 namespace sysml {
 
 /// This SDK's version, whose release the standard library helpers name.
-inline constexpr const char* sdk_version = "0.1.0";
+inline constexpr const char* sdk_version = "0.2.0";
 
 /// The standard library is not at hand: no models beside the executable, or no JSON.
 class library_unavailable final : public sdk_error {

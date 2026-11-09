@@ -38,7 +38,7 @@ import java.util.Map;
 public final class ToolkitBackend implements Backend, AutoCloseable {
 
     // -- status codes (ABI section 3) --------------------------------------------------------
-    private static final int OK = 0, NOT_IMPLEMENTED = 1, NOT_APPLICABLE = 2, INVALID_HANDLE = 3, UNRESOLVED = 7;
+    private static final int OK = 0, NOT_IMPLEMENTED = 1, NOT_APPLICABLE = 2, INVALID_HANDLE = 3, UNRESOLVED = 7, REFUSED = 8;
 
     // -- struct layouts (ABI section 4), x86-64 --------------------------------------------
     private static final long STR_SIZE = 32, STR_PTR = 0, STR_LEN = 8, STR_PRESENT = 16, STR_OWNER = 24;
@@ -53,6 +53,29 @@ public final class ToolkitBackend implements Backend, AutoCloseable {
         final SymbolLookup lookup;
         final MethodHandle free, sessionOpen, sessionClose, sessionRoots, lastError, metaclass, userElements, fullJson;
         private final Map<String, MethodHandle> members = new HashMap<>();
+        private boolean convenienceChecked;
+
+        /** Whether the library has the convenience members this SDK was generated with. */
+        synchronized void checkConvenience() {
+            if (convenienceChecked) return;
+            var digest = lookup.find("sysmlv2_convenience_digest");
+            var digestLen = lookup.find("sysmlv2_convenience_digest_len");
+            if (digest.isEmpty() || digestLen.isEmpty())
+                throw new SdkException("this binding library has no convenience members; rebuild it (abi/)");
+            try {
+                MemorySegment p = (MemorySegment) linker.downcallHandle(digest.get(), FunctionDescriptor.of(ValueLayout.ADDRESS)).invokeExact();
+                long n = (long) linker.downcallHandle(digestLen.get(), FunctionDescriptor.of(ValueLayout.JAVA_LONG)).invokeExact();
+                String have = new String(p.reinterpret(n).toArray(ValueLayout.JAVA_BYTE), StandardCharsets.UTF_8);
+                if (!have.equals(ToolkitTable.CONVENIENCE_DIGEST))
+                    throw new SdkException("binding library was generated with convenience members " + have.substring(0, 12)
+                        + ", this SDK with " + ToolkitTable.CONVENIENCE_DIGEST.substring(0, 12) + "; regenerate one side");
+            } catch (SdkException e) {
+                throw e;
+            } catch (Throwable t) {
+                throw new SdkException("convenience digest failed: " + t);
+            }
+            convenienceChecked = true;
+        }
 
         public Library(Path path) {
             lookup = SymbolLookup.libraryLookup(path, arena);
@@ -312,6 +335,8 @@ public final class ToolkitBackend implements Backend, AutoCloseable {
             throw new GoneException(msg.isEmpty() ? where + ": invalid handle" : msg);
         if (st == UNRESOLVED)
             throw new UnresolvedReferenceException(msg.isEmpty() ? where + ": a reference did not resolve" : msg);
+        if (st == REFUSED)
+            throw new RefusedException(msg.isEmpty() ? where + ": refused" : msg);
         throw new SdkException(where + ": status " + st + ": " + msg);
     }
 
@@ -338,7 +363,7 @@ public final class ToolkitBackend implements Backend, AutoCloseable {
     }
 
     private static long outSize(String code) {
-        return switch (code) { case "H" -> HANDLES_SIZE; case "S", "T" -> STR_SIZE; case "B" -> BOOL_SIZE; default -> NUM_SIZE; };
+        return switch (code) { case "H" -> HANDLES_SIZE; case "S", "T", "M" -> STR_SIZE; case "B" -> BOOL_SIZE; default -> NUM_SIZE; };
     }
 
     private Object call(String symbol, String code, long handle, String where) {
@@ -369,6 +394,16 @@ public final class ToolkitBackend implements Backend, AutoCloseable {
             case "T": { // a list of strings (a requirement's `text`), as JSON text
                 String text = takeStr(out);
                 return text == null ? List.of() : Json.parse(text);
+            }
+            case "M": { // a name-keyed map: JSON pairs of a name and a handle
+                String text = takeStr(out);
+                List<Object> pairs = new ArrayList<>();
+                if (text != null)
+                    for (Object pair : (List<?>) Json.parse(text)) {
+                        List<?> p = (List<?>) pair;
+                        pairs.add(List.of(p.get(0), Map.of("@id", String.valueOf(p.get(1)))));
+                    }
+                return pairs;
             }
             case "B":
                 return out.get(ValueLayout.JAVA_BYTE, 0) != 0 ? Boolean.valueOf(out.get(ValueLayout.JAVA_BYTE, 1) != 0) : null;
@@ -467,6 +502,56 @@ public final class ToolkitBackend implements Backend, AutoCloseable {
                 FunctionDescriptor.of(ValueLayout.JAVA_INT, layouts.toArray(new MemoryLayout[0])));
             int st = (int) f.invokeWithArguments(values);
             return unpack(e[1], out, st, where);
+        } catch (SdkException | IllegalArgumentException ex) {
+            throw ex;
+        } catch (Throwable t) {
+            throw new SdkException(where + " failed: " + t);
+        }
+    }
+
+    /**
+     * A convenience member, through its binding library function: a scope or visibility filter as
+     * the literal's index, a boolean as a C bool, a string as text, an element as its handle.
+     */
+    @Override
+    public Object find(String handle, Find member, List<Object> args) {
+        lib.checkConvenience();
+        String where = metaclass(handle) + "." + member.name() + "()";
+        String code = switch (member.result()) {
+            case "elements" -> "H"; case "element" -> "R"; case "bool" -> "B"; case "int", "unlimited" -> "I";
+            case "real" -> "F"; case "strings" -> "T"; case "map" -> "M"; default -> "S";
+        };
+        try (Arena arena = Arena.ofConfined()) {
+            List<MemoryLayout> layouts = new ArrayList<>(List.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
+            List<Object> values = new ArrayList<>(List.of(session, Long.parseLong(handle)));
+            String[] kinds = member.paramKinds();
+            for (int i = 0; i < kinds.length; i++) {
+                Object a = args.get(i);
+                switch (kinds[i]) {
+                    case "scope" -> { layouts.add(ValueLayout.JAVA_INT); values.add(((Scope) a).ordinal()); }
+                    case "visibility" -> { layouts.add(ValueLayout.JAVA_INT); values.add(((VisibilityFilter) a).ordinal()); }
+                    case "bool" -> { layouts.add(ValueLayout.JAVA_BOOLEAN); values.add(Boolean.TRUE.equals(a)); }
+                    case "str" -> {
+                        MemorySegment s = arena.allocate(STR_SIZE);
+                        writeStr(arena, s, String.valueOf(a));
+                        layouts.add(ValueLayout.ADDRESS);
+                        values.add(s);
+                    }
+                    default -> {
+                        if (!(a instanceof Element el))
+                            throw new IllegalArgumentException(where + ": " + member.paramNames()[i] + " must be an element, not " + a);
+                        layouts.add(ValueLayout.JAVA_LONG);
+                        values.add(Long.parseLong(el.$handle()));
+                    }
+                }
+            }
+            MemorySegment out = arena.allocate(outSize(code));
+            layouts.add(ValueLayout.ADDRESS);
+            values.add(out);
+            MethodHandle f = lib.linker.downcallHandle(lib.lookup.find("sysmlv2_conv_" + member.symbol()).orElseThrow(),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, layouts.toArray(new MemoryLayout[0])));
+            int st = (int) f.invokeWithArguments(values);
+            return unpack(code, out, st, where);
         } catch (SdkException | IllegalArgumentException ex) {
             throw ex;
         } catch (Throwable t) {

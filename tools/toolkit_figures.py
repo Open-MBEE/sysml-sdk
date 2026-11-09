@@ -18,7 +18,7 @@ specification's Annex A model and the standard library:
 Prints them, and what differs from the figures in python/tests/toolkit_gaps.py (the reads by
 outcome), STATUS.md (elements, reads, the outcome table, the operations the SysML Toolkit runs)
 and CHANGELOG.md (the share of reads refused, the operations the SysML Toolkit runs, the
-references that do not resolve). With --write, rewrites those figures in place; nothing else in
+references that do not resolve, where the newest version's section states them). With --write, rewrites those figures in place; nothing else in
 the files changes. Run it after moving the SysML Toolkit pin
 (abi/README.md, "Moving to a newer SysML Toolkit release").
 """
@@ -85,19 +85,27 @@ def thousands(n: int) -> str:
     return f"{n:,}"
 
 
-def rewrite(path: Path, edits: list[tuple[str, str, str]], write: bool) -> list[str]:
-    """Apply (what, pattern, replacement) regex edits; each pattern must match exactly once."""
+def rewrite(path: Path, edits: list[tuple[str, str, str]], write: bool, newest_section: bool = False) -> list[str]:
+    """Apply (what, pattern, replacement) regex edits; each pattern must match exactly once. With
+    newest_section, only the file's first `## ` section is edited (a changelog's released versions
+    keep the figures they were made with), and a figure that section does not state is left out."""
     text = path.read_text(encoding="utf-8")
+    heads = [m.start() for m in re.finditer(r"^## ", text, flags=re.M)] if newest_section else []
+    start = heads[0] if heads else 0
+    end = heads[1] if len(heads) > 1 else len(text)
+    part = text[start:end]
     changed = []
     for what, pattern, replacement in edits:
-        new, n = re.subn(pattern, replacement, text, flags=re.S)
+        new, n = re.subn(pattern, replacement, part, flags=re.S)
+        if n == 0 and newest_section:
+            continue
         if n != 1:
             sys.exit(f"{path.name}: expected one match for {what}, found {n}")
-        if new != text:
+        if new != part:
             changed.append(f"{path.relative_to(ROOT).as_posix()}: {what}")
-        text = new
+        part = new
     if write and changed:
-        path.write_bytes(text.encode("utf-8"))
+        path.write_bytes((text[:start] + part + text[end:]).encode("utf-8"))
     return changed
 
 
@@ -142,7 +150,7 @@ def main() -> None:
          rf"\g<1>\g<2>{run}\g<3> {declared}\g<4>"),
         ("the references that do not resolve", r"(\*\*Some references do not resolve\*\*.*?\()\d+( references there\))",
          rf"\g<1>{references}\g<2>"),
-    ], a.write)
+    ], a.write, newest_section=True)
     if changed:
         print(("rewrote:" if a.write else "differs (run with --write to rewrite):") + "\n  " + "\n  ".join(changed))
     else:

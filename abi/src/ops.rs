@@ -101,8 +101,17 @@ pub fn call(s: &mut Session, e: ElementRef, class: &str, member: &str, args: &[A
         values = ordered;
     }
     let values: Vec<DerivedValue> = values.into_iter().map(|(_, v)| v).collect();
+    // An answer for the same element, operation and arguments is kept (`Session::calls`).
+    let key = (e, format!("{}{values:?}", spec.id));
+    if let Some(kept) = s.calls.get(&key) {
+        return Ok(kept.clone());
+    }
     match s.model().invoke_operation(e, spec.id, &values) {
-        Ok(result) => read::from_derived(s, &name, result.value),
+        Ok(result) => {
+            let answer = read::from_derived(s, &name, result.value)?;
+            s.calls.insert(key, answer.clone());
+            Ok(answer)
+        }
         Err(err) => Err(match err {
             OperationError::InvalidArgument { .. } | OperationError::ArgumentCount { .. } => {
                 s.fail(Status::InvalidArg, format!("{name}: {err}"))

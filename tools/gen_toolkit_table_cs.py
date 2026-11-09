@@ -9,7 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from naming import CS_NAMESPACE, CS_PROJECT, abi_params, op_key, result_code
+from naming import convenience_digest, CS_NAMESPACE, CS_PROJECT, abi_params, op_key, result_code
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -40,6 +40,7 @@ def main() -> None:
         "internal static class ToolkitTable",
         "{",
         f'    public const string NamesDigest = "{digest}";',
+        f'    public const string ConvenienceDigest = "{convenience_digest(json.loads((ROOT / "convenience.json").read_text(encoding="utf-8")))}";',
         "    public static readonly Dictionary<string, (string Symbol, char Code, string Params)> Funcs = new()",
         "    {",
     ]

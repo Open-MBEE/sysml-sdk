@@ -131,4 +131,13 @@ public interface OperatorExpression extends InvocationExpression {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * The type operand of a classification or cast (x istype T, x hastype T, x &#64; T, m
+     * &#64;&#64; T, x as T, m meta T give T): the grammar puts it in the second owned feature.
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default Type findTypeArgument() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_TYPE_ARGUMENT)); }
 }

@@ -5,12 +5,17 @@ package org.openmbee.sysml.checks;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import org.openmbee.sysml.Element;
 import org.openmbee.sysml.Model;
+import org.openmbee.sysml.NotAnsweredException;
 import org.openmbee.sysml.NotImplementedInToolkitException;
 import org.openmbee.sysml.PayloadLibrary;
+import org.openmbee.sysml.RefusedException;
+import org.openmbee.sysml.Scope;
 import org.openmbee.sysml.UnresolvedReferenceException;
+import org.openmbee.sysml.VisibilityFilter;
 import org.openmbee.sysml.classes.AttributeUsage;
 import org.openmbee.sysml.classes.CalculationDefinition;
 import org.openmbee.sysml.classes.Classifier;
@@ -22,6 +27,7 @@ import org.openmbee.sysml.classes.PartDefinition;
 import org.openmbee.sysml.classes.PartUsage;
 import org.openmbee.sysml.classes.Subclassification;
 import org.openmbee.sysml.classes.Type;
+import org.openmbee.sysml.classes.TypeList;
 import org.openmbee.sysml.classes.Usage;
 
 public final class Checks {
@@ -32,7 +38,7 @@ public final class Checks {
             throw new AssertionError("FAILED: " + what);
     }
 
-    private static Path findRepoRoot() {
+    static Path findRepoRoot() {
         Path d = Path.of("").toAbsolutePath();
         while (d != null) {
             if (Files.exists(d.resolve("metamodel.json")))
@@ -123,6 +129,31 @@ public final class Checks {
         check(inputs.size() == 1
             && "x".equals(((Feature) inputs.get(0)).getDeclaredName()), "K.input");
         System.out.println("K.input -> [x] OK");
+
+        // --- convenience members: a payload holds property values only ------
+        // Every convenience member is refused by the backend (NotAnsweredException, not the contract's
+        // RefusedException), naming the member, on an element and over a list, whatever the arguments.
+        // The same checks run in every language.
+        Namespace demo = (Namespace) m.resolve("Demo");
+        PartDefinition vehicleDef = (PartDefinition) vehicle;
+        List<Map.Entry<String, Runnable>> finds = List.of(
+            Map.entry("findPartDefs", () -> demo.findPartDefs()),
+            Map.entry("findPartDef", () -> demo.findPartDef("Vehicle", Scope.ALL)),
+            Map.entry("findParts", () -> vehicleDef.findParts(Scope.ALL, VisibilityFilter.PUBLIC, true)),
+            Map.entry("findDocText", () -> vehicleDef.findDocText()),
+            Map.entry("findParts", () -> new TypeList(List.of(vehicleDef, (Type) baseDef)).findParts()));
+        for (Map.Entry<String, Runnable> f : finds) {
+            try {
+                f.getValue().run();
+                check(false, f.getKey() + " answered on a payload model");
+            } catch (RefusedException e) {
+                check(false, f.getKey() + ": the contract's refusal, not the backend's");
+            } catch (NotAnsweredException e) {
+                check(e.getMessage().startsWith(f.getKey() + ": the convenience members are not available on payload models"),
+                    "the refusal names " + f.getKey() + ": " + e.getMessage());
+            }
+        }
+        System.out.println("convenience members on a payload model -> NotAnsweredException (as designed)");
 
         // --- collision rule: MetadataUsage.metaclass is the SPEC member ----
         String metaPayload = """

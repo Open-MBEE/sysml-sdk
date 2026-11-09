@@ -1,6 +1,6 @@
 ---
 name: sysml-sdk-cpp
-description: Writes C++17 code that reads, navigates and queries SysML v2 and KerML models with the header-only sysml SDK (namespace sysml, <sysml/classes.g.hpp>), through the OpenMBEE SysML Toolkit (a native binding library loaded at run time) or from a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml files or SysML v2 JSON in C++, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
+description: Writes C++17 code that reads, navigates and queries SysML v2 and KerML models with the header-only sysml SDK (namespace sysml, <sysml/classes.g.hpp>), through the OpenMBEE SysML Toolkit (a native binding library loaded at run time), the SysML v2 Pilot Implementation, or a full-form interchange JSON payload. Use when a task involves loading .sysml/.kerml files or SysML v2 JSON in C++, walking parts, features, states, connections or requirements, evaluating a model's expressions, or answering questions about a SysML v2 model with code.
 ---
 
 # SysML v2 SDK for C++
@@ -8,12 +8,17 @@ description: Writes C++17 code that reads, navigates and queries SysML v2 and Ke
 The SDK is the OMG metamodel as C++ structs: every KerML and SysML metaclass, property and
 operation, under its specification name, with the metaclass hierarchy as virtual inheritance over
 one runtime `Element`. Header-only, C++17, JSON through the bundled nlohmann/json. A model comes from
-one of two backends:
+one of three backends:
 
 - **the SysML Toolkit**, through its native binding library, loaded at run time: reads SysML text,
   resolves names, computes derived properties and evaluates operations, and refuses what it cannot
   derive completely;
+- **the SysML v2 Pilot Implementation**, run in a Java process (or in this process through JNI):
+  reads the text too, and computes every property and operation with its own code;
 - **a payload**: a full-form interchange JSON export from any SysML v2 tool.
+
+Besides the specification's members, the structs have `find_` convenience members (`find_parts()`,
+`find_part_defs()`, `find_value()`, ...) for what takes several steps in the specification.
 
 The SDK never guesses. A member the SysML Toolkit does not answer throws
 `not_implemented_in_toolkit` with the reason the SysML Toolkit gives; a reference that does not
@@ -23,10 +28,10 @@ around them as described below, or report them.
 ## Setup
 
 ```sh
-g++ -std=c++17 -I sysml-sdk-cpp-0.1.0/include main.cpp -o main   # add -ldl on Linux, -static with MinGW
+g++ -std=c++17 -I sysml-sdk-cpp-0.2.0/include main.cpp -o main   # add -ldl on Linux, -static with MinGW
 ```
 
-- The package `sysml-sdk-cpp-0.1.0.zip` has `include/` with `sysml/` and `nlohmann/`.
+- The package `sysml-sdk-cpp-0.2.0.zip` has `include/` with `sysml/` and `nlohmann/`.
 - For the SysML Toolkit, the archive's `lib/<target>/` holds the binding library for Windows x64,
   Linux x64, and macOS on Apple silicon and on Intel: copy the one for your platform beside your
   executable, where `ToolkitBackend::open` finds it. To load it from elsewhere, set `SYSMLV2_ABI` to
@@ -48,7 +53,7 @@ std::string library_json = sysml::standard_library_json();   // the library as J
 
 C++ downloads nothing: `standard_library_json()` is the file `SYSML_LIBRARY_JSON` names, else the
 copy in the user cache that the other SDK languages download; otherwise it throws
-`library_unavailable` with instructions (download the release's `sysml_library-0.1.0.zip` and set
+`library_unavailable` with instructions (download the release's `sysml_library-0.2.0.zip` and set
 `SYSML_LIBRARY_JSON` to its `sysml.library.full.json`). Call only the one the chosen backend needs.
 
 Costs: `classes.g.hpp` is about 4 MB, so a translation unit that includes it takes tens of seconds
@@ -117,6 +122,28 @@ and those references resolve. Library elements are not the model's (`all()`, `ro
 `elements_of_type<T>()` skip them); a qualified name is looked up in the payload first. The library
 JSON lists each library element's own members only, not what it inherits.
 
+Through the SysML v2 Pilot Implementation, which runs in a Java process, or in this process through
+JNI when compiled with `SYSML_PILOT_JNI` and the JDK's include directories:
+
+```cpp
+#include <sysml/pilot.hpp>   // and copy sysml-pilot-server.jar beside the program
+
+Model model = Model::from_backend(PilotBackend::open({"model.sysml"}));   // or PilotBackend::open_sources({...})
+```
+
+- It needs a Java 21 or newer runtime (`JAVA_HOME`, or `java` on the path). The first use downloads
+  the Pilot (about 130 MB) into the user cache; `SYSML_PILOT_HOME` names a Pilot already at hand.
+  Opening takes seconds even for a small model.
+- It reads with its own standard library: pass no library.
+- It answers rather than refuses: the derived reads the SysML Toolkit refuses (`type`,
+  `inheritedFeature`, `connectorEnd`, ...) and the operations it does not evaluate are answered, so
+  the workarounds below are not needed. Its answers are the Pilot's own; where they differ from the
+  SysML Toolkit's, say which backend produced the result.
+- The model it reads is elaborated: it holds the implied relationships and implicit elements too
+  (more elements in `all()` than the text declares).
+- A failure inside the Pilot, an operation it lacks, or a Pilot that cannot be found or started
+  raises `backend_error`.
+
 ## The shape of the API
 
 - **Find:** `model.resolve("Pkg::Part::feature")` returns `std::optional<Element>`; convert with
@@ -164,39 +191,102 @@ JSON lists each library element's own members only, not what it inherits.
   `inheritedMemberships`, `supertypes(false)`. No body at all: `isCompatibleWith`, `specializes`,
   `allSupertypes`, `directionOf`, ... Catch the refusal.
 
+## Convenience members
+
+Besides the specification's members, the structs have `find_` members (312), each defined by the SDK
+over the specification's properties and operations; every one has its definition in its Doxygen
+comment in `classes.g.hpp`. Use one wherever it answers: one call instead of a walk.
+
+```cpp
+d.find_parts();                      // ElementList<PartUsage>: the part usages d owns (connections too)
+d.find_parts_exact();                // exactly PartUsage; d.find_part("engine"): std::optional
+d.find_parts(Scope::All);            // owned, then inherited; Scope::Inherited: inherited only
+d.find_parts_semantic();             // the features typed by a part definition
+pkg.find_part_defs();                // the part definitions a namespace owns; find_part_def(name)
+pkg.find_part_defs_by_name();        // NameMap<PartDefinition>: pairs of a name and a definition, find(name)
+pkg.find_part_defs().find_ports();   // an ElementList carries its elements' members: calls chain
+feature.find_declared_types();       // the types as written; t.find_declared_supertypes()
+feature.find_redefinition_root();    // the feature its written redefinitions start from
+feature.find_value();                // std::optional<Expression>: the value expression (=, :=, default)
+expr.find_literal();                 // a Literal: std::variant<std::int64_t, double, bool,
+                                     //   std::string, Unbounded>; read it with std::get or std::visit
+t.find_lower_bound(); t.find_upper_bound();   // std::optional<Literal>: t's own multiplicity
+```
+
+- The feature kinds (27): `find_attributes`, `find_ports`, `find_items`, `find_actions`,
+  `find_states`, `find_connections`, `find_requirements`, `find_constraints`, ... Every list takes
+  `scope`, `visibility` (`VisibilityFilter::Public`, `Protected`; `Any` by default) and `library`
+  (`true` keeps what the standard library's types contribute, left out by default). On a namespace:
+  `find_<kind>_defs()`, `find_<kind>_def(name)`, `find_<kind>_defs_by_name()`, and the usages it has
+  through any membership, `find_member_<kinds>()`.
+- Also: `find_subsetted_features()`, `find_redefined_features()`, `find_referenced_feature()`,
+  `find_effective_feature(f)`, `find_unit()` (`1500 [kg]`: `SI::kilogram`), `find_parameters()`,
+  `find_inputs()`, `find_outputs()`, `find_initial_states()`, `find_accepted_types()`,
+  `find_is_accepted_type(t)`, `find_result_expression()`, `find_path()`, `find_applied_metadata()`,
+  `find_doc_text()`.
+- `refused` (a `not_answered`): the member's definition gives no answer for this element
+  (`find_literal()` of `2 * x`, or of a value with a unit). `not_answered`: the backend cannot answer
+  something the member reads, named in `what()` (`not_implemented_in_toolkit` from the SysML
+  Toolkit).
+- **On the Pilot Implementation** every member answers.
+- **On the SysML Toolkit**, the members answer: every list, lookup and exact list in the owned scope;
+  the definition lists and name maps of a package; the types, supertypes, subsettings and
+  redefinitions as written; values, unsigned literals and own bounds; paths, metadata and
+  documentation. They are refused, with the reason: the inherited scope and `Scope::All` of feature
+  and member lists and the semantic lists (`specializes()`), `find_effective_feature`, the implied
+  supertypes, `find_parameters`, `find_inputs` and `find_outputs` (`directionOf()`), the accepted
+  types (`payloadParameter`), `find_initial_states`, `find_result_expression`, and a literal with a
+  sign or a unit (`argument`). For those, use the helpers below: `features_with_inherited`,
+  `accepted_types`, `initial_states`, `number`.
+- `find_lower_bound()`/`find_upper_bound()` read the type's own multiplicity only; for SysML's
+  default and the multiplicity a usage takes from what it redefines, use `multiplicity_of` below.
+- Outside the owned scope, a member or definition list is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+
 ## When the SysML Toolkit refuses a read (read this before writing queries)
 
 The SysML Toolkit's checked reader answers a property only where it can derive it completely. In
-this release it refuses most of what builds on inheritance, so plan for it:
+this release it answers most reads (all but 3.6 % on the specification's Annex A model), refuses a
+few properties wherever they apply, and refuses some on particular elements, so plan for it:
 
-- **refused on nearly every element:** `getFeature()`, `getInheritedFeature()`,
-  `getInheritedMembership()`, `getFeatureMembership()`, `getMember()`, `getMembership()`,
-  `getImportedMembership()`, `getEndFeature()`, `getInput()`, `getOutput()`, `getUsage()`,
-  `getDirectedUsage()`, `getDefinition()` and the kind-specific definitions
-  (`getPartDefinition()`, `getPortDefinition()`, `getItemDefinition()`,
-  `getRequirementDefinition()`, ...), `getParameter()` and `getFeaturingType()`;
-- **refused on features, even with a written typing:** `getType()`. Assume it is refused and use
-  `types_of` below;
-- **refused on connectors, accept actions, requirements and satisfy relations:**
-  `getSourceFeature()`, `getTargetFeature()`, `getConnectorEnd()`, `getRelatedFeature()`,
-  `getPayloadParameter()`, `getSubjectParameter()`, `getActorParameter()`,
-  `getStakeholderParameter()`, `getSatisfyingFeature()`;
-- **answered:** what the model states itself: `getOwnedMember()`, `getOwnedFeature()`,
-  `getOwnedMembership()`, the owned lists (`getOwnedUsage()`, `getOwnedPart()`, `getNestedUsage()`,
-  `getNestedPart()`, `getNestedAttribute()`, `getNestedState()`, `getNestedTransition()`, ...; owned
-  members only, so an empty `getNestedPart()` does not mean a usage has no parts), `getOwner()`,
-  `getOwningNamespace()`, `getOwningType()`, `getName()`, `getDeclaredName()`,
-  `getQualifiedName()`, `getDocumentation()`, `getMultiplicity()`, `getDirection()`,
-  `getIsComposite()`, `getIsEnd()`, `getIsImplied()`, `getEntryAction()`, `getIsParallel()`,
-  `getTriggerAction()`, a transition's `getSource()` and `getTarget()`,
-  `getSatisfiedRequirement()`, `getChainingFeature()`, and the specific owned relationships with
-  their ends: `getOwnedTyping()` (`getType()`), `getOwnedSubclassification()`
-  (`getSuperclassifier()`), `getOwnedSpecialization()` (`getGeneral()`), `getOwnedSubsetting()`
-  (`getSubsettedFeature()`; it holds the redefinitions too), `getOwnedRedefinition()`
-  (`getRedefinedFeature()`), `getOwnedReferenceSubsetting()` (`getReferencedFeature()`), and a port
-  definition's `getConjugatedPortDefinition()` / `getOriginalPortDefinition()`.
-  (`getOwnedMember()`, `getOwnedFeature()` and `getOwnedMembership()` are refused on a
-  `FeatureReferenceExpression`.)
+- **refused wherever they apply (on the Annex A model):** `getFeaturingType()`, `getParameter()`,
+  `getIsModelLevelEvaluable()`, `getIndividualDefinition()`, `getDefaultFeaturingType()`,
+  `getActionDefinition()`, `getStateDefinition()`, `getCalculationDefinition()`,
+  `getFlowDefinition()`, `getEnumerationDefinition()`, a metadata usage's `getMetadataDefinition()`
+  and `getMetaclass()`, `getActorParameter()`, `getStakeholderParameter()`, `getFramedConcern()`,
+  `getObjectiveRequirement()`, `getStep()`, `getExpression()`, `getCalculation()`,
+  `getInteraction()`, `getFlowEnd()`, `getSourceOutputFeature()` and `getTargetInputFeature()`;
+- **refused on some elements:** `getType()`, `getDefinition()` and `getBehavior()` on action,
+  perform action, state, exhibit state, transition, flow, accept, send, allocation and use case
+  usages and on enumeration values, and `getType()` on some parameters and reference usages (use
+  `types_of` below there); the inherited and imported member lists (`getFeature()`,
+  `getInheritedFeature()`, `getFeatureMembership()`, `getInheritedMembership()`, `getMember()`,
+  `getMembership()`, `getImportedMembership()`, `getInput()`, `getOutput()` and `getEndFeature()`)
+  on a definition with a `public import` in its body, or one that specializes it; on expressions
+  (operator, invocation, feature reference and feature chain expressions, literals) their owned
+  lists (`getOwnedMember()`, `getOwnedFeature()`, `getOwnedMembership()` and `getOwnedElement()`),
+  `getDirectedFeature()` and a literal's `getResult()`; `getResult()` on some requirement,
+  constraint and case usages and on calculation, requirement and case definitions;
+  `getIsImpliedIncluded()`; an end feature's `getIsConstant()`; a connector's `getAssociation()`;
+  `getArgument()` on a type test (`istype`, `@`);
+- **answered:** everything else, among it the inherited and imported member lists and `getType()` on
+  most elements, a connector's ends (`getSourceFeature()`, `getTargetFeature()`, `getConnectorEnd()`
+  and `getRelatedFeature()`), `getPayloadParameter()`, `getPayloadType()`, `getSubjectParameter()`,
+  `getRequirementDefinition()` and `getSatisfyingFeature()`, and what the model states itself:
+  `getOwnedMember()`, `getOwnedFeature()`, `getOwnedMembership()`, the owned lists
+  (`getOwnedUsage()`, `getOwnedPart()`, `getNestedUsage()`, `getNestedPart()`,
+  `getNestedAttribute()`, `getNestedState()`, `getNestedTransition()`, ...; owned members only, so
+  an empty `getNestedPart()` does not mean a usage has no parts), `getOwner()`,
+  `getOwningNamespace()`, `getOwningType()`, `getName()`, `getDeclaredName()`, `getQualifiedName()`,
+  `getDocumentation()`, `getMultiplicity()`, `getDirection()`, `getIsComposite()`, `getIsEnd()`,
+  `getIsImplied()`, `getEntryAction()`, `getIsParallel()`, `getTriggerAction()`, a transition's
+  `getSource()` and `getTarget()`, `getSatisfiedRequirement()`, `getChainingFeature()`, and the
+  specific owned relationships with their ends: `getOwnedTyping()` (`getType()`),
+  `getOwnedSubclassification()` (`getSuperclassifier()`), `getOwnedSpecialization()`
+  (`getGeneral()`), `getOwnedSubsetting()` (`getSubsettedFeature()`; it holds the redefinitions
+  too), `getOwnedRedefinition()` (`getRedefinedFeature()`), `getOwnedReferenceSubsetting()`
+  (`getReferencedFeature()`), and a port definition's `getConjugatedPortDefinition()` /
+  `getOriginalPortDefinition()`.
 
 The refusal's message names the member and the SysML Toolkit's reason (`property has an incomplete
 derivation`, `Type features are incomplete: IncompleteProvider`, `incomplete operation evidence`):
@@ -427,28 +517,24 @@ inline std::optional<Usage> subject_of(const Type& requirement) {
     return std::nullopt;
 }
 
-// The states a state machine (a StateUsage or StateDefinition) starts in: the targets of its
-// successions from its entry action (`entry; then off;`) or from the library's `start`
-// (`first start then off;`), and of its transitions from its entry action
-// (`entry action initial; transition initial then off;`).
+// The states a state machine (a StateUsage or StateDefinition) starts in, as find_initial_states
+// defines them: the targets of its successions from the library's `start` (`first start then
+// off;`), and only where there are none, from its entry action (`entry; then off;`).
 inline std::vector<StateUsage> initial_states(const Type& machine) {
     std::optional<ActionUsage> entry;
     if (machine.is_a<StateUsage>()) entry = machine.as<StateUsage>().getEntryAction();
     else if (machine.is_a<StateDefinition>()) entry = machine.as<StateDefinition>().getEntryAction();
-    std::vector<StateUsage> out;
+    std::vector<StateUsage> from_start, from_entry;
     for (const Feature& f : machine.getOwnedFeature()) {
-        if (f.is_a<TransitionUsage>()) {
-            TransitionUsage t = f.as<TransitionUsage>();
-            std::optional<ActionUsage> source = t.getSource(), target = t.getTarget();
-            if (entry && source && *source == *entry && target && target->is_a<StateUsage>()) out.push_back(target->as<StateUsage>());
-        } else if (f.is_a<SuccessionAsUsage>()) {
-            std::vector<Feature> e = ends(f.as<SuccessionAsUsage>());
-            bool from_start = e.size() == 2 && ((entry && e[0] == *entry)
-                || (e[0].getIsLibraryElement() == true && e[0].getName() == std::optional<std::string>("start")));
-            if (from_start && e[1].is_a<StateUsage>()) out.push_back(e[1].as<StateUsage>());
-        }
+        if (!f.is_a<SuccessionAsUsage>()) continue;
+        std::vector<Feature> e = ends(f.as<SuccessionAsUsage>());
+        if (e.size() != 2 || !e[1].is_a<StateUsage>()) continue;
+        if (e[0].getIsLibraryElement() == true && e[0].getName() == std::optional<std::string>("start"))
+            from_start.push_back(e[1].as<StateUsage>());
+        else if (entry && e[0] == *entry)
+            from_entry.push_back(e[1].as<StateUsage>());
     }
-    return out;
+    return from_start.empty() ? from_entry : from_start;
 }
 
 // The states of a state machine reachable from its initial states along its own transitions, in the
@@ -479,10 +565,15 @@ inline double number(const Expression& expr) {
     if (expr.is_a<OperatorExpression>()) {
         std::optional<std::string> op = expr.as<OperatorExpression>().getOperator();
         if (op == std::optional<std::string>("-") || op == std::optional<std::string>("+")) {
+            // The operands' parameters through the owned relationships: the SysML Toolkit refuses an
+            // operator expression's ownedFeature in this release.
             std::vector<Expression> operands;
-            for (const Feature& f : expr.getOwnedFeature())
-                for (const Membership& m : f.getOwnedMembership())
-                    if (m.is_a<FeatureValue>()) operands.push_back(m.as<FeatureValue>().getValue().value());
+            for (const Relationship& r : expr.getOwnedRelationship())
+                if (r.is_a<ParameterMembership>())
+                    for (const Element& p : r.getOwnedRelatedElement())
+                        if (p.is_a<Feature>())
+                            for (const Membership& m : p.as<Feature>().getOwnedMembership())
+                                if (m.is_a<FeatureValue>()) operands.push_back(m.as<FeatureValue>().getValue().value());
             if (operands.size() == 1) return *op == "-" ? -number(operands[0]) : number(operands[0]);
         }
     }
@@ -567,12 +658,12 @@ std::vector<Classifier> items = flow.as<FlowUsage>().getPayloadType();   // the 
 // States
 StateUsage machine = model.resolve("Pkg::Controller::modes").value().as<StateUsage>();   // e.g. an ExhibitStateUsage
 std::vector<StateUsage> states = machine.getNestedState();   // its own states
-std::vector<StateUsage> initial = initial_states(machine);   // `entry; then off;`, `first start then off;`, ...
+std::vector<StateUsage> initial = initial_states(machine);   // `first start then off;`, else `entry; then off;`
 std::vector<StateUsage> reachable = reachable_states(machine);   // from the initial states along the transitions
 for (const TransitionUsage& t : machine.getNestedTransition()) {
     ActionUsage from = t.getSource().value();   // getSource(), getTarget(): std::optional<ActionUsage>; the
-    ActionUsage to = t.getTarget().value();     // states (as<StateUsage>()); an initial transition
-    // (`transition init then off;`) leaves the entry action, not a state: no as<StateUsage>() then
+    ActionUsage to = t.getTarget().value();     // states (as<StateUsage>()); a transition
+    // from the entry action leaves an action, not a state: no as<StateUsage>() then
     std::vector<Type> signals = t.getTriggerAction().empty() ? std::vector<Type>{} : accepted_types(t.getTriggerAction().at(0));
 }
 

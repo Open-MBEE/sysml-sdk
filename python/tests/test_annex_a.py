@@ -128,15 +128,16 @@ def test_the_answered_operations_agree_with_the_derived_properties(elements):
         assert e.effectiveShortName() == e.shortName, e.element_id
 
 
-def test_operations_the_toolkit_answers_differently_are_refused(model):
-    from sysml import NotImplementedInToolkit
-
+def test_the_conformance_and_resolution_operations(model):
     vehicle = model.resolve("SimpleVehicleModel::Definitions::PartDefinitions::Vehicle")
-    for call in (lambda: vehicle.resolve("mass"), lambda: vehicle.resolveLocal("mass"),
-                 lambda: vehicle.supertypes(False), lambda: vehicle.isCompatibleWith(vehicle),
-                 lambda: vehicle.inheritedMemberships([vehicle], [], False)):
-        with pytest.raises(NotImplementedInToolkit):
-            call()
+    mass = model.resolve("SimpleVehicleModel::Definitions::PartDefinitions::Vehicle::mass")
+    assert vehicle.resolve("mass").memberElement == mass
+    assert vehicle.resolveLocal("mass").memberElement == mass
+    # Its only direct supertype is the implied one.
+    assert vehicle.supertypes(False) == [model.resolve("Parts::Part")]
+    assert vehicle.isCompatibleWith(vehicle)
+    # Excluding a namespace's imports (KerML 8.3.3.1.10): Vehicle imports nothing, so nothing changes.
+    assert vehicle.inheritedMemberships([vehicle], [], False) == vehicle.inheritedMemberships([], [], False)
 
 
 def test_the_export_is_the_same_model(model, elements):

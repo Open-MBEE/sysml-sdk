@@ -8,6 +8,10 @@ Usage: python tools/package.py <what> [--target TRIPLE] [--out DIR] [--javac22 P
   java     sysml-sdk-<version>.jar and its sources jar; with --javac22, a multi-release jar
   csharp   the NuGet package
   cpp      sysml-sdk-cpp-<version>.zip: the headers, the vendored JSON header, the licenses
+  pilot-server
+           sysml-pilot-server-<version>.jar: the SDK's engine over the SysML v2 Pilot Implementation,
+           which the Python, JavaScript, C# and C++ Pilot backends run in a JVM (Java needs none:
+           the engine is in the SDK's jar)
 
 With --abi-archives DIR, the jar, the NuGet package and the C++ archive also carry the binding
 library of every platform whose archive (sysmlv2_abi-<version>-<target>.zip or .tar.gz, as
@@ -108,27 +112,35 @@ def run(*cmd: str | os.PathLike, cwd: Path = ROOT) -> None:
     subprocess.run([str(c) for c in cmd], cwd=cwd, check=True)
 
 
-def wheel(target: str, out: Path, library_dir: Path | None) -> Path:
+def wheel(target: str, out: Path, library_dir: Path | None, pilot_jar: Path | None = None) -> Path:
     lib = library_path(target)
     if not lib.exists():
         raise SystemExit(f"no library at {lib}; build abi/ for {target} first")
     if library_dir is None:
         print("note: no --library-dir; the wheel carries no standard library models")
+    if pilot_jar is None:
+        print("note: no --pilot-server; the wheel carries no Pilot engine")
     native = ROOT / "python" / "sysml" / "_native"
     stdlib = ROOT / "python" / "sysml" / "stdlib"
+    pilot = ROOT / "python" / "sysml" / "_pilot"
     staging = out / "wheel-staging"
     shutil.rmtree(staging, ignore_errors=True)
     shutil.rmtree(stdlib, ignore_errors=True)
+    shutil.rmtree(pilot, ignore_errors=True)
     native.mkdir(exist_ok=True)
     try:
         shutil.copy2(lib, native / lib.name)
         third_party_notices.write(target, native)
         if library_dir is not None:
             package_library.write_models(library_dir, stdlib)
+        if pilot_jar is not None:
+            pilot.mkdir()
+            shutil.copyfile(pilot_jar, pilot / PILOT_SERVER_JAR)
         run(sys.executable, "-m", "build", "--wheel", "--outdir", staging)
     finally:
         shutil.rmtree(native, ignore_errors=True)
         shutil.rmtree(stdlib, ignore_errors=True)
+        shutil.rmtree(pilot, ignore_errors=True)
         shutil.rmtree(ROOT / "build", ignore_errors=True)
     [built] = staging.glob("*.whl")
     run(sys.executable, "-m", "wheel", "tags", "--python-tag", "py3", "--abi-tag", "none",
@@ -186,17 +198,24 @@ def sdist(out: Path) -> Path:
     return dest
 
 
-def npm(out: Path, library_dir: Path | None) -> Path:
+def npm(out: Path, library_dir: Path | None, pilot_jar: Path | None = None) -> Path:
     wasm = library_path("wasm32-unknown-unknown")
     if not wasm.exists():
         raise SystemExit(f"no WebAssembly build at {wasm}; build abi/ for wasm32-unknown-unknown first")
     if library_dir is None:
         print("note: no --library-dir; the npm package carries no standard library models")
+    if pilot_jar is None:
+        print("note: no --pilot-server; the npm package carries no Pilot engine")
     ts = ROOT / "ts"
     stdlib = ts / "stdlib"
+    pilot = ts / "pilot"
     copies = [ts / "sysmlv2_abi.wasm", ts / "LICENSE", ts / "NOTICE"]
     shutil.rmtree(stdlib, ignore_errors=True)
+    shutil.rmtree(pilot, ignore_errors=True)
     try:
+        if pilot_jar is not None:
+            pilot.mkdir()
+            shutil.copyfile(pilot_jar, pilot / PILOT_SERVER_JAR)
         shutil.copy2(wasm, copies[0])
         shutil.copy2(ROOT / "LICENSE", copies[1])
         shutil.copy2(ROOT / "NOTICE", copies[2])
@@ -210,6 +229,7 @@ def npm(out: Path, library_dir: Path | None) -> Path:
         for c in copies:
             c.unlink(missing_ok=True)
         shutil.rmtree(stdlib, ignore_errors=True)
+        shutil.rmtree(pilot, ignore_errors=True)
     [made] = set(out.glob("*.tgz")) - before
     return made
 
@@ -288,11 +308,45 @@ def java(out: Path, javac22: str | None, archives: Path | None = None, library_d
     return [jar, sources_jar]
 
 
-def csharp(out: Path, archives: Path | None = None, library_dir: Path | None = None) -> Path:
+# The classes of the Pilot engine and what they use, relative to the Java package. Compiled for Java
+# 17, so that on an older runtime than the Pilot's (21) the engine still starts and says so.
+PILOT_SERVER_SOURCES = ["pilot/Pilot.java", "pilot/PilotEngine.java", "pilot/PilotException.java",
+                        "pilot/PilotServer.java", "pilot/Convenience.java", "pilot/ConvenienceMembers.java",
+                        "pilot/Shortcuts.java", "Json.java", "SdkException.java", "BackendException.java"]
+# The name the packages carry the engine's jar under (without the version, so the backends find it).
+PILOT_SERVER_JAR = "sysml-pilot-server.jar"
+
+
+def pilot_server(out: Path) -> Path:
+    work = out / "pilot-server-staging"
+    shutil.rmtree(work, ignore_errors=True)
+    classes = work / "classes"
+    classes.mkdir(parents=True)
+    run("javac", "--release", "17", "-d", classes, *[JAVA_SRC / s for s in PILOT_SERVER_SOURCES])
+    manifest = [
+        "Manifest-Version: 1.0",
+        f"Main-Class: {JAVA_PACKAGE}.pilot.PilotServer",
+        f"Implementation-Title: {JAVA_PACKAGE}.pilot",
+        f"Implementation-Version: {VERSION}",
+    ]
+    jar = out / f"sysml-pilot-server-{VERSION}.jar"
+    with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("META-INF/MANIFEST.MF", "\r\n".join(manifest) + "\r\n")
+        z.write(ROOT / "LICENSE", "META-INF/LICENSE")
+        z.write(ROOT / "NOTICE", "META-INF/NOTICE")
+        _zip_tree(z, classes, "")
+    shutil.rmtree(work)
+    return jar
+
+
+def csharp(out: Path, archives: Path | None = None, library_dir: Path | None = None,
+           pilot_jar: Path | None = None) -> Path:
     projects = [p for p in (ROOT / "csharp").glob("*/*.csproj") if not p.stem.endswith(".Checks")]
     [project] = projects
-    # Staged beside the project, which packs runtimes/ and THIRD-PARTY/ and embeds stdlib/ when they exist.
-    staged = [project.parent / "runtimes", project.parent / "THIRD-PARTY", project.parent / "stdlib"]
+    # Staged beside the project, which packs runtimes/ and THIRD-PARTY/ and embeds stdlib/ and pilot/
+    # when they exist.
+    staged = [project.parent / "runtimes", project.parent / "THIRD-PARTY", project.parent / "stdlib",
+              project.parent / "pilot"]
     for d in staged:
         shutil.rmtree(d, ignore_errors=True)
     try:
@@ -300,6 +354,12 @@ def csharp(out: Path, archives: Path | None = None, library_dir: Path | None = N
             package_library.write_models(library_dir, staged[2])
         else:
             print("note: no --library-dir; the NuGet package carries no standard library models")
+        if pilot_jar is not None:
+            staged[3].mkdir()
+            # A fresh timestamp, so that MSBuild sees a changed input and embeds it.
+            shutil.copyfile(pilot_jar, staged[3] / PILOT_SERVER_JAR)
+        else:
+            print("note: no --pilot-server; the NuGet package carries no Pilot engine")
         for target, files in natives(archives).items():
             rid = NATIVE_TARGETS[target][1]
             for name, data in files.items():
@@ -324,6 +384,7 @@ Header-only, C++17. Put include/ on the include path:
     #include <sysml/classes.g.hpp>    the metaclass structs, with the runtime and the payload backend
     #include <sysml/toolkit.hpp>       the SysML Toolkit backend (loads the binding library at run time)
     #include <sysml/library.hpp>       the standard library: sysml::standard_library(), standard_library_json()
+    #include <sysml/pilot.hpp>         the SysML v2 Pilot Implementation backend (runs the Pilot in Java)
 
 (<sysml/sdk.hpp> alone is the runtime and the payload backend, without the metaclass structs.)
 
@@ -337,17 +398,29 @@ for the library directory of ToolkitBackend::open. sysml::standard_library_json(
 JSON, for payloads: the file SYSML_LIBRARY_JSON names, or the copy another SDK language downloaded
 into the user's cache (C++ downloads nothing; sysml_library-{version}.zip on the release has it).
 
+The Pilot backend needs a Java 21 or newer runtime and the SDK's Pilot engine: copy
+sysml-pilot-server.jar beside your executable too (or name it in SYSML_PILOT_SERVER). The engine
+finds the Pilot (SYSML_PILOT_HOME, else the user's cache, else it downloads the pinned release). It
+runs in a Java process; defined SYSML_PILOT_JNI and the JDK's include directories on the include path
+(-I "$JAVA_HOME/include" -I "$JAVA_HOME/include/<win32|linux|darwin>") run it in your process
+instead, in the JVM of JAVA_HOME.
+
 License: Apache-2.0, see LICENSE and NOTICE. include/nlohmann/json.hpp is JSON for Modern C++ by Niels
 Lohmann, MIT license, see THIRD-PARTY/nlohmann-json-LICENSE.MIT. sysml.library/ is the SysML v2
 release's standard library, Eclipse Public License 2.0, see sysml.library/LICENSE and NOTICE.
 """
 
 
-def cpp(out: Path, archives: Path | None = None, library_dir: Path | None = None) -> Path:
+def cpp(out: Path, archives: Path | None = None, library_dir: Path | None = None,
+        pilot_jar: Path | None = None) -> Path:
     stem = f"sysml-sdk-cpp-{VERSION}"
     dest = out / f"{stem}.zip"
     models = library_models(library_dir, out / "cpp-stdlib-staging", "the C++ archive")
+    if pilot_jar is None:
+        print("note: no --pilot-server; the C++ archive carries no Pilot engine")
     with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
+        if pilot_jar is not None:
+            z.write(pilot_jar, f"{stem}/{PILOT_SERVER_JAR}")
         for f in sorted((ROOT / "cpp" / "include" / "sysml").glob("*.hpp")):
             z.write(f, f"{stem}/include/sysml/{f.name}")
         z.write(ROOT / "vendor" / "nlohmann" / "json.hpp", f"{stem}/include/nlohmann/json.hpp")
@@ -366,7 +439,7 @@ def cpp(out: Path, archives: Path | None = None, library_dir: Path | None = None
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["python", "sdist", "npm", "java", "csharp", "cpp"])
+    ap.add_argument("what", choices=["python", "sdist", "npm", "java", "csharp", "cpp", "pilot-server"])
     ap.add_argument("--target", help="Rust target triple of the native library (python)")
     ap.add_argument("--out", type=Path, default=ROOT / "dist")
     ap.add_argument("--javac22", help="a JDK 22 or newer javac, for the multi-release jar (java)")
@@ -375,22 +448,27 @@ def main() -> None:
     ap.add_argument("--library-dir", type=Path,
                     help="the standard library's sysml.library directory, in a git checkout of the SysML v2 "
                          "release, whose models the package carries (python, npm, java, csharp, cpp)")
+    ap.add_argument("--pilot-server", type=Path,
+                    help="the Pilot engine's jar (made by the pilot-server target) for the package to carry "
+                         "(python, npm, csharp, cpp)")
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
     if a.what == "python":
         if not a.target:
             raise SystemExit("python needs --target")
-        made = [wheel(a.target, a.out, a.library_dir)]
+        made = [wheel(a.target, a.out, a.library_dir, a.pilot_server)]
     elif a.what == "sdist":
         made = [sdist(a.out)]
     elif a.what == "npm":
-        made = [npm(a.out, a.library_dir)]
+        made = [npm(a.out, a.library_dir, a.pilot_server)]
     elif a.what == "java":
         made = java(a.out, a.javac22, a.abi_archives, a.library_dir)
     elif a.what == "csharp":
-        made = [csharp(a.out, a.abi_archives, a.library_dir)]
+        made = [csharp(a.out, a.abi_archives, a.library_dir, a.pilot_server)]
+    elif a.what == "pilot-server":
+        made = [pilot_server(a.out)]
     else:
-        made = [cpp(a.out, a.abi_archives, a.library_dir)]
+        made = [cpp(a.out, a.abi_archives, a.library_dir, a.pilot_server)]
     for m in made:
         print(m)
 

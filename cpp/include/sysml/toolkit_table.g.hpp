@@ -7,6 +7,7 @@
 namespace sysml::toolkit_table {
 
 inline constexpr std::string_view NAMES_DIGEST = "3f9b7564be50625bf64b6d5b8f8959ad9b0ca10a64c6b56ce5b1c84b6d2cd351";
+inline constexpr std::string_view CONVENIENCE_DIGEST = "edcab7ef0f4863bdd8c564da76ea3cebd92d8a1ba5bd360d7805f7061f235feb";
 
 /// C symbol, result code and, for an operation, its parameters' C types joined by ';'.
 struct Entry { const char* symbol; char code; const char* params; };

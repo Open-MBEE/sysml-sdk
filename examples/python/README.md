@@ -4,10 +4,12 @@ Read SysML v2 and KerML models from Python. Every metaclass of the specification
 class, and every property and operation keeps its specification name: `ownedFeature`,
 `qualifiedName`, `effectiveName()`.
 
-A model is read through one of two backends, with the same classes over both:
+A model is read through one of three backends, with the same classes over all of them:
 
 - **the OpenMBEE SysML Toolkit** reads your `.sysml` and `.kerml` files, resolves names and
   computes derived properties;
+- **the SysML v2 Pilot Implementation** reads them too, in Java (in your Python process through
+  JPype, or in a Java process), and computes every value with its own code;
 - **a payload** is a model exported as full-form interchange JSON by any SysML v2 tool, read in
   pure Python.
 
@@ -21,7 +23,7 @@ pip install sysml
 
 The wheels (Windows x64, Linux x64 with glibc 2.28 or later, macOS on Apple silicon and on Intel)
 carry the binding library and the standard library models; nothing else is needed. The release has
-the same wheels to install from a file (`pip install sysml-0.1.0-py3-none-win_amd64.whl`, or
+the same wheels to install from a file (`pip install sysml-0.2.0-py3-none-win_amd64.whl`, or
 `manylinux_2_28_x86_64`, `macosx_11_0_arm64`, `macosx_10_12_x86_64`). On other platforms pip installs
 the source distribution, which reads payloads only.
 
@@ -42,7 +44,7 @@ library_json = standard_library_json()    # the library as JSON, for payloads
   its first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your
   user cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache.
   Nothing is downloaded unless you call it.
-- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+- Without access to GitHub, download `sysml_library-0.2.0.zip` from the release, unpack it, and set
   `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
   the same models the wheel carries.
 - The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
@@ -95,6 +97,41 @@ with open("model.json", encoding="utf-8") as f:
 
 A payload answers with what its writer wrote and nothing else. Operations need the SysML Toolkit:
 on a payload they raise `NotImplementedInToolkit`.
+
+## Read a model through the Pilot Implementation
+
+The SysML v2 Pilot Implementation is the open-source implementation developed alongside the
+specifications. It needs a Java 21 or newer runtime (`JAVA_HOME`, or `java` on the path). With
+JPype installed it runs in your Python process, otherwise in a Java process the SDK starts:
+
+```sh
+pip install "sysml[pilot]"     # optional: JPype, for the Pilot in this process
+```
+
+```python
+from sysml import BackendError, Model
+from sysml.classes import *
+
+model = Model.from_pilot("model.sysml")    # your model: one or more .sysml / .kerml files
+
+# ... your code here ...
+```
+
+- The first use downloads the Pilot (about 130 MB) into your user cache, checked against its pinned
+  SHA-256; later uses, from any SDK language, find it there. `SYSML_PILOT_HOME` names a Pilot you
+  already have instead: a directory with the Pilot's jar and its `sysml.library`. The Pilot is
+  under the Eclipse Public License 2.0; the SDK does not carry it.
+- Opening takes seconds even for a small model: the Pilot loads its standard library (it always
+  reads with its own) and adds the implied relationships, which `elaborate=False` skips.
+- The Pilot answers rather than refuses, with its own reading of the specification: where it and
+  the SysML Toolkit differ, each is one implementation's answer. A failure inside the Pilot, an
+  operation it does not have, or a Pilot that cannot be found or started raises `BackendError`.
+- Text in memory: `Model.from_pilot(sources={"model.sysml": text})`. A large model needs a larger
+  Java heap: `heap="8g"` (4 GB by default). `transport="process"` runs the Pilot in a Java process
+  even with JPype installed.
+- To stop the Pilot before your program ends, open the backend yourself:
+  `with PilotBackend.open(["model.sysml"]) as pilot: model = Model(pilot)` (`from sysml.pilot
+  import PilotBackend`).
 
 ## Find and read elements
 
@@ -158,6 +195,71 @@ except NotImplementedInToolkit as refusal:
 
 A reference that does not resolve raises `UnresolvedReference`, and an element that is no longer
 there `Gone`. All three errors derive from `sysml.SdkError`.
+
+## Convenience members
+
+Beside the specification's members, the classes have `find_` members for what takes several steps
+in the specification: the parts of a definition, with the inherited ones or without, a member by
+name, the definitions a package owns, a value as a number. The SDK defines each one over the
+specification's properties and operations, and the SysML Toolkit and the Pilot Implementation
+answer them alike; a payload does not (`NotAnswered`). Your editor shows each member's definition
+on hover.
+
+<!-- test: queries toolkit -->
+```python
+from sysml import NotAnswered, Scope
+
+vehicles = model.resolve("Vehicles")    # vehicle, sports and wheels are the elements found above
+
+# The features of one kind that a type owns: parts here; attributes, ports, actions, states and the
+# other kinds alike. A connection is a part too; the exact list leaves the subkinds out.
+print([p.name or type(p).__name__ for p in vehicle.find_parts()])    # ['wheels', 'engine', 'tank', 'ConnectionUsage']
+print([p.name for p in vehicle.find_parts_exact()])                  # ['wheels', 'engine', 'tank']
+print(sports.find_part("spoiler").qualifiedName)                     # Vehicles::SportsCar::spoiler
+
+# The definitions a namespace owns, as a list, or by name.
+print([d.name for d in vehicles.find_part_defs()])    # ['Wheel', 'Engine', 'FuelTank', 'Vehicle', 'SportsCar']
+print(vehicles.find_part_defs_by_name()["Engine"].qualifiedName)    # Vehicles::Engine
+
+# A list carries the same members, asked of each element in turn: the ports of every part definition.
+print([p.qualifiedName for p in vehicles.find_part_defs().find_ports()])
+# ['Vehicles::Engine::fuelIn', 'Vehicles::FuelTank::fuelOut']
+
+# Types, multiplicities, values and documentation.
+print([t.name for t in wheels.find_declared_types()], wheels.find_lower_bound(), wheels.find_upper_bound())    # ['Wheel'] 4 4
+mass = model.resolve("Vehicles::myCar::mass")
+print(mass.find_value().find_literal(), mass.find_redefinition_root().qualifiedName)    # 1400 Vehicles::Vehicle::mass
+print([text.strip() for text in vehicle.find_doc_text()])    # ['The general vehicle: four wheels, one engine, one tank.']
+
+# The inherited members too: Scope.INHERITED, or Scope.ALL for both (Scope.OWNED is the default).
+try:
+    print([p.name or type(p).__name__ for p in sports.find_parts(Scope.ALL)])
+    # ['spoiler', 'wheels', 'engine', 'tank', 'ConnectionUsage']
+except NotAnswered as refusal:
+    print("not answered:", refusal)    # where the backend cannot derive the inherited members
+```
+
+- Every list takes `scope`, `visibility` (`VisibilityFilter.PUBLIC`, `VisibilityFilter.PROTECTED`
+  for public and protected; `VisibilityFilter.ANY` by default) and `library` (`True` keeps the
+  features the standard library's types contribute, which are left out by default).
+- For each of 27 kinds of feature: `find_parts()`, `find_part(name)`, `find_parts_semantic()` (the
+  features typed by a part definition, whatever their metaclass) and, for most, `find_parts_exact()`.
+  On a namespace, for each kind of definition: `find_part_defs()`, `find_part_def(name)` and
+  `find_part_defs_by_name()`, and the usages it has through any membership, `find_member_parts()`.
+- One by one: the types and supertypes as written, what a feature subsets, redefines or references
+  (`find_redefinition_root()` follows its redefinitions to the first), values and literals, the
+  bounds of a multiplicity, the parameters, inputs and outputs of a behavior, what an accept action
+  or a transition accepts, applied metadata, documentation.
+- Where a member's definition gives no answer, it raises `Refused`: `find_literal()` of an
+  expression that is not a literal (`2 * x`, a value with a unit). Where the backend cannot answer
+  something the member reads, it raises `NotAnswered`, naming what. Today the SysML Toolkit answers
+  430 of the members' 456 examples; it does not answer `type` on action, state and other behavioral
+  usages and on enumeration values (which the semantic lists of those kinds read), a metadata
+  usage's `metaclass`, nor the member lists of a definition with a public import in its body.
+- A member or definition list outside the owned scope is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+- Every member, with its definition, its signature in each language and its examples: the release's
+  `sysml-sdk-reference-<version>.html`.
 
 ## Operations
 

@@ -100,13 +100,7 @@ int main() {
         auto memberships = sports.inheritedMemberships({}, {}, false);
         check(memberships.size() == 2 && memberships[0].getMemberName().value() == "wheels", "inheritedMemberships");
     });
-    bool op_refused = false;
-    try {
-        (void)sports.isCompatibleWith(car_def);
-    } catch (const not_implemented_in_toolkit& e) {
-        op_refused = std::string(e.what()).find("isCompatibleWith") != std::string::npos;
-    }
-    check(op_refused, "an operation the SysML Toolkit cannot answer as specified is refused");
+    check(sports.isCompatibleWith(car_def) == true, "a specialization is compatible with its general type");
     check(raw->full_json().rfind("[", 0) == 0, "full_json");
 
     // Text beyond ASCII, a requirement's text (a list of strings), the members every element has,

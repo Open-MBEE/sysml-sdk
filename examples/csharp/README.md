@@ -4,10 +4,12 @@ Read SysML v2 and KerML models from C# (.NET 8). Every metaclass of the specific
 interface, so `is` and casts follow the specification's generalizations, and every property and
 operation keeps its specification name: `ownedFeature`, `qualifiedName`, `effectiveName()`.
 
-A model is read through one of two backends, with the same interfaces over both:
+A model is read through one of three backends, with the same interfaces over all of them:
 
 - **the OpenMBEE SysML Toolkit** reads your `.sysml` and `.kerml` files, resolves names and
   computes derived properties, through the binding library (a native library, called with P/Invoke);
+- **the SysML v2 Pilot Implementation** reads them too, in a Java process, and computes every
+  value with its own code;
 - **a payload** is a model exported as full-form interchange JSON by any SysML v2 tool, read in
   plain C#.
 
@@ -15,8 +17,8 @@ A model is read through one of two backends, with the same interfaces over both:
 
 .NET 8 or newer. Download from the release:
 
-- `OpenMBEE.SysML.0.1.0.nupkg`, and add it to your project from the folder that holds it:
-  `dotnet add package OpenMBEE.SysML --version 0.1.0 --source <that folder>`. It carries the
+- `OpenMBEE.SysML.0.2.0.nupkg`, and add it to your project from the folder that holds it:
+  `dotnet add package OpenMBEE.SysML --version 0.2.0 --source <that folder>`. It carries the
   binding library for Windows x64, Linux x64, and macOS on Apple silicon and on
   Intel, and .NET puts the one for your platform beside your program. It also carries the standard
   library models.
@@ -38,7 +40,7 @@ var libraryJson = StandardLibrary.Json();       // the library as JSON, for payl
   first call, checks it against the SHA-256 GitHub states for the file, and keeps it in your user
   cache (`SYSML_CACHE_DIR` moves it); later calls, from any SDK language, read the cache. Nothing is
   downloaded unless you call it.
-- Without access to GitHub, download `sysml_library-0.1.0.zip` from the release, unpack it, and set
+- Without access to GitHub, download `sysml_library-0.2.0.zip` from the release, unpack it, and set
   `SYSML_LIBRARY_JSON` to the `sysml.library.full.json` it holds. Its `sysml.library/` directory is
   the same models the package carries.
 - The library is under the Eclipse Public License 2.0: see the LICENSE and NOTICE beside it.
@@ -93,6 +95,34 @@ on a payload they throw `NotImplementedInToolkitException`.
 
 The snippets assume the project's implicit usings (`System`, `System.IO`, `System.Linq`, ...), which
 `dotnet new console` turns on.
+
+## Read a model through the Pilot Implementation
+
+The SysML v2 Pilot Implementation is the open-source implementation developed alongside the
+specifications. It runs in a Java process the SDK starts and needs a Java 21 or newer runtime
+(`JAVA_HOME`, or `java` on the path):
+
+```csharp
+using OpenMBEE.SysML;
+
+using var pilot = PilotBackend.Open(new[] { "model.sysml" });    // your .sysml / .kerml files
+var model = new Model(pilot);
+
+// ... your code here ...
+```
+
+- The first use downloads the Pilot (about 130 MB) into your user cache, checked against its pinned
+  SHA-256; later uses, from any SDK language, find it there. `SYSML_PILOT_HOME` names a Pilot you
+  already have instead: a directory with the Pilot's jar and its `sysml.library`. The Pilot is
+  under the Eclipse Public License 2.0; the SDK does not carry it.
+- Opening takes seconds even for a small model: the Pilot loads its standard library (it always
+  reads with its own) and adds the implied relationships, which `Elaborate = false` skips.
+- The Pilot answers rather than refuses, with its own reading of the specification: where it and
+  the SysML Toolkit differ, each is one implementation's answer. A failure inside the Pilot, an
+  operation it does not have, or a Pilot that cannot be found or started raises `BackendException`.
+- Text in memory: `PilotBackend.OpenSources(new Dictionary<string, string> { ["model.sysml"] = text })`.
+  Options: `new PilotOptions { Heap = "8g", Elaborate = false }` (a large model needs a larger Java
+  heap; 4 GB by default).
 
 ## Find and read elements
 
@@ -163,6 +193,82 @@ catch (NotImplementedInToolkitException refusal)
 
 A reference that does not resolve throws `UnresolvedReferenceException`, and an element that is no
 longer there `GoneException`. All three derive from `SdkException`.
+
+## Convenience members
+
+Beside the specification's members, the interfaces have `Find` members for what takes several
+steps in the specification: the parts of a definition, with the inherited ones or without, a member
+by name, the definitions a package owns, a value as a number. The SDK defines each one over the
+specification's properties and operations, and the SysML Toolkit and the Pilot Implementation
+answer them alike; a payload does not (`NotAnsweredException`). Your editor shows each member's
+definition on hover.
+
+<!-- test: queries toolkit -->
+```csharp
+// vehicle, sports and wheels are the elements found above.
+var vehicles = (Namespace)model.Resolve("Vehicles")!;
+string NameOf(IElement e) => e.name ?? e.MetaclassName;
+
+// The features of one kind that a type owns: parts here; attributes, ports, actions, states and the
+// other kinds alike. A connection is a part too; the exact list leaves the subkinds out.
+Console.WriteLine(string.Join(", ", vehicle.FindParts().Select(NameOf)));        // wheels, engine, tank, ConnectionUsage
+Console.WriteLine(string.Join(", ", vehicle.FindPartsExact().Select(NameOf)));   // wheels, engine, tank
+Console.WriteLine(sports.FindPart("spoiler")!.qualifiedName);                    // Vehicles::SportsCar::spoiler
+
+// The definitions a namespace owns, as a list, or by name (a dictionary).
+Console.WriteLine(string.Join(", ", vehicles.FindPartDefs().Select(NameOf)));    // Wheel, Engine, FuelTank, Vehicle, SportsCar
+Console.WriteLine(vehicles.FindPartDefsByName()["Engine"].qualifiedName);        // Vehicles::Engine
+
+// A list carries the same members, asked of each element in turn: the ports of every part definition.
+Console.WriteLine(string.Join(", ", vehicles.FindPartDefs().FindPorts().Select(p => p.qualifiedName)));
+// Vehicles::Engine::fuelIn, Vehicles::FuelTank::fuelOut
+
+// Types, multiplicities, values and documentation. A literal's value, and a bound, is a Literal: an
+// integer, a real, a Boolean, a string, or unbounded (*); AsLong() and the like read it, and a
+// switch over its cases tells them apart.
+Console.WriteLine($"{string.Join(", ", wheels.FindDeclaredTypes().Select(NameOf))} "
+    + $"{wheels.FindLowerBound()!.AsLong()} {wheels.FindUpperBound()!.AsLong()}");   // Wheel 4 4
+var mass = (Feature)model.Resolve("Vehicles::myCar::mass")!;
+long kilograms = mass.FindValue()!.FindLiteral<long>();                          // or FindLiteral().AsLong()
+Console.WriteLine($"{kilograms} {mass.FindRedefinitionRoot()!.qualifiedName}");   // 1400 Vehicles::Vehicle::mass
+Console.WriteLine(string.Join(" | ", vehicle.FindDocText().Select(text => text.Trim())));   // The general vehicle: four wheels, one engine, one tank.
+
+// The inherited members too: Scope.Inherited, or Scope.All for both (Scope.Owned is the default).
+try
+{
+    Console.WriteLine(string.Join(", ", sports.FindParts(Scope.All).Select(NameOf)));
+    // spoiler, wheels, engine, tank, ConnectionUsage
+}
+catch (NotAnsweredException refusal)
+{
+    Console.WriteLine($"not answered: {refusal.Message}");   // where the backend cannot derive the inherited members
+}
+```
+
+- Every list takes `scope`, `visibility` (`VisibilityFilter.Public`, `VisibilityFilter.Protected`
+  for public and protected; `VisibilityFilter.Any` by default) and `library` (`true` keeps the
+  features the standard library's types contribute, which are left out by default).
+- A list of elements carries the members its elements have (extension methods on
+  `IEnumerable<T>`), so calls chain.
+- For each of 27 kinds of feature: `FindParts()`, `FindPart(name)`, `FindPartsSemantic()` (the
+  features typed by a part definition, whatever their metaclass) and, for most, `FindPartsExact()`.
+  On a namespace, for each kind of definition: `FindPartDefs()`, `FindPartDef(name)` and
+  `FindPartDefsByName()`, and the usages it has through any membership, `FindMemberParts()`.
+- One by one: the types and supertypes as written, what a feature subsets, redefines or references
+  (`FindRedefinitionRoot()` follows its redefinitions to the first), values and literals, the bounds
+  of a multiplicity, the parameters, inputs and outputs of a behavior, what an accept action or a
+  transition accepts, applied metadata, documentation.
+- Where a member's definition gives no answer, it throws `RefusedException`: `FindLiteral()` of an
+  expression that is not a literal (`2 * x`, a value with a unit). Where the backend cannot answer
+  something the member reads, it throws `NotAnsweredException`, naming what. Today the SysML Toolkit
+  answers 430 of the members' 456 examples; it does not answer `type` on action, state and other
+  behavioral usages and on enumeration values (which the semantic lists of those kinds read), a
+  metadata usage's `metaclass`, nor the member lists of a definition with a public import in its
+  body.
+- A member or definition list outside the owned scope is in the backend's order: the specification
+  does not define the order of a namespace's memberships.
+- Every member, with its definition, its signature in each language and its examples: the release's
+  `sysml-sdk-reference-<version>.html`.
 
 ## Operations
 

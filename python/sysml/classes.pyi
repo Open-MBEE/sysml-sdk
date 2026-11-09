@@ -1,6 +1,8 @@
 """Generated type stubs — do not edit. Source: metamodel.json."""
 
-from .base import Element as _RuntimeElement
+from typing import TypeVar, overload
+
+from .base import Element as _RuntimeElement, Scope, VisibilityFilter
 
 class Element(_RuntimeElement):
     aliasIds: list[str]
@@ -26,6 +28,28 @@ class Element(_RuntimeElement):
     def effectiveName(self) -> str | None: ...
     def libraryNamespace(self) -> Namespace | None: ...
     def path(self) -> str | None: ...
+    def find_applied_metadata(self) -> ElementList[MetadataFeature]:
+        """Metadata applied to an element by an owned annotation, or as an owned member annotating
+        it (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not
+        found.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_doc_text(self) -> list[str]:
+        """The bodies of the element's documentation comments, in order.
+
+        Returns:
+            The texts, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class Namespace(Element):
     aliasIds: list[str]
@@ -63,6 +87,3118 @@ class Namespace(Element):
     def resolveVisible(self, name: str | None) -> Membership | None: ...
     def qualificationOf(self, qualifiedName: str | None) -> str | None: ...
     def unqualifiedNameOf(self, qualifiedName: str | None) -> str | None: ...
+    def find_member_features(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_feature(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> Feature | None:
+        """The feature that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_usages(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Usage]:
+        """The usages that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_usage(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> Usage | None:
+        """The usage that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_actions(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The actions that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_action(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ActionUsage | None:
+        """The action that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_allocations(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AllocationUsage]:
+        """The allocations that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_allocation(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> AllocationUsage | None:
+        """The allocation that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_analysis_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AnalysisCaseUsage]:
+        """The analysisCases that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_analysis_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> AnalysisCaseUsage | None:
+        """The analysisCase that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_attributes(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attributes that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_attribute(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> AttributeUsage | None:
+        """The attribute that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_calculations(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculations that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_calculation(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> CalculationUsage | None:
+        """The calculation that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The cases that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> CaseUsage | None:
+        """The case that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_concerns(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConcernUsage]:
+        """The concerns that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_concern(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ConcernUsage | None:
+        """The concern that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_connections(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectorAsUsage]:
+        """The connections that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_connection(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ConnectorAsUsage | None:
+        """The connection that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_constraints(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraints that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_constraint(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ConstraintUsage | None:
+        """The constraint that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_enumerations(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[EnumerationUsage]:
+        """The enumerations that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_enumeration(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> EnumerationUsage | None:
+        """The enumeration that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_flows(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flows that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_flow(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> FlowUsage | None:
+        """The flow that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_interfaces(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[InterfaceUsage]:
+        """The interfaces that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_interface(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> InterfaceUsage | None:
+        """The interface that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_items(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The items that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_item(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ItemUsage | None:
+        """The item that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_occurrences(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrences that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_occurrence(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> OccurrenceUsage | None:
+        """The occurrence that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_parts(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The parts that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_part(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> PartUsage | None:
+        """The part that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_ports(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PortUsage]:
+        """The ports that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_port(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> PortUsage | None:
+        """The port that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_references(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ReferenceUsage]:
+        """The references that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_reference(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ReferenceUsage | None:
+        """The reference that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_renderings(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RenderingUsage]:
+        """The renderings that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_rendering(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> RenderingUsage | None:
+        """The rendering that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_requirements(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirements that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_requirement(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> RequirementUsage | None:
+        """The requirement that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_states(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The states that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_state(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> StateUsage | None:
+        """The state that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_transitions(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[TransitionUsage]:
+        """The transitions that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_transition(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> TransitionUsage | None:
+        """The transition that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_use_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCases that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_use_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> UseCaseUsage | None:
+        """The useCase that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_verification_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[VerificationCaseUsage]:
+        """The verificationCases that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_verification_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> VerificationCaseUsage | None:
+        """The verificationCase that is a member under this simple name (an alias's name included),
+        or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_views(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewUsage]:
+        """The views that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_view(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ViewUsage | None:
+        """The view that is a member under this simple name (an alias's name included), or none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_viewpoints(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewpointUsage]:
+        """The viewpoints that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_viewpoint(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ViewpointUsage | None:
+        """The viewpoint that is a member under this simple name (an alias's name included), or
+        none.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_definitions(self, scope: Scope = ...) -> ElementList[Definition]:
+        """The definitions of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_definition(self, name: str, scope: Scope = ...) -> Definition | None:
+        """The definition with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_definitions_by_name(self, scope: Scope = ...) -> dict[str, Definition]:
+        """The definitions of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different definitions,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_action_defs(self, scope: Scope = ...) -> ElementList[ActionDefinition]:
+        """The actionDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_action_defs_exact(self, scope: Scope = ...) -> ElementList[ActionDefinition]:
+        """The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_action_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Actions::Action; refused where the model's library has no
+        Actions::Action.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_action_def(self, name: str, scope: Scope = ...) -> ActionDefinition | None:
+        """The actionDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_action_defs_by_name(self, scope: Scope = ...) -> dict[str, ActionDefinition]:
+        """The actionDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different actionDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocation_defs(self, scope: Scope = ...) -> ElementList[AllocationDefinition]:
+        """The allocationDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocation_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Allocations::Allocation; refused where the model's library has
+        no Allocations::Allocation.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocation_def(self, name: str, scope: Scope = ...) -> AllocationDefinition | None:
+        """The allocationDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocation_defs_by_name(self, scope: Scope = ...) -> dict[str, AllocationDefinition]:
+        """The allocationDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different allocationDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_case_defs(self, scope: Scope = ...) -> ElementList[AnalysisCaseDefinition]:
+        """The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_case_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize AnalysisCases::AnalysisCase; refused where the model's library
+        has no AnalysisCases::AnalysisCase.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_case_def(self, name: str, scope: Scope = ...) -> AnalysisCaseDefinition | None:
+        """The analysisCaseDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_case_defs_by_name(self, scope: Scope = ...) -> dict[str, AnalysisCaseDefinition]:
+        """The analysisCaseDefs of this namespace by name: each under every name and short name it
+        is a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different analysisCaseDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attribute_defs(self, scope: Scope = ...) -> ElementList[AttributeDefinition]:
+        """The attributeDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attribute_defs_exact(self, scope: Scope = ...) -> ElementList[AttributeDefinition]:
+        """The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attribute_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Base::DataValue; refused where the model's library has no
+        Base::DataValue.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attribute_def(self, name: str, scope: Scope = ...) -> AttributeDefinition | None:
+        """The attributeDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attribute_defs_by_name(self, scope: Scope = ...) -> dict[str, AttributeDefinition]:
+        """The attributeDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different attributeDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculation_defs(self, scope: Scope = ...) -> ElementList[CalculationDefinition]:
+        """The calculationDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculation_defs_exact(self, scope: Scope = ...) -> ElementList[CalculationDefinition]:
+        """The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds left
+        out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculation_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Calculations::Calculation; refused where the model's library
+        has no Calculations::Calculation.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculation_def(self, name: str, scope: Scope = ...) -> CalculationDefinition | None:
+        """The calculationDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculation_defs_by_name(self, scope: Scope = ...) -> dict[str, CalculationDefinition]:
+        """The calculationDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different calculationDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_case_defs(self, scope: Scope = ...) -> ElementList[CaseDefinition]:
+        """The caseDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_case_defs_exact(self, scope: Scope = ...) -> ElementList[CaseDefinition]:
+        """The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_case_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Cases::Case; refused where the model's library has no
+        Cases::Case.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_case_def(self, name: str, scope: Scope = ...) -> CaseDefinition | None:
+        """The caseDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_case_defs_by_name(self, scope: Scope = ...) -> dict[str, CaseDefinition]:
+        """The caseDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different caseDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concern_defs(self, scope: Scope = ...) -> ElementList[ConcernDefinition]:
+        """The concernDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concern_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Requirements::ConcernCheck; refused where the model's library
+        has no Requirements::ConcernCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concern_def(self, name: str, scope: Scope = ...) -> ConcernDefinition | None:
+        """The concernDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concern_defs_by_name(self, scope: Scope = ...) -> dict[str, ConcernDefinition]:
+        """The concernDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different concernDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connection_defs(self, scope: Scope = ...) -> ElementList[ConnectionDefinition]:
+        """The connectionDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connection_defs_exact(self, scope: Scope = ...) -> ElementList[ConnectionDefinition]:
+        """The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds left
+        out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connection_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Connections::Connection; refused where the model's library has
+        no Connections::Connection.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connection_def(self, name: str, scope: Scope = ...) -> ConnectionDefinition | None:
+        """The connectionDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connection_defs_by_name(self, scope: Scope = ...) -> dict[str, ConnectionDefinition]:
+        """The connectionDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different connectionDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraint_defs(self, scope: Scope = ...) -> ElementList[ConstraintDefinition]:
+        """The constraintDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraint_defs_exact(self, scope: Scope = ...) -> ElementList[ConstraintDefinition]:
+        """The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds left
+        out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraint_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Constraints::ConstraintCheck; refused where the model's library
+        has no Constraints::ConstraintCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraint_def(self, name: str, scope: Scope = ...) -> ConstraintDefinition | None:
+        """The constraintDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraint_defs_by_name(self, scope: Scope = ...) -> dict[str, ConstraintDefinition]:
+        """The constraintDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different constraintDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_enumeration_defs(self, scope: Scope = ...) -> ElementList[EnumerationDefinition]:
+        """The enumerationDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_enumeration_def(self, name: str, scope: Scope = ...) -> EnumerationDefinition | None:
+        """The enumerationDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_enumeration_defs_by_name(self, scope: Scope = ...) -> dict[str, EnumerationDefinition]:
+        """The enumerationDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different enumerationDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flow_defs(self, scope: Scope = ...) -> ElementList[FlowDefinition]:
+        """The flowDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flow_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Flows::MessageAction; refused where the model's library has no
+        Flows::MessageAction.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flow_def(self, name: str, scope: Scope = ...) -> FlowDefinition | None:
+        """The flowDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flow_defs_by_name(self, scope: Scope = ...) -> dict[str, FlowDefinition]:
+        """The flowDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different flowDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interface_defs(self, scope: Scope = ...) -> ElementList[InterfaceDefinition]:
+        """The interfaceDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interface_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Interfaces::Interface; refused where the model's library has no
+        Interfaces::Interface.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interface_def(self, name: str, scope: Scope = ...) -> InterfaceDefinition | None:
+        """The interfaceDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interface_defs_by_name(self, scope: Scope = ...) -> dict[str, InterfaceDefinition]:
+        """The interfaceDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different interfaceDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_item_defs(self, scope: Scope = ...) -> ElementList[ItemDefinition]:
+        """The itemDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_item_defs_exact(self, scope: Scope = ...) -> ElementList[ItemDefinition]:
+        """The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_item_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Items::Item; refused where the model's library has no
+        Items::Item.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_item_def(self, name: str, scope: Scope = ...) -> ItemDefinition | None:
+        """The itemDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_item_defs_by_name(self, scope: Scope = ...) -> dict[str, ItemDefinition]:
+        """The itemDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different itemDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_metadata_defs(self, scope: Scope = ...) -> ElementList[MetadataDefinition]:
+        """The metadataDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_metadata_def(self, name: str, scope: Scope = ...) -> MetadataDefinition | None:
+        """The metadataDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_metadata_defs_by_name(self, scope: Scope = ...) -> dict[str, MetadataDefinition]:
+        """The metadataDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different metadataDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrence_defs(self, scope: Scope = ...) -> ElementList[OccurrenceDefinition]:
+        """The occurrenceDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrence_defs_exact(self, scope: Scope = ...) -> ElementList[OccurrenceDefinition]:
+        """The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds left
+        out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrence_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Occurrences::Occurrence; refused where the model's library has
+        no Occurrences::Occurrence.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrence_def(self, name: str, scope: Scope = ...) -> OccurrenceDefinition | None:
+        """The occurrenceDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrence_defs_by_name(self, scope: Scope = ...) -> dict[str, OccurrenceDefinition]:
+        """The occurrenceDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different occurrenceDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_part_defs(self, scope: Scope = ...) -> ElementList[PartDefinition]:
+        """The partDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_part_defs_exact(self, scope: Scope = ...) -> ElementList[PartDefinition]:
+        """The partDefs whose metaclass is exactly PartDefinition, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_part_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Parts::Part; refused where the model's library has no
+        Parts::Part.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_part_def(self, name: str, scope: Scope = ...) -> PartDefinition | None:
+        """The partDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_part_defs_by_name(self, scope: Scope = ...) -> dict[str, PartDefinition]:
+        """The partDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different partDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_port_defs(self, scope: Scope = ...) -> ElementList[PortDefinition]:
+        """The portDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_port_defs_exact(self, scope: Scope = ...) -> ElementList[PortDefinition]:
+        """The portDefs whose metaclass is exactly PortDefinition, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_port_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Ports::Port; refused where the model's library has no
+        Ports::Port.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_port_def(self, name: str, scope: Scope = ...) -> PortDefinition | None:
+        """The portDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_port_defs_by_name(self, scope: Scope = ...) -> dict[str, PortDefinition]:
+        """The portDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different portDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_rendering_defs(self, scope: Scope = ...) -> ElementList[RenderingDefinition]:
+        """The renderingDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_rendering_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Views::Rendering; refused where the model's library has no
+        Views::Rendering.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_rendering_def(self, name: str, scope: Scope = ...) -> RenderingDefinition | None:
+        """The renderingDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_rendering_defs_by_name(self, scope: Scope = ...) -> dict[str, RenderingDefinition]:
+        """The renderingDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different renderingDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirement_defs(self, scope: Scope = ...) -> ElementList[RequirementDefinition]:
+        """The requirementDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirement_defs_exact(self, scope: Scope = ...) -> ElementList[RequirementDefinition]:
+        """The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds left
+        out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirement_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Requirements::RequirementCheck; refused where the model's
+        library has no Requirements::RequirementCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirement_def(self, name: str, scope: Scope = ...) -> RequirementDefinition | None:
+        """The requirementDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirement_defs_by_name(self, scope: Scope = ...) -> dict[str, RequirementDefinition]:
+        """The requirementDefs of this namespace by name: each under every name and short name it is
+        a member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different requirementDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_state_defs(self, scope: Scope = ...) -> ElementList[StateDefinition]:
+        """The stateDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_state_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize States::StateAction; refused where the model's library has no
+        States::StateAction.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_state_def(self, name: str, scope: Scope = ...) -> StateDefinition | None:
+        """The stateDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_state_defs_by_name(self, scope: Scope = ...) -> dict[str, StateDefinition]:
+        """The stateDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different stateDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_case_defs(self, scope: Scope = ...) -> ElementList[UseCaseDefinition]:
+        """The useCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_case_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize UseCases::UseCase; refused where the model's library has no
+        UseCases::UseCase.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_case_def(self, name: str, scope: Scope = ...) -> UseCaseDefinition | None:
+        """The useCaseDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_case_defs_by_name(self, scope: Scope = ...) -> dict[str, UseCaseDefinition]:
+        """The useCaseDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different useCaseDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_case_defs(self, scope: Scope = ...) -> ElementList[VerificationCaseDefinition]:
+        """The verificationCaseDefs of this namespace: owned, imported (and inherited) only, or
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_case_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize VerificationCases::VerificationCase; refused where the model's
+        library has no VerificationCases::VerificationCase.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_case_def(self, name: str, scope: Scope = ...) -> VerificationCaseDefinition | None:
+        """The verificationCaseDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_case_defs_by_name(self, scope: Scope = ...) -> dict[str, VerificationCaseDefinition]:
+        """The verificationCaseDefs of this namespace by name: each under every name and short name
+        it is a member by (an alias's included). The order is the backend's: the specification does
+        not define the order of membership. Refused where one name names two different
+        verificationCaseDefs, naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_view_defs(self, scope: Scope = ...) -> ElementList[ViewDefinition]:
+        """The viewDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_view_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Views::View; refused where the model's library has no
+        Views::View.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_view_def(self, name: str, scope: Scope = ...) -> ViewDefinition | None:
+        """The viewDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_view_defs_by_name(self, scope: Scope = ...) -> dict[str, ViewDefinition]:
+        """The viewDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different viewDefs, naming
+        both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoint_defs(self, scope: Scope = ...) -> ElementList[ViewpointDefinition]:
+        """The viewpointDefs of this namespace: owned, imported (and inherited) only, or both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoint_defs_semantic(self, scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Views::ViewpointCheck; refused where the model's library has no
+        Views::ViewpointCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoint_def(self, name: str, scope: Scope = ...) -> ViewpointDefinition | None:
+        """The viewpointDef with this simple (effective) name, or none.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoint_defs_by_name(self, scope: Scope = ...) -> dict[str, ViewpointDefinition]:
+        """The viewpointDefs of this namespace by name: each under every name and short name it is a
+        member by (an alias's included). The order is the backend's: the specification does not
+        define the order of membership. Refused where one name names two different viewpointDefs,
+        naming both.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The names and the element each names, in membership order; an empty map where there are
+            none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_packages(self) -> ElementList[Package]:
+        """The packages this namespace owns.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_package(self, name: str) -> Package | None:
+        """The owned package with this simple name, or none.
+
+        Args:
+            name: The simple name to look for.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_member_metadata(self) -> ElementList[MetadataUsage]:
+        """The metadata usages this namespace owns, whatever they annotate (metadata M about other;
+        included). Owned only: metadata is about the element that owns it, so it is never read
+        through inheritance or imports.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class Type(Namespace):
     aliasIds: list[str]
@@ -127,6 +3263,2059 @@ class Type(Namespace):
     def specializesFromLibrary(self, libraryTypeName: str | None) -> bool | None: ...
     def isCompatibleWith(self, otherType: Type | None) -> bool | None: ...
     def multiplicities(self) -> list[Multiplicity]: ...
+    def find_features(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_feature(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> Feature | None:
+        """The feature with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_usages(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Usage]:
+        """The usages of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_usage(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> Usage | None:
+        """The usage with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_actions(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The actions of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_actions_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The actions whose metaclass is exactly ActionUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_actions_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Actions::Action, as the Pilot navigation API's
+        semanticActions; refused where the model's library has no Actions::Action.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_action(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ActionUsage | None:
+        """The action with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocations(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AllocationUsage]:
+        """The allocations of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocations_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Allocations::Allocation, as the Pilot navigation
+        API's semanticAllocations; refused where the model's library has no Allocations::Allocation.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_allocation(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> AllocationUsage | None:
+        """The allocation with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AnalysisCaseUsage]:
+        """The analysisCases of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_cases_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot navigation
+        API's semanticAnalysisCases; refused where the model's library has no
+        AnalysisCases::AnalysisCase.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_analysis_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> AnalysisCaseUsage | None:
+        """The analysisCase with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attributes(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attributes of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attributes_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attributes whose metaclass is exactly AttributeUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attributes_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+        semanticAttributes; refused where the model's library has no Base::DataValue.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_attribute(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> AttributeUsage | None:
+        """The attribute with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculations(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculations of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculations_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculations whose metaclass is exactly CalculationUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculations_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Calculations::Calculation, as the Pilot navigation
+        API's semanticCalculations; refused where the model's library has no
+        Calculations::Calculation.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_calculation(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> CalculationUsage | None:
+        """The calculation with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The cases of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_cases_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The cases whose metaclass is exactly CaseUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_cases_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Cases::Case, as the Pilot navigation API's
+        semanticCases; refused where the model's library has no Cases::Case.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> CaseUsage | None:
+        """The case with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concerns(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConcernUsage]:
+        """The concerns of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concerns_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Requirements::ConcernCheck, as the Pilot navigation
+        API's semanticConcerns; refused where the model's library has no Requirements::ConcernCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_concern(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ConcernUsage | None:
+        """The concern with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connections(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectorAsUsage]:
+        """The connections of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connections_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectionUsage]:
+        """The connections whose metaclass is exactly ConnectionUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connections_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Connections::Connection, as the Pilot navigation
+        API's semanticConnections; refused where the model's library has no Connections::Connection.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_connection(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ConnectorAsUsage | None:
+        """The connection with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraints(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraints of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraints_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraints_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Constraints::ConstraintCheck, as the Pilot navigation
+        API's semanticConstraints; refused where the model's library has no
+        Constraints::ConstraintCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_constraint(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ConstraintUsage | None:
+        """The constraint with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_enumerations(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[EnumerationUsage]:
+        """The enumerations of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_enumeration(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> EnumerationUsage | None:
+        """The enumeration with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flows(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flows of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flows_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flows whose metaclass is exactly FlowUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flows_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Flows::MessageAction, as the Pilot navigation API's
+        semanticFlows; refused where the model's library has no Flows::MessageAction.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_flow(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> FlowUsage | None:
+        """The flow with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interfaces(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[InterfaceUsage]:
+        """The interfaces of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interfaces_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Interfaces::Interface, as the Pilot navigation API's
+        semanticInterfaces; refused where the model's library has no Interfaces::Interface.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_interface(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> InterfaceUsage | None:
+        """The interface with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_items(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The items of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_items_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The items whose metaclass is exactly ItemUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_items_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Items::Item, as the Pilot navigation API's
+        semanticItems; refused where the model's library has no Items::Item.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_item(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ItemUsage | None:
+        """The item with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrences(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrences of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrences_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrences_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Occurrences::Occurrence, as the Pilot navigation
+        API's semanticOccurrences; refused where the model's library has no Occurrences::Occurrence.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_occurrence(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> OccurrenceUsage | None:
+        """The occurrence with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_parts(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The parts of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_parts_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The parts whose metaclass is exactly PartUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_parts_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Parts::Part, as the Pilot navigation API's
+        semanticParts; refused where the model's library has no Parts::Part.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_part(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> PartUsage | None:
+        """The part with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_ports(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PortUsage]:
+        """The ports of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_ports_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Ports::Port, as the Pilot navigation API's
+        semanticPorts; refused where the model's library has no Ports::Port.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_port(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> PortUsage | None:
+        """The port with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_references(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ReferenceUsage]:
+        """The references of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_reference(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ReferenceUsage | None:
+        """The reference with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_renderings(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RenderingUsage]:
+        """The renderings of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_renderings_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+        semanticRenderings; refused where the model's library has no Views::Rendering.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_rendering(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> RenderingUsage | None:
+        """The rendering with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirements(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirements of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirements_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirements whose metaclass is exactly RequirementUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirements_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Requirements::RequirementCheck, as the Pilot
+        navigation API's semanticRequirements; refused where the model's library has no
+        Requirements::RequirementCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_requirement(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> RequirementUsage | None:
+        """The requirement with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_states(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The states of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_states_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The states whose metaclass is exactly StateUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_states_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to States::StateAction, as the Pilot navigation API's
+        semanticStates; refused where the model's library has no States::StateAction.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_state(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> StateUsage | None:
+        """The state with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_transitions(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[TransitionUsage]:
+        """The transitions of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_transition(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> TransitionUsage | None:
+        """The transition with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCases of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_cases_exact(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_cases_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to UseCases::UseCase, as the Pilot navigation API's
+        semanticUseCases; refused where the model's library has no UseCases::UseCase.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_use_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> UseCaseUsage | None:
+        """The useCase with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_cases(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[VerificationCaseUsage]:
+        """The verificationCases of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_cases_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to VerificationCases::VerificationCase, as the Pilot
+        navigation API's semanticVerificationCases; refused where the model's library has no
+        VerificationCases::VerificationCase.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_verification_case(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> VerificationCaseUsage | None:
+        """The verificationCase with this simple (effective) name, or none: part :>> wheels is found
+        as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_views(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewUsage]:
+        """The views of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_views_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Views::View, as the Pilot navigation API's
+        semanticViews; refused where the model's library has no Views::View.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_view(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ViewUsage | None:
+        """The view with this simple (effective) name, or none: part :>> wheels is found as wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoints(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewpointUsage]:
+        """The viewpoints of this type.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoints_semantic(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation API's
+        semanticViewpoints; refused where the model's library has no Views::ViewpointCheck.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_viewpoint(self, name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ViewpointUsage | None:
+        """The viewpoint with this simple (effective) name, or none: part :>> wheels is found as
+        wheels.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_declared_supertypes(self) -> ElementList[Type]:
+        """Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its
+        original type; a feature chain's last feature is a supertype of the chain.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_implied_supertypes(self) -> ElementList[Type]:
+        """Direct supertypes the backend adds by the language's rules (Parts::Part for a part
+        definition).
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_declared_and_implied_supertypes(self) -> ElementList[Type]:
+        """Direct supertypes, written and implied: supertypes(false).
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_effective_feature(self, feature: Feature) -> Feature | None:
+        """The feature in effect here for feature: itself where inherited as it is, else the one
+        redefining it; none where this type does not have it.
+
+        Args:
+            feature: The feature as declared, on this type or on a type it specializes.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_lower_bound(self) -> int | None:
+        """The lower bound as a number; none where the type has no multiplicity; refused where the
+        bound is an expression ([rotorCount]).
+
+        Returns:
+            The number, or None where there is none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_upper_bound(self) -> int | float | None:
+        """The upper bound as a number or * (unbounded); none where the type has no multiplicity;
+        refused where the bound is an expression.
+
+        Returns:
+            The number (math.inf for *, unbounded), or None where there is none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_lower_bound_expr(self) -> Expression | None:
+        """The lower bound's expression; none where there is none (no multiplicity, the lower bound
+        of [*], a multiplicity without a range).
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_upper_bound_expr(self) -> Expression | None:
+        """The upper bound's expression; none where there is none.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_has_literal_lower_bound(self) -> bool:
+        """Whether the type has a multiplicity whose lower bound is a literal (findLowerBound then
+        answers with a number).
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_has_literal_upper_bound(self) -> bool:
+        """Whether the type has a multiplicity whose upper bound is a literal.
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_inputs(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features directed in or inout relative to this type, directionOf taking conjugation
+        into account (a conjugated port's out items are its inputs), scoped like the kind lists.
+        With scope all and library true, the specification's input.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_outputs(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features directed out or inout relative to this type, directionOf taking conjugation
+        into account (a conjugated port's in items are its outputs), scoped like the kind lists.
+        With scope all and library true, the specification's output.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_subsetting_features_of(self, feature: Feature, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features of this type that are, or specialize, feature (the wheels among a vehicle's
+        parts), scoped.
+
+        Args:
+            feature: The feature the answers are or specialize.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class Feature(Type):
     aliasIds: list[str]
@@ -220,6 +5409,374 @@ class Feature(Type):
     def isFeaturedWithin(self, type: Type | None) -> bool | None: ...
     def canAccess(self, feature: Feature | None) -> bool | None: ...
     def isFeaturingType(self, type: Type | None) -> bool | None: ...
+    def find_is_semantic_action(self) -> bool:
+        """Whether a type of this feature conforms to Actions::Action; refused where the model's
+        library has no Actions::Action.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_allocation(self) -> bool:
+        """Whether a type of this feature conforms to Allocations::Allocation; refused where the
+        model's library has no Allocations::Allocation.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_analysis_case(self) -> bool:
+        """Whether a type of this feature conforms to AnalysisCases::AnalysisCase; refused where the
+        model's library has no AnalysisCases::AnalysisCase.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_attribute(self) -> bool:
+        """Whether a type of this feature conforms to Base::DataValue; refused where the model's
+        library has no Base::DataValue.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_calculation(self) -> bool:
+        """Whether a type of this feature conforms to Calculations::Calculation; refused where the
+        model's library has no Calculations::Calculation.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_case(self) -> bool:
+        """Whether a type of this feature conforms to Cases::Case; refused where the model's library
+        has no Cases::Case.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_concern(self) -> bool:
+        """Whether a type of this feature conforms to Requirements::ConcernCheck; refused where the
+        model's library has no Requirements::ConcernCheck.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_connection(self) -> bool:
+        """Whether a type of this feature conforms to Connections::Connection; refused where the
+        model's library has no Connections::Connection.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_constraint(self) -> bool:
+        """Whether a type of this feature conforms to Constraints::ConstraintCheck; refused where
+        the model's library has no Constraints::ConstraintCheck.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_flow(self) -> bool:
+        """Whether a type of this feature conforms to Flows::MessageAction; refused where the
+        model's library has no Flows::MessageAction.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_interface(self) -> bool:
+        """Whether a type of this feature conforms to Interfaces::Interface; refused where the
+        model's library has no Interfaces::Interface.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_item(self) -> bool:
+        """Whether a type of this feature conforms to Items::Item; refused where the model's library
+        has no Items::Item.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_occurrence(self) -> bool:
+        """Whether a type of this feature conforms to Occurrences::Occurrence; refused where the
+        model's library has no Occurrences::Occurrence.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_part(self) -> bool:
+        """Whether a type of this feature conforms to Parts::Part; refused where the model's library
+        has no Parts::Part.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_port(self) -> bool:
+        """Whether a type of this feature conforms to Ports::Port; refused where the model's library
+        has no Ports::Port.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_rendering(self) -> bool:
+        """Whether a type of this feature conforms to Views::Rendering; refused where the model's
+        library has no Views::Rendering.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_requirement(self) -> bool:
+        """Whether a type of this feature conforms to Requirements::RequirementCheck; refused where
+        the model's library has no Requirements::RequirementCheck.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_state(self) -> bool:
+        """Whether a type of this feature conforms to States::StateAction; refused where the model's
+        library has no States::StateAction.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_use_case(self) -> bool:
+        """Whether a type of this feature conforms to UseCases::UseCase; refused where the model's
+        library has no UseCases::UseCase.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_verification_case(self) -> bool:
+        """Whether a type of this feature conforms to VerificationCases::VerificationCase; refused
+        where the model's library has no VerificationCases::VerificationCase.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_view(self) -> bool:
+        """Whether a type of this feature conforms to Views::View; refused where the model's library
+        has no Views::View.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_semantic_viewpoint(self) -> bool:
+        """Whether a type of this feature conforms to Views::ViewpointCheck; refused where the
+        model's library has no Views::ViewpointCheck.
+
+        Returns:
+            True or False.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_declared_types(self) -> ElementList[Type]:
+        """The types this feature is declared with.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_subsetted_features(self) -> ElementList[Feature]:
+        """The features this feature subsets as written (redefinitions and reference subsettings
+        left out).
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_redefined_features(self) -> ElementList[Feature]:
+        """The features this feature redefines as written.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_referenced_feature(self) -> Feature | None:
+        """The feature this feature references (::>), or none.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_redefinition_root(self) -> Feature | None:
+        """The feature a chain of written redefinitions starts from, following the first at each
+        step (Truck::mass to Frame::mass); itself when it redefines nothing.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_value(self) -> Expression | None:
+        """The value expression this feature is declared with (=, :=, default), or none.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_has_default_value(self) -> bool:
+        """Whether the value is a default (default = or default :=).
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_has_initial_value(self) -> bool:
+        """Whether the value is an initial value (:=).
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_effectively_ordered(self) -> bool:
+        """Ordered: declared, or through a feature it subsets or redefines, implied ones included,
+        as the Pilot's FeatureUtil.checkIsOrdered.
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_path(self) -> ElementList[Feature]:
+        """A feature chain as its features (battery.powerOut gives [battery, powerOut]); else
+        [self].
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class Step(Feature):
     aliasIds: list[str]
@@ -297,6 +5854,28 @@ class Step(Feature):
     textualRepresentation: list[TextualRepresentation]
     type: list[Type]
     unioningType: list[Type]
+    def find_parameters(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The directed features, scoped like the kind lists: those whose direction relative to this
+        behaviour or step, directionOf, is not null. With scope all and library true, the
+        specification's parameter.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class Usage(Feature):
     aliasIds: list[str]
@@ -411,6 +5990,17 @@ class Usage(Feature):
     variantMembership: list[VariantMembership]
     def namingFeature(self) -> Feature | None: ...
     def referencedFeatureTarget(self) -> Feature | None: ...
+    def find_variation(self) -> Type | None:
+        """The variation a variant belongs to (variation part def V { variant part a; }: a gives V;
+        an enumeration's values give the enumeration); none for a usage that is not a variant.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class OccurrenceUsage(Usage):
     aliasIds: list[str]
@@ -773,6 +6363,30 @@ class AcceptActionUsage(ActionUsage):
     variant: list[Usage]
     variantMembership: list[VariantMembership]
     def isTriggerAction(self) -> bool | None: ...
+    def find_accepted_types(self) -> ElementList[Type]:
+        """What an accept action accepts: its payload's types.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_accepted_type(self, type: Type) -> bool:
+        """Whether this accept action accepts a value of type: whether type specializes one of its
+        accepted types (findAcceptedTypes).
+
+        Args:
+            type: The type of what arrives: an item, a signal or an event.
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class Classifier(Type):
     aliasIds: list[str]
@@ -1095,6 +6709,28 @@ class Behavior(Class):
     step: list[Step]
     textualRepresentation: list[TextualRepresentation]
     unioningType: list[Type]
+    def find_parameters(self, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The directed features, scoped like the kind lists: those whose direction relative to this
+        behaviour or step, directionOf, is not null. With scope all and library true, the
+        specification's parameter.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class ActionDefinition(Behavior, OccurrenceDefinition):
     action: list[ActionUsage]
@@ -2695,6 +8331,17 @@ class Function(Behavior):
     step: list[Step]
     textualRepresentation: list[TextualRepresentation]
     unioningType: list[Type]
+    def find_result_expression(self) -> Expression | None:
+        """The result expression of a calculation or constraint, owned or inherited; the
+        specification has resultExpression only on analysis cases.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class CalculationDefinition(Function, ActionDefinition):
     action: list[ActionUsage]
@@ -3058,6 +8705,63 @@ class Expression(Step):
     def modelLevelEvaluable(self, visited: list[Feature]) -> bool | None: ...
     def evaluate(self, target: Element | None) -> list[Element]: ...
     def checkCondition(self, target: Element | None) -> bool | None: ...
+    def find_has_unit(self) -> bool:
+        """Whether the value is written with a unit, <expression> [<unit>], a sign allowed.
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_literal(self) -> bool:
+        """Whether findLiteral answers: a literal, or a sign on a number literal; a value with a
+        unit is not one.
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_literal(self) -> int | float | bool | str:
+        """A literal's value, a sign folded. Refused for anything else: a value with a unit (1500
+        [kg]; findUnit gives the unit), an expression (2 * x), a reference (= other).
+
+        Returns:
+            The value: an int, float, bool or str (math.inf for *, unbounded).
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_unit(self) -> Element | None:
+        """The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference
+        names, SI::kilogram); none for a literal without a unit; refused for anything else, whose
+        unit needs evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit().
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_result_expression(self) -> Expression | None:
+        """The result expression of a calculation or constraint, owned or inherited; the
+        specification has resultExpression only on analysis cases.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class CalculationUsage(Expression, ActionUsage):
     actionDefinition: list[Behavior]
@@ -4737,6 +10441,17 @@ class OperatorExpression(InvocationExpression):
     type: list[Type]
     unioningType: list[Type]
     def instantiatedType_op(self) -> Type | None: ...
+    def find_type_argument(self) -> Type | None:
+        """The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x
+        as T, m meta T give T): the grammar puts it in the second owned feature.
+
+        Returns:
+            The element, or None where there is none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class CollectExpression(OperatorExpression):
     aliasIds: list[str]
@@ -6884,6 +12599,18 @@ class StateUsage(ActionUsage):
     variant: list[Usage]
     variantMembership: list[VariantMembership]
     def isSubstateUsage(self, isParallel: bool | None) -> bool | None: ...
+    def find_initial_states(self) -> ElementList[StateUsage]:
+        """Initial states, by a priority chain over the notation's forms: first start then off; and,
+        only if that gives none, entry; then off; (the Annex A form, an entry action with a
+        transition from it, is not recognized).
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class ExhibitStateUsage(StateUsage, PerformActionUsage):
     actionDefinition: list[Behavior]
@@ -11792,6 +17519,18 @@ class StateDefinition(ActionDefinition):
     usage: list[Usage]
     variant: list[Usage]
     variantMembership: list[VariantMembership]
+    def find_initial_states(self) -> ElementList[StateUsage]:
+        """Initial states, by a priority chain over the notation's forms: first start then off; and,
+        only if that gives none, entry; then off; (the Annex A form, an entry action with a
+        transition from it, is not recognized).
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class StateSubactionMembership(FeatureMembership):
     action: ActionUsage | None
@@ -12662,6 +18401,30 @@ class TransitionUsage(ActionUsage):
     variantMembership: list[VariantMembership]
     def triggerPayloadParameter(self) -> ReferenceUsage | None: ...
     def sourceFeature(self) -> Feature | None: ...
+    def find_accepted_types(self) -> ElementList[Type]:
+        """What a transition's triggers accept.
+
+        Returns:
+            The elements, in order; an empty list where there are none.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
+    def find_is_accepted_type(self, type: Type) -> bool:
+        """Whether this transition's triggers accept a value of type: whether type specializes one
+        of their accepted types (findAcceptedTypes).
+
+        Args:
+            type: The type of what arrives: an item, a signal or an event.
+
+        Returns:
+            True or False.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it.
+        """
 
 class TriggerInvocationExpression(InvocationExpression):
     aliasIds: list[str]
@@ -13765,5 +19528,5154 @@ class WhileLoopActionUsage(LoopActionUsage):
     variant: list[Usage]
     variantMembership: list[VariantMembership]
     whileArgument: Expression | None
+
+_E = TypeVar("_E", bound=Element)
+_T_AcceptActionUsage = TypeVar("_T_AcceptActionUsage", bound=AcceptActionUsage)
+_T_Behavior = TypeVar("_T_Behavior", bound=Behavior)
+_T_Element = TypeVar("_T_Element", bound=Element)
+_T_Expression = TypeVar("_T_Expression", bound=Expression)
+_T_Feature = TypeVar("_T_Feature", bound=Feature)
+_T_Function = TypeVar("_T_Function", bound=Function)
+_T_Namespace = TypeVar("_T_Namespace", bound=Namespace)
+_T_OperatorExpression = TypeVar("_T_OperatorExpression", bound=OperatorExpression)
+_T_StateDefinition = TypeVar("_T_StateDefinition", bound=StateDefinition)
+_T_StateUsage = TypeVar("_T_StateUsage", bound=StateUsage)
+_T_Step = TypeVar("_T_Step", bound=Step)
+_T_TransitionUsage = TypeVar("_T_TransitionUsage", bound=TransitionUsage)
+_T_Type = TypeVar("_T_Type", bound=Type)
+_T_Usage = TypeVar("_T_Usage", bound=Usage)
+
+class ElementList(list[_E]):
+    """A list of elements carrying their convenience members (see sysml.base.ElementList)."""
+    @overload
+    def find_accepted_types(self: ElementList[_T_AcceptActionUsage]) -> ElementList[Type]:
+        """What an accept action accepts: its payload's types. Over the list's elements, in order:
+        list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_accepted_types(self: ElementList[_T_TransitionUsage]) -> ElementList[Type]:
+        """What a transition's triggers accept. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_action(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The action with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_action_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ActionDefinition]:
+        """The actionDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_action_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ActionDefinition]:
+        """The actionDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_action_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ActionDefinition]:
+        """The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_action_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Actions::Action; refused where the model's library has no
+        Actions::Action. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_actions(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The actions of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_actions_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The actions whose metaclass is exactly ActionUsage, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_actions_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Actions::Action, as the Pilot navigation API's
+        semanticActions; refused where the model's library has no Actions::Action. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_allocation(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AllocationUsage]:
+        """The allocation with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_allocation_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[AllocationDefinition]:
+        """The allocationDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_allocation_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[AllocationDefinition]:
+        """The allocationDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_allocation_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Allocations::Allocation; refused where the model's library has
+        no Allocations::Allocation. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_allocations(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AllocationUsage]:
+        """The allocations of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_allocations_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Allocations::Allocation, as the Pilot navigation
+        API's semanticAllocations; refused where the model's library has no Allocations::Allocation.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_analysis_case(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AnalysisCaseUsage]:
+        """The analysisCase with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_analysis_case_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[AnalysisCaseDefinition]:
+        """The analysisCaseDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_analysis_case_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[AnalysisCaseDefinition]:
+        """The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_analysis_case_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize AnalysisCases::AnalysisCase; refused where the model's library
+        has no AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_analysis_cases(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AnalysisCaseUsage]:
+        """The analysisCases of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_analysis_cases_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot navigation
+        API's semanticAnalysisCases; refused where the model's library has no
+        AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_applied_metadata(self: ElementList[_T_Element]) -> ElementList[MetadataFeature]:
+        """Metadata applied to an element by an owned annotation, or as an owned member annotating
+        it (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not
+        found. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attribute(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attribute with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attribute_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[AttributeDefinition]:
+        """The attributeDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attribute_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[AttributeDefinition]:
+        """The attributeDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attribute_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[AttributeDefinition]:
+        """The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left out.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attribute_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Base::DataValue; refused where the model's library has no
+        Base::DataValue. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attributes(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attributes of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attributes_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attributes whose metaclass is exactly AttributeUsage, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_attributes_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+        semanticAttributes; refused where the model's library has no Base::DataValue. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculation(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculation with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculation_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[CalculationDefinition]:
+        """The calculationDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculation_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[CalculationDefinition]:
+        """The calculationDefs of this namespace: owned, imported (and inherited) only, or both.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculation_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[CalculationDefinition]:
+        """The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds left
+        out. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculation_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Calculations::Calculation; refused where the model's library
+        has no Calculations::Calculation. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculations(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculations of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculations_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculations whose metaclass is exactly CalculationUsage, its subkinds left out. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_calculations_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Calculations::Calculation, as the Pilot navigation
+        API's semanticCalculations; refused where the model's library has no
+        Calculations::Calculation. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_case(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The case with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_case_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[CaseDefinition]:
+        """The caseDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_case_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[CaseDefinition]:
+        """The caseDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_case_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[CaseDefinition]:
+        """The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_case_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Cases::Case; refused where the model's library has no
+        Cases::Case. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_cases(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The cases of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_cases_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The cases whose metaclass is exactly CaseUsage, its subkinds left out. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_cases_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Cases::Case, as the Pilot navigation API's
+        semanticCases; refused where the model's library has no Cases::Case. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_concern(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConcernUsage]:
+        """The concern with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_concern_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ConcernDefinition]:
+        """The concernDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_concern_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ConcernDefinition]:
+        """The concernDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_concern_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Requirements::ConcernCheck; refused where the model's library
+        has no Requirements::ConcernCheck. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_concerns(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConcernUsage]:
+        """The concerns of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_concerns_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Requirements::ConcernCheck, as the Pilot navigation
+        API's semanticConcerns; refused where the model's library has no Requirements::ConcernCheck.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connection(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectorAsUsage]:
+        """The connection with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connection_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ConnectionDefinition]:
+        """The connectionDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connection_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ConnectionDefinition]:
+        """The connectionDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connection_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ConnectionDefinition]:
+        """The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds left
+        out. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connection_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Connections::Connection; refused where the model's library has
+        no Connections::Connection. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connections(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectorAsUsage]:
+        """The connections of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connections_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectionUsage]:
+        """The connections whose metaclass is exactly ConnectionUsage, its subkinds left out. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_connections_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Connections::Connection, as the Pilot navigation
+        API's semanticConnections; refused where the model's library has no Connections::Connection.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraint(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraint with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraint_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ConstraintDefinition]:
+        """The constraintDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraint_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ConstraintDefinition]:
+        """The constraintDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraint_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ConstraintDefinition]:
+        """The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds left
+        out. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraint_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Constraints::ConstraintCheck; refused where the model's library
+        has no Constraints::ConstraintCheck. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraints(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraints of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraints_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_constraints_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Constraints::ConstraintCheck, as the Pilot navigation
+        API's semanticConstraints; refused where the model's library has no
+        Constraints::ConstraintCheck. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_declared_and_implied_supertypes(self: ElementList[_T_Type]) -> ElementList[Type]:
+        """Direct supertypes, written and implied: supertypes(false). Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_declared_supertypes(self: ElementList[_T_Type]) -> ElementList[Type]:
+        """Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its
+        original type; a feature chain's last feature is a supertype of the chain. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_declared_types(self: ElementList[_T_Feature]) -> ElementList[Type]:
+        """The types this feature is declared with. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_definition(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[Definition]:
+        """The definition with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_definitions(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Definition]:
+        """The definitions of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_doc_text(self: ElementList[_T_Element]) -> list[str]:
+        """The bodies of the element's documentation comments, in order. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The texts, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_effective_feature(self: ElementList[_T_Type], feature: Feature) -> ElementList[Feature]:
+        """The feature in effect here for feature: itself where inherited as it is, else the one
+        redefining it; none where this type does not have it. Over the list's elements, in order:
+        list answers concatenated, absent single answers dropped.
+
+        Args:
+            feature: The feature as declared, on this type or on a type it specializes.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_enumeration(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[EnumerationUsage]:
+        """The enumeration with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_enumeration_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[EnumerationDefinition]:
+        """The enumerationDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_enumeration_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[EnumerationDefinition]:
+        """The enumerationDefs of this namespace: owned, imported (and inherited) only, or both.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_enumerations(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[EnumerationUsage]:
+        """The enumerations of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_feature(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The feature with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_features(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flow(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flow with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flow_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[FlowDefinition]:
+        """The flowDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flow_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[FlowDefinition]:
+        """The flowDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flow_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Flows::MessageAction; refused where the model's library has no
+        Flows::MessageAction. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flows(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flows of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flows_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flows whose metaclass is exactly FlowUsage, its subkinds left out. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_flows_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Flows::MessageAction, as the Pilot navigation API's
+        semanticFlows; refused where the model's library has no Flows::MessageAction. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_implied_supertypes(self: ElementList[_T_Type]) -> ElementList[Type]:
+        """Direct supertypes the backend adds by the language's rules (Parts::Part for a part
+        definition). Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_initial_states(self: ElementList[_T_StateUsage]) -> ElementList[StateUsage]:
+        """Initial states, by a priority chain over the notation's forms: first start then off; and,
+        only if that gives none, entry; then off; (the Annex A form, an entry action with a
+        transition from it, is not recognized). Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_initial_states(self: ElementList[_T_StateDefinition]) -> ElementList[StateUsage]:
+        """Initial states, by a priority chain over the notation's forms: first start then off; and,
+        only if that gives none, entry; then off; (the Annex A form, an entry action with a
+        transition from it, is not recognized). Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_inputs(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features directed in or inout relative to this type, directionOf taking conjugation
+        into account (a conjugated port's out items are its inputs), scoped like the kind lists.
+        With scope all and library true, the specification's input. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_interface(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[InterfaceUsage]:
+        """The interface with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_interface_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[InterfaceDefinition]:
+        """The interfaceDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_interface_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[InterfaceDefinition]:
+        """The interfaceDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_interface_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Interfaces::Interface; refused where the model's library has no
+        Interfaces::Interface. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_interfaces(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[InterfaceUsage]:
+        """The interfaces of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_interfaces_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Interfaces::Interface, as the Pilot navigation API's
+        semanticInterfaces; refused where the model's library has no Interfaces::Interface. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_item(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The item with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_item_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ItemDefinition]:
+        """The itemDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_item_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ItemDefinition]:
+        """The itemDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_item_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ItemDefinition]:
+        """The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_item_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Items::Item; refused where the model's library has no
+        Items::Item. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_items(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The items of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_items_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The items whose metaclass is exactly ItemUsage, its subkinds left out. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_items_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Items::Item, as the Pilot navigation API's
+        semanticItems; refused where the model's library has no Items::Item. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_lower_bound_expr(self: ElementList[_T_Type]) -> ElementList[Expression]:
+        """The lower bound's expression; none where there is none (no multiplicity, the lower bound
+        of [*], a multiplicity without a range). Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_action(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The action that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_actions(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ActionUsage]:
+        """The actions that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_allocation(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AllocationUsage]:
+        """The allocation that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_allocations(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AllocationUsage]:
+        """The allocations that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_analysis_case(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AnalysisCaseUsage]:
+        """The analysisCase that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_analysis_cases(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AnalysisCaseUsage]:
+        """The analysisCases that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_attribute(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attribute that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_attributes(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[AttributeUsage]:
+        """The attributes that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_calculation(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculation that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_calculations(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CalculationUsage]:
+        """The calculations that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_case(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The case that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_cases(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[CaseUsage]:
+        """The cases that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_concern(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConcernUsage]:
+        """The concern that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_concerns(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConcernUsage]:
+        """The concerns that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_connection(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectorAsUsage]:
+        """The connection that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_connections(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConnectorAsUsage]:
+        """The connections that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_constraint(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraint that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_constraints(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ConstraintUsage]:
+        """The constraints that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_enumeration(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[EnumerationUsage]:
+        """The enumeration that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_enumerations(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[EnumerationUsage]:
+        """The enumerations that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_feature(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The feature that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_features(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_flow(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flow that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_flows(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[FlowUsage]:
+        """The flows that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_interface(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[InterfaceUsage]:
+        """The interface that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_interfaces(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[InterfaceUsage]:
+        """The interfaces that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_item(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The item that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_items(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ItemUsage]:
+        """The items that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_metadata(self: ElementList[_T_Namespace]) -> ElementList[MetadataUsage]:
+        """The metadata usages this namespace owns, whatever they annotate (metadata M about other;
+        included). Owned only: metadata is about the element that owns it, so it is never read
+        through inheritance or imports. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_occurrence(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrence that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_occurrences(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrences that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_part(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The part that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_parts(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The parts that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_port(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PortUsage]:
+        """The port that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_ports(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PortUsage]:
+        """The ports that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_reference(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ReferenceUsage]:
+        """The reference that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_references(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ReferenceUsage]:
+        """The references that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_rendering(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RenderingUsage]:
+        """The rendering that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_renderings(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RenderingUsage]:
+        """The renderings that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_requirement(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirement that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_requirements(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirements that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_state(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The state that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_states(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The states that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_transition(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[TransitionUsage]:
+        """The transition that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_transitions(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[TransitionUsage]:
+        """The transitions that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_usage(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Usage]:
+        """The usage that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_usages(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Usage]:
+        """The usages that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_use_case(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCase that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_use_cases(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCases that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_verification_case(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[VerificationCaseUsage]:
+        """The verificationCase that is a member under this simple name (an alias's name included),
+        or none. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_verification_cases(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[VerificationCaseUsage]:
+        """The verificationCases that are members of this namespace through any membership (owned,
+        aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_view(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewUsage]:
+        """The view that is a member under this simple name (an alias's name included), or none.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_viewpoint(self: ElementList[_T_Namespace], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewpointUsage]:
+        """The viewpoint that is a member under this simple name (an alias's name included), or
+        none. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The member name to look for, an alias's name included.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_viewpoints(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewpointUsage]:
+        """The viewpoints that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_member_views(self: ElementList[_T_Namespace], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewUsage]:
+        """The views that are members of this namespace through any membership (owned, aliased,
+        imported, inherited), each once. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_metadata_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[MetadataDefinition]:
+        """The metadataDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_metadata_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[MetadataDefinition]:
+        """The metadataDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrence(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrence with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrence_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[OccurrenceDefinition]:
+        """The occurrenceDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrence_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[OccurrenceDefinition]:
+        """The occurrenceDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrence_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[OccurrenceDefinition]:
+        """The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds left
+        out. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrence_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Occurrences::Occurrence; refused where the model's library has
+        no Occurrences::Occurrence. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrences(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrences of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrences_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[OccurrenceUsage]:
+        """The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_occurrences_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Occurrences::Occurrence, as the Pilot navigation
+        API's semanticOccurrences; refused where the model's library has no Occurrences::Occurrence.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_outputs(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features directed out or inout relative to this type, directionOf taking conjugation
+        into account (a conjugated port's in items are its outputs), scoped like the kind lists.
+        With scope all and library true, the specification's output. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_package(self: ElementList[_T_Namespace], name: str) -> ElementList[Package]:
+        """The owned package with this simple name, or none. Over the list's elements, in order:
+        list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_packages(self: ElementList[_T_Namespace]) -> ElementList[Package]:
+        """The packages this namespace owns. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_parameters(self: ElementList[_T_Behavior], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The directed features, scoped like the kind lists: those whose direction relative to this
+        behaviour or step, directionOf, is not null. With scope all and library true, the
+        specification's parameter. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_parameters(self: ElementList[_T_Step], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The directed features, scoped like the kind lists: those whose direction relative to this
+        behaviour or step, directionOf, is not null. With scope all and library true, the
+        specification's parameter. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_part(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The part with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_part_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[PartDefinition]:
+        """The partDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_part_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[PartDefinition]:
+        """The partDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_part_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[PartDefinition]:
+        """The partDefs whose metaclass is exactly PartDefinition, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_part_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Parts::Part; refused where the model's library has no
+        Parts::Part. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_parts(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The parts of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_parts_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PartUsage]:
+        """The parts whose metaclass is exactly PartUsage, its subkinds left out. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_parts_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Parts::Part, as the Pilot navigation API's
+        semanticParts; refused where the model's library has no Parts::Part. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_path(self: ElementList[_T_Feature]) -> ElementList[Feature]:
+        """A feature chain as its features (battery.powerOut gives [battery, powerOut]); else
+        [self]. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_port(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PortUsage]:
+        """The port with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_port_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[PortDefinition]:
+        """The portDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_port_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[PortDefinition]:
+        """The portDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_port_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[PortDefinition]:
+        """The portDefs whose metaclass is exactly PortDefinition, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_port_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Ports::Port; refused where the model's library has no
+        Ports::Port. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_ports(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[PortUsage]:
+        """The ports of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_ports_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Ports::Port, as the Pilot navigation API's
+        semanticPorts; refused where the model's library has no Ports::Port. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_redefined_features(self: ElementList[_T_Feature]) -> ElementList[Feature]:
+        """The features this feature redefines as written. Over the list's elements, in order: list
+        answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_redefinition_root(self: ElementList[_T_Feature]) -> ElementList[Feature]:
+        """The feature a chain of written redefinitions starts from, following the first at each
+        step (Truck::mass to Frame::mass); itself when it redefines nothing. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_reference(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ReferenceUsage]:
+        """The reference with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_referenced_feature(self: ElementList[_T_Feature]) -> ElementList[Feature]:
+        """The feature this feature references (::>), or none. Over the list's elements, in order:
+        list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_references(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ReferenceUsage]:
+        """The references of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_rendering(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RenderingUsage]:
+        """The rendering with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_rendering_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[RenderingDefinition]:
+        """The renderingDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_rendering_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[RenderingDefinition]:
+        """The renderingDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_rendering_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Views::Rendering; refused where the model's library has no
+        Views::Rendering. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_renderings(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RenderingUsage]:
+        """The renderings of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_renderings_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+        semanticRenderings; refused where the model's library has no Views::Rendering. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirement(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirement with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirement_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[RequirementDefinition]:
+        """The requirementDef with this simple (effective) name, or none. Over the list's elements,
+        in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirement_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[RequirementDefinition]:
+        """The requirementDefs of this namespace: owned, imported (and inherited) only, or both.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirement_defs_exact(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[RequirementDefinition]:
+        """The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds left
+        out. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirement_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Requirements::RequirementCheck; refused where the model's
+        library has no Requirements::RequirementCheck. Over the list's elements, in order: list
+        answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirements(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirements of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirements_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[RequirementUsage]:
+        """The requirements whose metaclass is exactly RequirementUsage, its subkinds left out. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_requirements_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Requirements::RequirementCheck, as the Pilot
+        navigation API's semanticRequirements; refused where the model's library has no
+        Requirements::RequirementCheck. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_result_expression(self: ElementList[_T_Function]) -> ElementList[Expression]:
+        """The result expression of a calculation or constraint, owned or inherited; the
+        specification has resultExpression only on analysis cases. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    @overload
+    def find_result_expression(self: ElementList[_T_Expression]) -> ElementList[Expression]:
+        """The result expression of a calculation or constraint, owned or inherited; the
+        specification has resultExpression only on analysis cases. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_state(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The state with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_state_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[StateDefinition]:
+        """The stateDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_state_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[StateDefinition]:
+        """The stateDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_state_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize States::StateAction; refused where the model's library has no
+        States::StateAction. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_states(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The states of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_states_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[StateUsage]:
+        """The states whose metaclass is exactly StateUsage, its subkinds left out. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_states_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to States::StateAction, as the Pilot navigation API's
+        semanticStates; refused where the model's library has no States::StateAction. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_subsetted_features(self: ElementList[_T_Feature]) -> ElementList[Feature]:
+        """The features this feature subsets as written (redefinitions and reference subsettings
+        left out). Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_subsetting_features_of(self: ElementList[_T_Type], feature: Feature, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features of this type that are, or specialize, feature (the wheels among a vehicle's
+        parts), scoped. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            feature: The feature the answers are or specialize.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_transition(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[TransitionUsage]:
+        """The transition with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_transitions(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[TransitionUsage]:
+        """The transitions of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_type_argument(self: ElementList[_T_OperatorExpression]) -> ElementList[Type]:
+        """The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x
+        as T, m meta T give T): the grammar puts it in the second owned feature. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_unit(self: ElementList[_T_Expression]) -> ElementList[Element]:
+        """The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference
+        names, SI::kilogram); none for a literal without a unit; refused for anything else, whose
+        unit needs evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit(). Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_upper_bound_expr(self: ElementList[_T_Type]) -> ElementList[Expression]:
+        """The upper bound's expression; none where there is none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_usage(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Usage]:
+        """The usage with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_usages(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Usage]:
+        """The usages of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_case(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCase with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_case_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[UseCaseDefinition]:
+        """The useCaseDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_case_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[UseCaseDefinition]:
+        """The useCaseDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_case_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize UseCases::UseCase; refused where the model's library has no
+        UseCases::UseCase. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_cases(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCases of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_cases_exact(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[UseCaseUsage]:
+        """The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_use_cases_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to UseCases::UseCase, as the Pilot navigation API's
+        semanticUseCases; refused where the model's library has no UseCases::UseCase. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_value(self: ElementList[_T_Feature]) -> ElementList[Expression]:
+        """The value expression this feature is declared with (=, :=, default), or none. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_variation(self: ElementList[_T_Usage]) -> ElementList[Type]:
+        """The variation a variant belongs to (variation part def V { variant part a; }: a gives V;
+        an enumeration's values give the enumeration); none for a usage that is not a variant. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_verification_case(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[VerificationCaseUsage]:
+        """The verificationCase with this simple (effective) name, or none: part :>> wheels is found
+        as wheels. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_verification_case_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[VerificationCaseDefinition]:
+        """The verificationCaseDef with this simple (effective) name, or none. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_verification_case_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[VerificationCaseDefinition]:
+        """The verificationCaseDefs of this namespace: owned, imported (and inherited) only, or
+        both. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_verification_case_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize VerificationCases::VerificationCase; refused where the model's
+        library has no VerificationCases::VerificationCase. Over the list's elements, in order: list
+        answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_verification_cases(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[VerificationCaseUsage]:
+        """The verificationCases of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_verification_cases_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to VerificationCases::VerificationCase, as the Pilot
+        navigation API's semanticVerificationCases; refused where the model's library has no
+        VerificationCases::VerificationCase. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_view(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewUsage]:
+        """The view with this simple (effective) name, or none: part :>> wheels is found as wheels.
+        Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_view_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ViewDefinition]:
+        """The viewDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_view_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ViewDefinition]:
+        """The viewDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_view_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Views::View; refused where the model's library has no
+        Views::View. Over the list's elements, in order: list answers concatenated, absent single
+        answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_viewpoint(self: ElementList[_T_Type], name: str, scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewpointUsage]:
+        """The viewpoint with this simple (effective) name, or none: part :>> wheels is found as
+        wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+        dropped.
+
+        Args:
+            name: The simple name to look for, a feature's effective name.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_viewpoint_def(self: ElementList[_T_Namespace], name: str, scope: Scope = ...) -> ElementList[ViewpointDefinition]:
+        """The viewpointDef with this simple (effective) name, or none. Over the list's elements, in
+        order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            name: The simple name to look for.
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_viewpoint_defs(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[ViewpointDefinition]:
+        """The viewpointDefs of this namespace: owned, imported (and inherited) only, or both. Over
+        the list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_viewpoint_defs_semantic(self: ElementList[_T_Namespace], scope: Scope = ...) -> ElementList[Type]:
+        """The types that specialize Views::ViewpointCheck; refused where the model's library has no
+        Views::ViewpointCheck. Over the list's elements, in order: list answers concatenated, absent
+        single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_viewpoints(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewpointUsage]:
+        """The viewpoints of this type. Over the list's elements, in order: list answers
+        concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_viewpoints_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation API's
+        semanticViewpoints; refused where the model's library has no Views::ViewpointCheck. Over the
+        list's elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_views(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[ViewUsage]:
+        """The views of this type. Over the list's elements, in order: list answers concatenated,
+        absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
+    def find_views_semantic(self: ElementList[_T_Type], scope: Scope = ..., visibility: VisibilityFilter = ..., library: bool = ...) -> ElementList[Feature]:
+        """The features whose type conforms to Views::View, as the Pilot navigation API's
+        semanticViews; refused where the model's library has no Views::View. Over the list's
+        elements, in order: list answers concatenated, absent single answers dropped.
+
+        Args:
+            scope: Which members a list reads: the type's own, those it inherits, or both. A list of
+                features gives its own first; a list of members or definitions, outside the owned
+                scope, is in the backend's order. For a namespace's members, inherited includes
+                imported. Default: Scope.OWNED.
+            visibility: Which visibilities a list keeps: every one, public and protected, or public
+                only. Default: VisibilityFilter.ANY.
+            library: Whether members inherited from the standard library's types are kept (a user's
+                library package counts as model). Default: False.
+
+        Returns:
+            The elements, in order.
+
+        Raises:
+            Refused: Where the definition gives no answer for this element, as described above.
+            NotAnswered: Where the backend cannot answer a property or operation this member reads;
+                the message names it. If the member refuses for one element, the call refuses.
+        """
 
 REGISTRY: dict[str, type[Element]]

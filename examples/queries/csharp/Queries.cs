@@ -438,8 +438,10 @@ public static class Queries
     /// false may hold.
     ///
     /// Entering a state enters every region of a parallel state, or else its initial states
-    /// (InitialStates) and the targets of the transitions from its entry action (the form
-    /// `entry action initial; transition initial then off;`), and so on down. A transition from a
+    /// (InitialStates) and the targets of the transitions from its entry action, and so on down.
+    /// The transitions from the entry action (`entry action initial; transition initial then
+    /// off;`) are the form the specification's Annex A model uses, followed here so that
+    /// model can be explored; the SDK's FindInitialStates does not count them. A transition from a
     /// state is taken from any of its substates too, and entering a nested target makes the states
     /// enclosing it active. Regions of a parallel state are explored independently of each other.
     ///
@@ -535,6 +537,17 @@ public static class Queries
         return kind && usage.owningType is Definition or Usage;
     }
 
+    /// <summary>The multiplicity `usage` declares, or null. SysML gives a usage that declares none the
+    /// default [1..1]; the SysML Toolkit and the Pilot Implementation write it as a member without
+    /// bounds whose subsetting of `Base::exactlyOne` is implied. That member is no declaration (see
+    /// MultiplicityOf).</summary>
+    public static Multiplicity? DeclaredMultiplicity(Feature usage)
+    {
+        var multiplicity = usage.multiplicity;
+        if (multiplicity == null || multiplicity is MultiplicityRange) return multiplicity;
+        return multiplicity.ownedSubsetting.All(s => s.isImplied == true) ? null : multiplicity;
+    }
+
     /// <summary>What says how many instances a usage stands for, by SysML's rule for usages: its own
     /// multiplicity; else that of the usages it explicitly subsets or redefines, nearest first (in a
     /// valid model a redefinition only narrows what it redefines, so the nearest is the tightest);
@@ -547,7 +560,8 @@ public static class Queries
         while (todo.Count > 0)
         {
             var current = todo.Dequeue();
-            if (current.multiplicity != null) return current.multiplicity;
+            var declared = DeclaredMultiplicity(current);
+            if (declared != null) return declared;
             var subsetted = ExplicitSubsettings(current);
             if (subsetted.Count == 0) return HasDefaultMultiplicity(current) ? DefaultOne : null;
             foreach (var feature in subsetted)

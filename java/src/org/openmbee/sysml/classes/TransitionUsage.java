@@ -176,4 +176,22 @@ public interface TransitionUsage extends ActionUsage {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * What a transition's triggers accept.
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default TypeList findAcceptedTypes() { return new TypeList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_ACCEPTED_TYPES))); }
+    /**
+     * Whether this transition's triggers accept a value of type: whether type specializes one of
+     * their accepted types (findAcceptedTypes).
+     *
+     * @param type The type of what arrives: an item, a signal or an event.
+     * @return true or false.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsAcceptedType(Type type) { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_ACCEPTED_TYPE, type)); }
 }

@@ -6,7 +6,10 @@ on:
 permissions:
   contents: read
 jobs:
+  # The registries trust Open-MBEE/sysml-sdk only (PUBLISHING.md); a release or a manual run anywhere
+  # else, such as a private copy of the repository, builds and uploads nothing.
   build:
+    if: github.repository == 'Open-MBEE/sysml-sdk'
     permissions:
       contents: write
     uses: ./.github/workflows/package.yml

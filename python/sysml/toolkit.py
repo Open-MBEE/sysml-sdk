@@ -23,7 +23,7 @@ import os
 import sys
 from typing import Any, Iterable, Optional
 
-from .base import SdkError, Gone, NotImplementedInToolkit, UnresolvedReference
+from .base import SdkError, Gone, NotImplementedInToolkit, Refused, UnresolvedReference
 from . import toolkit_table as T
 
 # ---------------------------------------------------------------- C structures
@@ -54,8 +54,8 @@ class LoadOptions(C.Structure):
     ]
 
 # "T", a list of strings, crosses the ABI as JSON text in a Str.
-OUT_TYPES = {"H": Handles, "R": Ref, "S": Str, "T": Str, "B": Bool, "I": Int, "F": Real}
-OK, NOT_IMPLEMENTED, NOT_APPLICABLE, INVALID_HANDLE, INVALID_ARG, LOAD_FAILED, INTERNAL, UNRESOLVED = range(8)
+OUT_TYPES = {"H": Handles, "R": Ref, "S": Str, "T": Str, "M": Str, "B": Bool, "I": Int, "F": Real}
+OK, NOT_IMPLEMENTED, NOT_APPLICABLE, INVALID_HANDLE, INVALID_ARG, LOAD_FAILED, INTERNAL, UNRESOLVED, REFUSED = range(9)
 
 
 class ToolkitError(SdkError):
@@ -114,6 +114,23 @@ class Library:
                 f"this SDK from {T.NAMES_DIGEST[:12]}; regenerate one side"
             )
         self._fn_cache: dict[str, Any] = {}
+        self._convenience_checked = False
+
+    def check_convenience(self) -> None:
+        """Whether the library has the convenience members this SDK was generated with."""
+        if self._convenience_checked:
+            return
+        try:
+            f, n = self.lib.sysmlv2_convenience_digest, self.lib.sysmlv2_convenience_digest_len
+        except AttributeError:
+            raise ToolkitError(f"binding library {self.path} has no convenience members; rebuild it (abi/)") from None
+        f.restype, n.restype = C.c_void_p, C.c_size_t
+        digest = C.string_at(f(), n()).decode()
+        if digest != T.CONVENIENCE_DIGEST:
+            raise ToolkitError(
+                f"binding library {self.path} was generated with convenience members {digest[:12]}, "
+                f"this SDK with {T.CONVENIENCE_DIGEST[:12]}; regenerate one side")
+        self._convenience_checked = True
 
     def fn(self, symbol: str, out_type):
         f = self._fn_cache.get(symbol)
@@ -224,6 +241,8 @@ class ToolkitBackend:
             raise Gone(msg or f"{where}: invalid handle")
         if st == UNRESOLVED:
             raise UnresolvedReference(msg or f"{where}: a reference did not resolve")
+        if st == REFUSED:
+            raise Refused(msg or f"{where}: refused")
         raise ToolkitError(f"{where}: status {st}: {msg}")
 
     # -- dispatch ------------------------------------------------------------
@@ -264,6 +283,9 @@ class ToolkitBackend:
         if code == "T":  # a list of strings (a requirement's `text`), as JSON text
             text = self._L.take_str(out)
             return [] if text is None else json.loads(text)
+        if code == "M":  # a name-keyed map: JSON pairs of a name and a handle (a decimal string)
+            text = self._L.take_str(out)
+            return [] if text is None else [[name, {"@id": int(h)}] for name, h in json.loads(text)]
         return out.value if out.present else None
 
     # -- the backend contract --------------------------------------------------
@@ -314,6 +336,43 @@ class ToolkitBackend:
         if not self._check(st, where):
             return [] if op.code == "H" else None
         return self._unpack(op.code, out)
+
+    # A convenience member's parameters and result at the binding library (tools/naming.py,
+    # convenience_abi): an enumeration literal by its index, a Boolean, a string, an element.
+    _FIND_PARAM = {"scope": C.c_uint32, "visibility": C.c_uint32, "bool": C.c_bool, "str": C.POINTER(Str),
+                   "element": C.c_uint64}
+    _FIND_OUT = {"elements": "H", "element": "R", "bool": "B", "int": "I", "unlimited": "I", "real": "F",
+                 "strings": "T", "literal": "S", "map": "M"}
+
+    def find(self, handle: int, member, args: list) -> Any:
+        """Answer a convenience member through its binding library function."""
+        self._L.check_convenience()
+        keep: list = []
+        cargs, argtypes = [], [C.c_void_p, C.c_uint64]
+        for (pname, kind, _), value in zip(member.params, args):
+            if kind in ("scope", "visibility"):
+                cargs.append(C.c_uint32(list(type(value)).index(value)))
+            elif kind == "bool":
+                cargs.append(C.c_bool(value))
+            elif kind == "str":
+                cargs.append(C.byref(_c_str(value.encode(), keep)))
+            else:
+                cargs.append(C.c_uint64(value._handle))
+            argtypes.append(self._FIND_PARAM[kind])
+        code = self._FIND_OUT[member.result]
+        out_t = OUT_TYPES[code]
+        f = getattr(self._L.lib, "sysmlv2_conv_" + member.spelled)
+        f.argtypes = argtypes + [C.POINTER(out_t)]
+        f.restype = C.c_int
+        out = out_t()
+        st = f(self._s, C.c_uint64(handle), *cargs, C.byref(out))
+        if not self._check(st, f"{self.metaclass(handle)}.{member.name}()"):
+            return [] if code in ("H", "T", "M") else None
+        return self._unpack(code, out)
+
+    def find_each(self, handles: list, member, args: list) -> list:
+        """A convenience member on each element: one binding library call per element (in process)."""
+        return [self.find(h, member, args) for h in handles]
 
     def full_json(self, closures: bool = True) -> str:
         """The model as full-form interchange JSON, from the SysML Toolkit's own emitter.

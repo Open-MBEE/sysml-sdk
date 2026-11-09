@@ -448,8 +448,10 @@ def explore(machine, *, triggers=None, bindings=None) -> dict:
               false may hold.
 
     Entering a state enters every region of a parallel state, or else its initial states
-    (`initial_states`) and the targets of the transitions from its entry action (the form
-    `entry action initial; transition initial then off;`), and so on down. A transition from a
+    (`initial_states`) and the targets of the transitions from its entry action, and so on down.
+    The transitions from the entry action (`entry action initial; transition initial then
+    off;`) are the form the specification's Annex A model uses, followed here so that
+    model can be explored; the SDK's find_initial_states does not count them. A transition from a
     state is taken from any of its substates too, and entering a nested target makes the states
     enclosing it active. Regions of a parallel state are explored independently of each other.
 
@@ -527,6 +529,16 @@ def has_default_multiplicity(usage) -> bool:
     return kind and isinstance(usage.owningType, (Definition, Usage))
 
 
+def declared_multiplicity(usage):
+    """The multiplicity `usage` declares, or None. SysML gives a usage that declares none the default
+    [1..1]; the SysML Toolkit and the Pilot Implementation write it as a member without bounds whose
+    subsetting of `Base::exactlyOne` is implied. That member is no declaration (see `multiplicity_of`)."""
+    multiplicity = usage.multiplicity
+    if multiplicity is None or isinstance(multiplicity, MultiplicityRange):
+        return multiplicity
+    return None if all(s.isImplied for s in multiplicity.ownedSubsetting) else multiplicity
+
+
 def multiplicity_of(usage):
     """What says how many instances a usage stands for, by SysML's rule for usages: its own
     multiplicity; else that of the usages it explicitly subsets or redefines, nearest first (in a
@@ -535,8 +547,9 @@ def multiplicity_of(usage):
     seen, todo = {usage}, deque([usage])
     while todo:
         current = todo.popleft()
-        if current.multiplicity is not None:
-            return current.multiplicity
+        declared = declared_multiplicity(current)
+        if declared is not None:
+            return declared
         subsetted = explicit_subsettings(current)
         if not subsetted:
             return DEFAULT_ONE if has_default_multiplicity(current) else None

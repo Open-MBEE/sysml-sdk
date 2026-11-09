@@ -122,4 +122,14 @@ public interface StateDefinition extends ActionDefinition {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * Initial states, by a priority chain over the notation's forms: first start then off; and,
+     * only if that gives none, entry; then off; (the Annex A form, an entry action with a
+     * transition from it, is not recognized).
+     *
+     * @return The elements, in order; an empty list where there are none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default StateUsageList findInitialStates() { return new StateUsageList($list($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_INITIAL_STATES))); }
 }

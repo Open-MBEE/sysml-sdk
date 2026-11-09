@@ -170,6 +170,27 @@ def test_resolve_miss_returns_none(model):
     assert model.resolve("No::Such::Name") is None
 
 
+# --- convenience members ----------------------------------------------------
+# A payload holds property values only: every convenience member is refused by the backend (NotAnswered,
+# not the contract's Refused), naming the member, on an element and over a list, whatever the
+# arguments. The same checks run in every language.
+
+def test_convenience_members_are_not_answered_on_payload_models(model):
+    pkg, part = model.element("pkg"), model.element("part")
+    calls = [
+        ("findPartDefs", lambda: pkg.find_part_defs()),
+        ("findPartDef", lambda: pkg.find_part_def("x", scope=f.Scope.ALL)),
+        ("findParts", lambda: part.find_parts(f.Scope.ALL, f.VisibilityFilter.PUBLIC, True)),
+        ("findDocText", lambda: part.find_doc_text()),
+        ("findParts", lambda: f.ElementList([part, model.element("part2")]).find_parts()),
+    ]
+    for member, call in calls:
+        with pytest.raises(f.NotAnswered) as ei:
+            call()
+        assert not isinstance(ei.value, f.Refused), member
+        assert str(ei.value).startswith(f"{member}: the convenience members are not available on payload models")
+
+
 def test_payload_elements_come_in_document_order():
     """An id given twice keeps its first place and its last element, in every language."""
     m = f.Model.from_full_json([

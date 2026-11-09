@@ -53,6 +53,1936 @@ struct Namespace : public virtual Element {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The features that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_member_features(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The feature that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Feature> find_member_feature(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The usages that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Usage> find_member_usages(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The usage that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Usage> find_member_usage(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The actions that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ActionUsage> find_member_actions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The action that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ActionUsage> find_member_action(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The allocations that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AllocationUsage> find_member_allocations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The allocation that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AllocationUsage> find_member_allocation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The analysisCases that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AnalysisCaseUsage> find_member_analysis_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The analysisCase that is a member under this simple name (an alias's name included), or
+    /// none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AnalysisCaseUsage> find_member_analysis_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The attributes that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AttributeUsage> find_member_attributes(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The attribute that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AttributeUsage> find_member_attribute(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The calculations that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CalculationUsage> find_member_calculations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The calculation that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<CalculationUsage> find_member_calculation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The cases that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CaseUsage> find_member_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The case that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<CaseUsage> find_member_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The concerns that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConcernUsage> find_member_concerns(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The concern that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConcernUsage> find_member_concern(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The connections that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConnectorAsUsage> find_member_connections(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The connection that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConnectorAsUsage> find_member_connection(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The constraints that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConstraintUsage> find_member_constraints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The constraint that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConstraintUsage> find_member_constraint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The enumerations that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<EnumerationUsage> find_member_enumerations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The enumeration that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<EnumerationUsage> find_member_enumeration(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The flows that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<FlowUsage> find_member_flows(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The flow that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<FlowUsage> find_member_flow(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The interfaces that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<InterfaceUsage> find_member_interfaces(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The interface that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<InterfaceUsage> find_member_interface(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The items that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ItemUsage> find_member_items(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The item that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ItemUsage> find_member_item(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The occurrences that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<OccurrenceUsage> find_member_occurrences(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The occurrence that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<OccurrenceUsage> find_member_occurrence(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The parts that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PartUsage> find_member_parts(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The part that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<PartUsage> find_member_part(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The ports that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PortUsage> find_member_ports(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The port that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<PortUsage> find_member_port(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The references that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ReferenceUsage> find_member_references(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The reference that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ReferenceUsage> find_member_reference(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The renderings that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RenderingUsage> find_member_renderings(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The rendering that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<RenderingUsage> find_member_rendering(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The requirements that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RequirementUsage> find_member_requirements(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The requirement that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<RequirementUsage> find_member_requirement(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The states that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<StateUsage> find_member_states(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The state that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<StateUsage> find_member_state(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The transitions that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<TransitionUsage> find_member_transitions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The transition that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<TransitionUsage> find_member_transition(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The useCases that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<UseCaseUsage> find_member_use_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The useCase that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<UseCaseUsage> find_member_use_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The verificationCases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<VerificationCaseUsage> find_member_verification_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The verificationCase that is a member under this simple name (an alias's name included), or
+    /// none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<VerificationCaseUsage> find_member_verification_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The views that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ViewUsage> find_member_views(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The view that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ViewUsage> find_member_view(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The viewpoints that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ViewpointUsage> find_member_viewpoints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The viewpoint that is a member under this simple name (an alias's name included), or none.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ViewpointUsage> find_member_viewpoint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The definitions of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Definition> find_definitions(Scope scope = Scope::Owned) const;
+    /// The definition with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Definition> find_definition(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The definitions of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different definitions,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<Definition> find_definitions_by_name(Scope scope = Scope::Owned) const;
+    /// The actionDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ActionDefinition> find_action_defs(Scope scope = Scope::Owned) const;
+    /// The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ActionDefinition> find_action_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Actions::Action; refused where the model's library has no
+    /// Actions::Action.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_action_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The actionDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ActionDefinition> find_action_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The actionDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different actionDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ActionDefinition> find_action_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The allocationDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AllocationDefinition> find_allocation_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Allocations::Allocation; refused where the model's library has no
+    /// Allocations::Allocation.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_allocation_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The allocationDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AllocationDefinition> find_allocation_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The allocationDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different allocationDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<AllocationDefinition> find_allocation_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AnalysisCaseDefinition> find_analysis_case_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize AnalysisCases::AnalysisCase; refused where the model's library has
+    /// no AnalysisCases::AnalysisCase.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_analysis_case_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The analysisCaseDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AnalysisCaseDefinition> find_analysis_case_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The analysisCaseDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different analysisCaseDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<AnalysisCaseDefinition> find_analysis_case_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The attributeDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AttributeDefinition> find_attribute_defs(Scope scope = Scope::Owned) const;
+    /// The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AttributeDefinition> find_attribute_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Base::DataValue; refused where the model's library has no
+    /// Base::DataValue.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_attribute_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The attributeDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AttributeDefinition> find_attribute_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The attributeDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different attributeDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<AttributeDefinition> find_attribute_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The calculationDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CalculationDefinition> find_calculation_defs(Scope scope = Scope::Owned) const;
+    /// The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CalculationDefinition> find_calculation_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Calculations::Calculation; refused where the model's library has
+    /// no Calculations::Calculation.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_calculation_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The calculationDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<CalculationDefinition> find_calculation_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The calculationDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different calculationDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<CalculationDefinition> find_calculation_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The caseDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CaseDefinition> find_case_defs(Scope scope = Scope::Owned) const;
+    /// The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CaseDefinition> find_case_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Cases::Case; refused where the model's library has no Cases::Case.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_case_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The caseDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<CaseDefinition> find_case_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The caseDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different caseDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<CaseDefinition> find_case_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The concernDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConcernDefinition> find_concern_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Requirements::ConcernCheck; refused where the model's library has
+    /// no Requirements::ConcernCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_concern_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The concernDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConcernDefinition> find_concern_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The concernDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different concernDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ConcernDefinition> find_concern_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The connectionDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConnectionDefinition> find_connection_defs(Scope scope = Scope::Owned) const;
+    /// The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConnectionDefinition> find_connection_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Connections::Connection; refused where the model's library has no
+    /// Connections::Connection.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_connection_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The connectionDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConnectionDefinition> find_connection_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The connectionDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different connectionDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ConnectionDefinition> find_connection_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The constraintDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConstraintDefinition> find_constraint_defs(Scope scope = Scope::Owned) const;
+    /// The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConstraintDefinition> find_constraint_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Constraints::ConstraintCheck; refused where the model's library
+    /// has no Constraints::ConstraintCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_constraint_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The constraintDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConstraintDefinition> find_constraint_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The constraintDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different constraintDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ConstraintDefinition> find_constraint_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The enumerationDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<EnumerationDefinition> find_enumeration_defs(Scope scope = Scope::Owned) const;
+    /// The enumerationDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<EnumerationDefinition> find_enumeration_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The enumerationDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different enumerationDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<EnumerationDefinition> find_enumeration_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The flowDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<FlowDefinition> find_flow_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Flows::MessageAction; refused where the model's library has no
+    /// Flows::MessageAction.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_flow_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The flowDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<FlowDefinition> find_flow_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The flowDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different flowDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<FlowDefinition> find_flow_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The interfaceDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<InterfaceDefinition> find_interface_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Interfaces::Interface; refused where the model's library has no
+    /// Interfaces::Interface.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_interface_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The interfaceDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<InterfaceDefinition> find_interface_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The interfaceDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different interfaceDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<InterfaceDefinition> find_interface_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The itemDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ItemDefinition> find_item_defs(Scope scope = Scope::Owned) const;
+    /// The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ItemDefinition> find_item_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Items::Item; refused where the model's library has no Items::Item.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_item_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The itemDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ItemDefinition> find_item_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The itemDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different itemDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ItemDefinition> find_item_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The metadataDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<MetadataDefinition> find_metadata_defs(Scope scope = Scope::Owned) const;
+    /// The metadataDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<MetadataDefinition> find_metadata_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The metadataDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different metadataDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<MetadataDefinition> find_metadata_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The occurrenceDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<OccurrenceDefinition> find_occurrence_defs(Scope scope = Scope::Owned) const;
+    /// The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<OccurrenceDefinition> find_occurrence_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Occurrences::Occurrence; refused where the model's library has no
+    /// Occurrences::Occurrence.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_occurrence_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The occurrenceDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<OccurrenceDefinition> find_occurrence_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The occurrenceDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different occurrenceDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<OccurrenceDefinition> find_occurrence_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The partDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PartDefinition> find_part_defs(Scope scope = Scope::Owned) const;
+    /// The partDefs whose metaclass is exactly PartDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PartDefinition> find_part_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Parts::Part; refused where the model's library has no Parts::Part.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_part_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The partDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<PartDefinition> find_part_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The partDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different partDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<PartDefinition> find_part_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The portDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PortDefinition> find_port_defs(Scope scope = Scope::Owned) const;
+    /// The portDefs whose metaclass is exactly PortDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PortDefinition> find_port_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Ports::Port; refused where the model's library has no Ports::Port.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_port_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The portDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<PortDefinition> find_port_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The portDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different portDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<PortDefinition> find_port_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The renderingDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RenderingDefinition> find_rendering_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Views::Rendering; refused where the model's library has no
+    /// Views::Rendering.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_rendering_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The renderingDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<RenderingDefinition> find_rendering_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The renderingDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different renderingDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<RenderingDefinition> find_rendering_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The requirementDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RequirementDefinition> find_requirement_defs(Scope scope = Scope::Owned) const;
+    /// The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RequirementDefinition> find_requirement_defs_exact(Scope scope = Scope::Owned) const;
+    /// The types that specialize Requirements::RequirementCheck; refused where the model's library
+    /// has no Requirements::RequirementCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_requirement_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The requirementDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<RequirementDefinition> find_requirement_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The requirementDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different requirementDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<RequirementDefinition> find_requirement_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The stateDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<StateDefinition> find_state_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize States::StateAction; refused where the model's library has no
+    /// States::StateAction.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_state_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The stateDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<StateDefinition> find_state_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The stateDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different stateDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<StateDefinition> find_state_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The useCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<UseCaseDefinition> find_use_case_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize UseCases::UseCase; refused where the model's library has no
+    /// UseCases::UseCase.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_use_case_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The useCaseDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<UseCaseDefinition> find_use_case_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The useCaseDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different useCaseDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<UseCaseDefinition> find_use_case_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The verificationCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<VerificationCaseDefinition> find_verification_case_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize VerificationCases::VerificationCase; refused where the model's
+    /// library has no VerificationCases::VerificationCase.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_verification_case_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The verificationCaseDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<VerificationCaseDefinition> find_verification_case_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The verificationCaseDefs of this namespace by name: each under every name and short name it
+    /// is a member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different
+    /// verificationCaseDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<VerificationCaseDefinition> find_verification_case_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The viewDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ViewDefinition> find_view_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Views::View; refused where the model's library has no Views::View.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_view_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The viewDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ViewDefinition> find_view_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The viewDefs of this namespace by name: each under every name and short name it is a member
+    /// by (an alias's included). The order is the backend's: the specification does not define the
+    /// order of membership. Refused where one name names two different viewDefs, naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ViewDefinition> find_view_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The viewpointDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ViewpointDefinition> find_viewpoint_defs(Scope scope = Scope::Owned) const;
+    /// The types that specialize Views::ViewpointCheck; refused where the model's library has no
+    /// Views::ViewpointCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_viewpoint_defs_semantic(Scope scope = Scope::Owned) const;
+    /// The viewpointDef with this simple (effective) name, or none.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ViewpointDefinition> find_viewpoint_def(const std::string& name, Scope scope = Scope::Owned) const;
+    /// The viewpointDefs of this namespace by name: each under every name and short name it is a
+    /// member by (an alias's included). The order is the backend's: the specification does not
+    /// define the order of membership. Refused where one name names two different viewpointDefs,
+    /// naming both.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The names and the element each names, in membership order; an empty map where there
+    ///     are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    NameMap<ViewpointDefinition> find_viewpoint_defs_by_name(Scope scope = Scope::Owned) const;
+    /// The packages this namespace owns.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Package> find_packages() const;
+    /// The owned package with this simple name, or none.
+    /// @param name The simple name to look for.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Package> find_package(const std::string& name) const;
+    /// The metadata usages this namespace owns, whatever they annotate (metadata M about other;
+    /// included). Owned only: metadata is about the element that owns it, so it is never read
+    /// through inheritance or imports.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<MetadataUsage> find_member_metadata() const;
 };
 
 /// concrete — KerML 20250201.
@@ -138,6 +2068,1359 @@ struct Type : public virtual Namespace {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The features of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_features(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The feature with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Feature> find_feature(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The usages of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Usage> find_usages(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The usage with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Usage> find_usage(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The actions of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ActionUsage> find_actions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The actions whose metaclass is exactly ActionUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ActionUsage> find_actions_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Actions::Action, as the Pilot navigation API's
+    /// semanticActions; refused where the model's library has no Actions::Action.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_actions_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The action with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ActionUsage> find_action(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The allocations of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AllocationUsage> find_allocations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Allocations::Allocation, as the Pilot navigation API's
+    /// semanticAllocations; refused where the model's library has no Allocations::Allocation.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_allocations_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The allocation with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AllocationUsage> find_allocation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The analysisCases of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AnalysisCaseUsage> find_analysis_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot navigation
+    /// API's semanticAnalysisCases; refused where the model's library has no
+    /// AnalysisCases::AnalysisCase.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_analysis_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The analysisCase with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AnalysisCaseUsage> find_analysis_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The attributes of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AttributeUsage> find_attributes(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The attributes whose metaclass is exactly AttributeUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<AttributeUsage> find_attributes_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+    /// semanticAttributes; refused where the model's library has no Base::DataValue.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_attributes_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The attribute with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<AttributeUsage> find_attribute(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The calculations of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CalculationUsage> find_calculations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The calculations whose metaclass is exactly CalculationUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CalculationUsage> find_calculations_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Calculations::Calculation, as the Pilot navigation API's
+    /// semanticCalculations; refused where the model's library has no Calculations::Calculation.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_calculations_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The calculation with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<CalculationUsage> find_calculation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The cases of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CaseUsage> find_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The cases whose metaclass is exactly CaseUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<CaseUsage> find_cases_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Cases::Case, as the Pilot navigation API's
+    /// semanticCases; refused where the model's library has no Cases::Case.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The case with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<CaseUsage> find_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The concerns of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConcernUsage> find_concerns(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Requirements::ConcernCheck, as the Pilot navigation
+    /// API's semanticConcerns; refused where the model's library has no Requirements::ConcernCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_concerns_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The concern with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConcernUsage> find_concern(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The connections of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConnectorAsUsage> find_connections(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The connections whose metaclass is exactly ConnectionUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConnectionUsage> find_connections_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Connections::Connection, as the Pilot navigation API's
+    /// semanticConnections; refused where the model's library has no Connections::Connection.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_connections_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The connection with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConnectorAsUsage> find_connection(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The constraints of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConstraintUsage> find_constraints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ConstraintUsage> find_constraints_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Constraints::ConstraintCheck, as the Pilot navigation
+    /// API's semanticConstraints; refused where the model's library has no
+    /// Constraints::ConstraintCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_constraints_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The constraint with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ConstraintUsage> find_constraint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The enumerations of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<EnumerationUsage> find_enumerations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The enumeration with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<EnumerationUsage> find_enumeration(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The flows of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<FlowUsage> find_flows(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The flows whose metaclass is exactly FlowUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<FlowUsage> find_flows_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Flows::MessageAction, as the Pilot navigation API's
+    /// semanticFlows; refused where the model's library has no Flows::MessageAction.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_flows_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The flow with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<FlowUsage> find_flow(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The interfaces of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<InterfaceUsage> find_interfaces(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Interfaces::Interface, as the Pilot navigation API's
+    /// semanticInterfaces; refused where the model's library has no Interfaces::Interface.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_interfaces_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The interface with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<InterfaceUsage> find_interface(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The items of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ItemUsage> find_items(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The items whose metaclass is exactly ItemUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ItemUsage> find_items_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Items::Item, as the Pilot navigation API's
+    /// semanticItems; refused where the model's library has no Items::Item.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_items_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The item with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ItemUsage> find_item(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The occurrences of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<OccurrenceUsage> find_occurrences(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<OccurrenceUsage> find_occurrences_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Occurrences::Occurrence, as the Pilot navigation API's
+    /// semanticOccurrences; refused where the model's library has no Occurrences::Occurrence.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_occurrences_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The occurrence with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<OccurrenceUsage> find_occurrence(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The parts of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PartUsage> find_parts(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The parts whose metaclass is exactly PartUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PartUsage> find_parts_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Parts::Part, as the Pilot navigation API's
+    /// semanticParts; refused where the model's library has no Parts::Part.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_parts_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The part with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<PartUsage> find_part(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The ports of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<PortUsage> find_ports(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Ports::Port, as the Pilot navigation API's
+    /// semanticPorts; refused where the model's library has no Ports::Port.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_ports_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The port with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<PortUsage> find_port(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The references of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ReferenceUsage> find_references(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The reference with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ReferenceUsage> find_reference(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The renderings of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RenderingUsage> find_renderings(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+    /// semanticRenderings; refused where the model's library has no Views::Rendering.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_renderings_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The rendering with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<RenderingUsage> find_rendering(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The requirements of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RequirementUsage> find_requirements(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The requirements whose metaclass is exactly RequirementUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<RequirementUsage> find_requirements_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Requirements::RequirementCheck, as the Pilot navigation
+    /// API's semanticRequirements; refused where the model's library has no
+    /// Requirements::RequirementCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_requirements_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The requirement with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<RequirementUsage> find_requirement(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The states of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<StateUsage> find_states(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The states whose metaclass is exactly StateUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<StateUsage> find_states_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to States::StateAction, as the Pilot navigation API's
+    /// semanticStates; refused where the model's library has no States::StateAction.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_states_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The state with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<StateUsage> find_state(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The transitions of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<TransitionUsage> find_transitions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The transition with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<TransitionUsage> find_transition(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The useCases of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<UseCaseUsage> find_use_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<UseCaseUsage> find_use_cases_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to UseCases::UseCase, as the Pilot navigation API's
+    /// semanticUseCases; refused where the model's library has no UseCases::UseCase.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_use_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The useCase with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<UseCaseUsage> find_use_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The verificationCases of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<VerificationCaseUsage> find_verification_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to VerificationCases::VerificationCase, as the Pilot
+    /// navigation API's semanticVerificationCases; refused where the model's library has no
+    /// VerificationCases::VerificationCase.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_verification_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The verificationCase with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<VerificationCaseUsage> find_verification_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The views of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ViewUsage> find_views(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Views::View, as the Pilot navigation API's
+    /// semanticViews; refused where the model's library has no Views::View.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_views_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The view with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ViewUsage> find_view(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The viewpoints of this type.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<ViewpointUsage> find_viewpoints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation API's
+    /// semanticViewpoints; refused where the model's library has no Views::ViewpointCheck.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_viewpoints_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The viewpoint with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<ViewpointUsage> find_viewpoint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its
+    /// original type; a feature chain's last feature is a supertype of the chain.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_declared_supertypes() const;
+    /// Direct supertypes the backend adds by the language's rules (Parts::Part for a part
+    /// definition).
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_implied_supertypes() const;
+    /// Direct supertypes, written and implied: supertypes(false).
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_declared_and_implied_supertypes() const;
+    /// The feature in effect here for feature: itself where inherited as it is, else the one
+    /// redefining it; none where this type does not have it.
+    /// @param feature The feature as declared, on this type or on a type it specializes.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Feature> find_effective_feature(const Feature& feature) const;
+    /// The lower bound as a number; none where the type has no multiplicity; refused where the
+    /// bound is an expression ([rotorCount]).
+    /// @return The number as a Literal, an integer; std::nullopt where there is none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Literal> find_lower_bound() const;
+    /// The upper bound as a number or * (unbounded); none where the type has no multiplicity;
+    /// refused where the bound is an expression.
+    /// @return The number as a Literal, an integer or unbounded (*); std::nullopt where there is
+    ///     none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Literal> find_upper_bound() const;
+    /// The lower bound's expression; none where there is none (no multiplicity, the lower bound of
+    /// [*], a multiplicity without a range).
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Expression> find_lower_bound_expr() const;
+    /// The upper bound's expression; none where there is none.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Expression> find_upper_bound_expr() const;
+    /// Whether the type has a multiplicity whose lower bound is a literal (findLowerBound then
+    /// answers with a number).
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_has_literal_lower_bound() const;
+    /// Whether the type has a multiplicity whose upper bound is a literal.
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_has_literal_upper_bound() const;
+    /// The features directed in or inout relative to this type, directionOf taking conjugation into
+    /// account (a conjugated port's out items are its inputs), scoped like the kind lists. With
+    /// scope all and library true, the specification's input.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_inputs(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features directed out or inout relative to this type, directionOf taking conjugation
+    /// into account (a conjugated port's in items are its outputs), scoped like the kind lists.
+    /// With scope all and library true, the specification's output.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_outputs(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
+    /// The features of this type that are, or specialize, feature (the wheels among a vehicle's
+    /// parts), scoped.
+    /// @param feature The feature the answers are or specialize.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_subsetting_features_of(const Feature& feature, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
 };
 
 /// concrete — KerML 20250201.
@@ -262,6 +3545,213 @@ struct Feature : public virtual Type {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// Whether a type of this feature conforms to Actions::Action; refused where the model's
+    /// library has no Actions::Action.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_action() const;
+    /// Whether a type of this feature conforms to Allocations::Allocation; refused where the
+    /// model's library has no Allocations::Allocation.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_allocation() const;
+    /// Whether a type of this feature conforms to AnalysisCases::AnalysisCase; refused where the
+    /// model's library has no AnalysisCases::AnalysisCase.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_analysis_case() const;
+    /// Whether a type of this feature conforms to Base::DataValue; refused where the model's
+    /// library has no Base::DataValue.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_attribute() const;
+    /// Whether a type of this feature conforms to Calculations::Calculation; refused where the
+    /// model's library has no Calculations::Calculation.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_calculation() const;
+    /// Whether a type of this feature conforms to Cases::Case; refused where the model's library
+    /// has no Cases::Case.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_case() const;
+    /// Whether a type of this feature conforms to Requirements::ConcernCheck; refused where the
+    /// model's library has no Requirements::ConcernCheck.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_concern() const;
+    /// Whether a type of this feature conforms to Connections::Connection; refused where the
+    /// model's library has no Connections::Connection.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_connection() const;
+    /// Whether a type of this feature conforms to Constraints::ConstraintCheck; refused where the
+    /// model's library has no Constraints::ConstraintCheck.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_constraint() const;
+    /// Whether a type of this feature conforms to Flows::MessageAction; refused where the model's
+    /// library has no Flows::MessageAction.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_flow() const;
+    /// Whether a type of this feature conforms to Interfaces::Interface; refused where the model's
+    /// library has no Interfaces::Interface.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_interface() const;
+    /// Whether a type of this feature conforms to Items::Item; refused where the model's library
+    /// has no Items::Item.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_item() const;
+    /// Whether a type of this feature conforms to Occurrences::Occurrence; refused where the
+    /// model's library has no Occurrences::Occurrence.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_occurrence() const;
+    /// Whether a type of this feature conforms to Parts::Part; refused where the model's library
+    /// has no Parts::Part.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_part() const;
+    /// Whether a type of this feature conforms to Ports::Port; refused where the model's library
+    /// has no Ports::Port.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_port() const;
+    /// Whether a type of this feature conforms to Views::Rendering; refused where the model's
+    /// library has no Views::Rendering.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_rendering() const;
+    /// Whether a type of this feature conforms to Requirements::RequirementCheck; refused where the
+    /// model's library has no Requirements::RequirementCheck.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_requirement() const;
+    /// Whether a type of this feature conforms to States::StateAction; refused where the model's
+    /// library has no States::StateAction.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_state() const;
+    /// Whether a type of this feature conforms to UseCases::UseCase; refused where the model's
+    /// library has no UseCases::UseCase.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_use_case() const;
+    /// Whether a type of this feature conforms to VerificationCases::VerificationCase; refused
+    /// where the model's library has no VerificationCases::VerificationCase.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_verification_case() const;
+    /// Whether a type of this feature conforms to Views::View; refused where the model's library
+    /// has no Views::View.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_view() const;
+    /// Whether a type of this feature conforms to Views::ViewpointCheck; refused where the model's
+    /// library has no Views::ViewpointCheck.
+    /// @return true or false.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_semantic_viewpoint() const;
+    /// The types this feature is declared with.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_declared_types() const;
+    /// The features this feature subsets as written (redefinitions and reference subsettings left
+    /// out).
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_subsetted_features() const;
+    /// The features this feature redefines as written.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_redefined_features() const;
+    /// The feature this feature references (::>), or none.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Feature> find_referenced_feature() const;
+    /// The feature a chain of written redefinitions starts from, following the first at each step
+    /// (Truck::mass to Frame::mass); itself when it redefines nothing.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Feature> find_redefinition_root() const;
+    /// The value expression this feature is declared with (=, :=, default), or none.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Expression> find_value() const;
+    /// Whether the value is a default (default = or default :=).
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_has_default_value() const;
+    /// Whether the value is an initial value (:=).
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_has_initial_value() const;
+    /// Ordered: declared, or through a feature it subsets or redefines, implied ones included, as
+    /// the Pilot's FeatureUtil.checkIsOrdered.
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_effectively_ordered() const;
+    /// A feature chain as its features (battery.powerOut gives [battery, powerOut]); else [self].
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_path() const;
 };
 
 /// concrete — KerML 20250201.
@@ -388,6 +3878,21 @@ struct Step : public virtual Feature {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The directed features, scoped like the kind lists: those whose direction relative to this
+    /// behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_parameters(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
 };
 
 /// concrete — SysML 20250201.
@@ -550,6 +4055,12 @@ struct Usage : public virtual Feature {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The variation a variant belongs to (variation part def V { variant part a; }: a gives V; an
+    /// enumeration's values give the enumeration); none for a usage that is not a variant.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Type> find_variation() const;
 };
 
 /// concrete — SysML 20250201.
@@ -1066,6 +4577,18 @@ struct AcceptActionUsage : public virtual ActionUsage {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// What an accept action accepts: its payload's types.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_accepted_types() const;
+    /// Whether this accept action accepts a value of type: whether type specializes one of its
+    /// accepted types (findAcceptedTypes).
+    /// @param type The type of what arrives: an item, a signal or an event.
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_accepted_type(const Type& type) const;
 };
 
 /// concrete — KerML 20250201.
@@ -1563,6 +5086,21 @@ struct Behavior : public virtual Class {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The directed features, scoped like the kind lists: those whose direction relative to this
+    /// behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Feature> find_parameters(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const;
 };
 
 /// concrete — SysML 20250201.
@@ -3845,6 +7383,12 @@ struct Function : public virtual Behavior {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The result expression of a calculation or constraint, owned or inherited; the specification
+    /// has resultExpression only on analysis cases.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Expression> find_result_expression() const;
 };
 
 /// concrete — SysML 20250201.
@@ -4362,6 +7906,38 @@ struct Expression : public virtual Step {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// Whether the value is written with a unit, <expression> [<unit>], a sign allowed.
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_has_unit() const;
+    /// Whether findLiteral answers: a literal, or a sign on a number literal; a value with a unit
+    /// is not one.
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_literal() const;
+    /// A literal's value, a sign folded. Refused for anything else: a value with a unit (1500 [kg];
+    /// findUnit gives the unit), an expression (2 * x), a reference (= other).
+    /// @return The value as a Literal: an integer, a real, a Boolean, a string, or unbounded (*).
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    Literal find_literal() const;
+    /// The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference
+    /// names, SI::kilogram); none for a literal without a unit; refused for anything else, whose
+    /// unit needs evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit().
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Element> find_unit() const;
+    /// The result expression of a calculation or constraint, owned or inherited; the specification
+    /// has resultExpression only on analysis cases.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Expression> find_result_expression() const;
 };
 
 /// concrete — SysML 20250201.
@@ -6869,6 +10445,12 @@ struct OperatorExpression : public virtual InvocationExpression {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x as
+    /// T, m meta T give T): the grammar puts it in the second owned feature.
+    /// @return The element, or std::nullopt where there is none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    std::optional<Type> find_type_argument() const;
 };
 
 /// concrete — KerML 20250201.
@@ -9932,6 +13514,13 @@ struct StateUsage : public virtual ActionUsage {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// Initial states, by a priority chain over the notation's forms: first start then off; and,
+    /// only if that gives none, entry; then off; (the Annex A form, an entry action with a
+    /// transition from it, is not recognized).
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<StateUsage> find_initial_states() const;
 };
 
 /// concrete — SysML 20250201.
@@ -17183,6 +20772,13 @@ struct StateDefinition : public virtual ActionDefinition {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// Initial states, by a priority chain over the notation's forms: first start then off; and,
+    /// only if that gives none, entry; then off; (the Annex A form, an entry action with a
+    /// transition from it, is not recognized).
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<StateUsage> find_initial_states() const;
 };
 
 /// concrete — SysML 20250201.
@@ -18422,6 +22018,18 @@ struct TransitionUsage : public virtual ActionUsage {
     std::optional<std::string> unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const;
     std::optional<std::string> visibilityOf(const std::optional<Membership>& mem) const;
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
+    /// What a transition's triggers accept.
+    /// @return The elements, in order; an empty list where there are none.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    ElementList<Type> find_accepted_types() const;
+    /// Whether this transition's triggers accept a value of type: whether type specializes one of
+    /// their accepted types (findAcceptedTypes).
+    /// @param type The type of what arrives: an item, a signal or an event.
+    /// @return true or false.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it.
+    bool find_is_accepted_type(const Type& type) const;
 };
 
 /// concrete — SysML 20250201.
@@ -19979,6 +23587,4401 @@ struct WhileLoopActionUsage : public virtual LoopActionUsage {
     std::vector<Membership> visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const;
 };
 
+/// A list of elements carrying the convenience members of its elements: `xs.find_ports()` is the
+/// elements' `find_ports()` in list order, list results concatenated (duplicates kept), absent single
+/// results dropped; if the member refuses for one element, the call refuses. Members that answer a
+/// Boolean, a number or a literal stay on the elements. A std::vector: any vector of elements
+/// converts to one.
+template <class T>
+class ElementList : public std::vector<T> {
+public:
+    ElementList() = default;
+    ElementList(std::vector<T> elements) : std::vector<T>(std::move(elements)) {}
+
+    /// The features of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_features(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findFeatures", "find_features", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The feature with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_feature(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findFeature", "find_feature", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The usages of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Usage> find_usages(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findUsages", "find_usages", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Usage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The usage with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Usage> find_usage(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findUsage", "find_usage", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<Usage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The actions of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ActionUsage> find_actions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findActions", "find_actions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ActionUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The actions whose metaclass is exactly ActionUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ActionUsage> find_actions_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findActionsExact", "find_actions_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ActionUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Actions::Action, as the Pilot navigation API's
+    /// semanticActions; refused where the model's library has no Actions::Action. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_actions_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findActionsSemantic", "find_actions_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The action with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ActionUsage> find_action(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAction", "find_action", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ActionUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The allocations of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AllocationUsage> find_allocations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAllocations", "find_allocations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AllocationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Allocations::Allocation, as the Pilot navigation API's
+    /// semanticAllocations; refused where the model's library has no Allocations::Allocation. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_allocations_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAllocationsSemantic", "find_allocations_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The allocation with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AllocationUsage> find_allocation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAllocation", "find_allocation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<AllocationUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The analysisCases of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AnalysisCaseUsage> find_analysis_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAnalysisCases", "find_analysis_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AnalysisCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to AnalysisCases::AnalysisCase, as the Pilot navigation
+    /// API's semanticAnalysisCases; refused where the model's library has no
+    /// AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_analysis_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAnalysisCasesSemantic", "find_analysis_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The analysisCase with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AnalysisCaseUsage> find_analysis_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAnalysisCase", "find_analysis_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<AnalysisCaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The attributes of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AttributeUsage> find_attributes(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAttributes", "find_attributes", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AttributeUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The attributes whose metaclass is exactly AttributeUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AttributeUsage> find_attributes_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAttributesExact", "find_attributes_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AttributeUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Base::DataValue, as the Pilot navigation API's
+    /// semanticAttributes; refused where the model's library has no Base::DataValue. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_attributes_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAttributesSemantic", "find_attributes_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The attribute with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<AttributeUsage> find_attribute(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findAttribute", "find_attribute", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<AttributeUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The calculations of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<CalculationUsage> find_calculations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCalculations", "find_calculations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<CalculationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The calculations whose metaclass is exactly CalculationUsage, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<CalculationUsage> find_calculations_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCalculationsExact", "find_calculations_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<CalculationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Calculations::Calculation, as the Pilot navigation API's
+    /// semanticCalculations; refused where the model's library has no Calculations::Calculation.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_calculations_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCalculationsSemantic", "find_calculations_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The calculation with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<CalculationUsage> find_calculation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCalculation", "find_calculation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<CalculationUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The cases of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<CaseUsage> find_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCases", "find_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<CaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The cases whose metaclass is exactly CaseUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<CaseUsage> find_cases_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCasesExact", "find_cases_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<CaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Cases::Case, as the Pilot navigation API's
+    /// semanticCases; refused where the model's library has no Cases::Case. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCasesSemantic", "find_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The case with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<CaseUsage> find_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findCase", "find_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<CaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The concerns of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConcernUsage> find_concerns(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConcerns", "find_concerns", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConcernUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Requirements::ConcernCheck, as the Pilot navigation
+    /// API's semanticConcerns; refused where the model's library has no Requirements::ConcernCheck.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_concerns_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConcernsSemantic", "find_concerns_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The concern with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConcernUsage> find_concern(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConcern", "find_concern", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ConcernUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The connections of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConnectorAsUsage> find_connections(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConnections", "find_connections", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConnectorAsUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The connections whose metaclass is exactly ConnectionUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConnectionUsage> find_connections_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConnectionsExact", "find_connections_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConnectionUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Connections::Connection, as the Pilot navigation API's
+    /// semanticConnections; refused where the model's library has no Connections::Connection. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_connections_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConnectionsSemantic", "find_connections_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The connection with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConnectorAsUsage> find_connection(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConnection", "find_connection", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ConnectorAsUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The constraints of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConstraintUsage> find_constraints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConstraints", "find_constraints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConstraintUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The constraints whose metaclass is exactly ConstraintUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConstraintUsage> find_constraints_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConstraintsExact", "find_constraints_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConstraintUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Constraints::ConstraintCheck, as the Pilot navigation
+    /// API's semanticConstraints; refused where the model's library has no
+    /// Constraints::ConstraintCheck. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_constraints_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConstraintsSemantic", "find_constraints_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The constraint with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ConstraintUsage> find_constraint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findConstraint", "find_constraint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ConstraintUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The enumerations of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<EnumerationUsage> find_enumerations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findEnumerations", "find_enumerations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<EnumerationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The enumeration with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<EnumerationUsage> find_enumeration(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findEnumeration", "find_enumeration", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<EnumerationUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The flows of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<FlowUsage> find_flows(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findFlows", "find_flows", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<FlowUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The flows whose metaclass is exactly FlowUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<FlowUsage> find_flows_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findFlowsExact", "find_flows_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<FlowUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Flows::MessageAction, as the Pilot navigation API's
+    /// semanticFlows; refused where the model's library has no Flows::MessageAction. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_flows_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findFlowsSemantic", "find_flows_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The flow with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<FlowUsage> find_flow(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findFlow", "find_flow", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<FlowUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The interfaces of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<InterfaceUsage> find_interfaces(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findInterfaces", "find_interfaces", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<InterfaceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Interfaces::Interface, as the Pilot navigation API's
+    /// semanticInterfaces; refused where the model's library has no Interfaces::Interface. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_interfaces_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findInterfacesSemantic", "find_interfaces_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The interface with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<InterfaceUsage> find_interface(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findInterface", "find_interface", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<InterfaceUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The items of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ItemUsage> find_items(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findItems", "find_items", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ItemUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The items whose metaclass is exactly ItemUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ItemUsage> find_items_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findItemsExact", "find_items_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ItemUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Items::Item, as the Pilot navigation API's
+    /// semanticItems; refused where the model's library has no Items::Item. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_items_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findItemsSemantic", "find_items_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The item with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ItemUsage> find_item(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findItem", "find_item", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ItemUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The occurrences of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<OccurrenceUsage> find_occurrences(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findOccurrences", "find_occurrences", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<OccurrenceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The occurrences whose metaclass is exactly OccurrenceUsage, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<OccurrenceUsage> find_occurrences_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findOccurrencesExact", "find_occurrences_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<OccurrenceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Occurrences::Occurrence, as the Pilot navigation API's
+    /// semanticOccurrences; refused where the model's library has no Occurrences::Occurrence. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_occurrences_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findOccurrencesSemantic", "find_occurrences_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The occurrence with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<OccurrenceUsage> find_occurrence(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findOccurrence", "find_occurrence", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<OccurrenceUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The parts of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<PartUsage> find_parts(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findParts", "find_parts", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<PartUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The parts whose metaclass is exactly PartUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<PartUsage> find_parts_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findPartsExact", "find_parts_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<PartUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Parts::Part, as the Pilot navigation API's
+    /// semanticParts; refused where the model's library has no Parts::Part. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_parts_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findPartsSemantic", "find_parts_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The part with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<PartUsage> find_part(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findPart", "find_part", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<PartUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The ports of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<PortUsage> find_ports(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findPorts", "find_ports", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<PortUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Ports::Port, as the Pilot navigation API's
+    /// semanticPorts; refused where the model's library has no Ports::Port. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_ports_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findPortsSemantic", "find_ports_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The port with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<PortUsage> find_port(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findPort", "find_port", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<PortUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The references of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ReferenceUsage> find_references(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findReferences", "find_references", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ReferenceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The reference with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ReferenceUsage> find_reference(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findReference", "find_reference", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ReferenceUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The renderings of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<RenderingUsage> find_renderings(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRenderings", "find_renderings", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<RenderingUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Views::Rendering, as the Pilot navigation API's
+    /// semanticRenderings; refused where the model's library has no Views::Rendering. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_renderings_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRenderingsSemantic", "find_renderings_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The rendering with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<RenderingUsage> find_rendering(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRendering", "find_rendering", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<RenderingUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The requirements of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<RequirementUsage> find_requirements(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRequirements", "find_requirements", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<RequirementUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The requirements whose metaclass is exactly RequirementUsage, its subkinds left out. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<RequirementUsage> find_requirements_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRequirementsExact", "find_requirements_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<RequirementUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Requirements::RequirementCheck, as the Pilot navigation
+    /// API's semanticRequirements; refused where the model's library has no
+    /// Requirements::RequirementCheck. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_requirements_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRequirementsSemantic", "find_requirements_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The requirement with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<RequirementUsage> find_requirement(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findRequirement", "find_requirement", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<RequirementUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The states of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<StateUsage> find_states(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findStates", "find_states", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<StateUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The states whose metaclass is exactly StateUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<StateUsage> find_states_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findStatesExact", "find_states_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<StateUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to States::StateAction, as the Pilot navigation API's
+    /// semanticStates; refused where the model's library has no States::StateAction. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_states_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findStatesSemantic", "find_states_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The state with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<StateUsage> find_state(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findState", "find_state", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<StateUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The transitions of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<TransitionUsage> find_transitions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findTransitions", "find_transitions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<TransitionUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The transition with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<TransitionUsage> find_transition(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findTransition", "find_transition", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<TransitionUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The useCases of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<UseCaseUsage> find_use_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findUseCases", "find_use_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<UseCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The useCases whose metaclass is exactly UseCaseUsage, its subkinds left out. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<UseCaseUsage> find_use_cases_exact(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findUseCasesExact", "find_use_cases_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<UseCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to UseCases::UseCase, as the Pilot navigation API's
+    /// semanticUseCases; refused where the model's library has no UseCases::UseCase. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_use_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findUseCasesSemantic", "find_use_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The useCase with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<UseCaseUsage> find_use_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findUseCase", "find_use_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<UseCaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The verificationCases of this type. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<VerificationCaseUsage> find_verification_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findVerificationCases", "find_verification_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<VerificationCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to VerificationCases::VerificationCase, as the Pilot
+    /// navigation API's semanticVerificationCases; refused where the model's library has no
+    /// VerificationCases::VerificationCase. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_verification_cases_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findVerificationCasesSemantic", "find_verification_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The verificationCase with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<VerificationCaseUsage> find_verification_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findVerificationCase", "find_verification_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<VerificationCaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The views of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ViewUsage> find_views(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findViews", "find_views", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ViewUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Views::View, as the Pilot navigation API's
+    /// semanticViews; refused where the model's library has no Views::View. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_views_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findViewsSemantic", "find_views_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The view with this simple (effective) name, or none: part :>> wheels is found as wheels.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ViewUsage> find_view(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findView", "find_view", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ViewUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The viewpoints of this type. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ViewpointUsage> find_viewpoints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findViewpoints", "find_viewpoints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ViewpointUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features whose type conforms to Views::ViewpointCheck, as the Pilot navigation API's
+    /// semanticViewpoints; refused where the model's library has no Views::ViewpointCheck. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_viewpoints_semantic(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findViewpointsSemantic", "find_viewpoints_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The viewpoint with this simple (effective) name, or none: part :>> wheels is found as
+    /// wheels. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The simple name to look for, a feature's effective name.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<ViewpointUsage> find_viewpoint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findViewpoint", "find_viewpoint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ViewpointUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Feature> find_member_features(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberFeatures", "find_member_features", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The feature that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Feature> find_member_feature(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberFeature", "find_member_feature", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The usages that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Usage> find_member_usages(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberUsages", "find_member_usages", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Usage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The usage that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Usage> find_member_usage(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberUsage", "find_member_usage", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<Usage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The actions that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ActionUsage> find_member_actions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberActions", "find_member_actions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ActionUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The action that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ActionUsage> find_member_action(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAction", "find_member_action", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ActionUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The allocations that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AllocationUsage> find_member_allocations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAllocations", "find_member_allocations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AllocationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The allocation that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AllocationUsage> find_member_allocation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAllocation", "find_member_allocation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<AllocationUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The analysisCases that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AnalysisCaseUsage> find_member_analysis_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAnalysisCases", "find_member_analysis_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AnalysisCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The analysisCase that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AnalysisCaseUsage> find_member_analysis_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAnalysisCase", "find_member_analysis_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<AnalysisCaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The attributes that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AttributeUsage> find_member_attributes(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAttributes", "find_member_attributes", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<AttributeUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The attribute that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AttributeUsage> find_member_attribute(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberAttribute", "find_member_attribute", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<AttributeUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The calculations that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CalculationUsage> find_member_calculations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberCalculations", "find_member_calculations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<CalculationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The calculation that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CalculationUsage> find_member_calculation(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberCalculation", "find_member_calculation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<CalculationUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The cases that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CaseUsage> find_member_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberCases", "find_member_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<CaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The case that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CaseUsage> find_member_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberCase", "find_member_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<CaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The concerns that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConcernUsage> find_member_concerns(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberConcerns", "find_member_concerns", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConcernUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The concern that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConcernUsage> find_member_concern(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberConcern", "find_member_concern", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ConcernUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The connections that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConnectorAsUsage> find_member_connections(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberConnections", "find_member_connections", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConnectorAsUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The connection that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConnectorAsUsage> find_member_connection(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberConnection", "find_member_connection", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ConnectorAsUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The constraints that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConstraintUsage> find_member_constraints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberConstraints", "find_member_constraints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ConstraintUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The constraint that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConstraintUsage> find_member_constraint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberConstraint", "find_member_constraint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ConstraintUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The enumerations that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<EnumerationUsage> find_member_enumerations(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberEnumerations", "find_member_enumerations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<EnumerationUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The enumeration that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<EnumerationUsage> find_member_enumeration(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberEnumeration", "find_member_enumeration", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<EnumerationUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The flows that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<FlowUsage> find_member_flows(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberFlows", "find_member_flows", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<FlowUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The flow that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<FlowUsage> find_member_flow(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberFlow", "find_member_flow", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<FlowUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The interfaces that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<InterfaceUsage> find_member_interfaces(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberInterfaces", "find_member_interfaces", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<InterfaceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The interface that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<InterfaceUsage> find_member_interface(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberInterface", "find_member_interface", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<InterfaceUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The items that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ItemUsage> find_member_items(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberItems", "find_member_items", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ItemUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The item that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ItemUsage> find_member_item(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberItem", "find_member_item", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ItemUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The occurrences that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<OccurrenceUsage> find_member_occurrences(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberOccurrences", "find_member_occurrences", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<OccurrenceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The occurrence that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<OccurrenceUsage> find_member_occurrence(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberOccurrence", "find_member_occurrence", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<OccurrenceUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The parts that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PartUsage> find_member_parts(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberParts", "find_member_parts", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<PartUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The part that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PartUsage> find_member_part(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberPart", "find_member_part", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<PartUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The ports that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PortUsage> find_member_ports(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberPorts", "find_member_ports", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<PortUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The port that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PortUsage> find_member_port(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberPort", "find_member_port", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<PortUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The references that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ReferenceUsage> find_member_references(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberReferences", "find_member_references", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ReferenceUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The reference that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ReferenceUsage> find_member_reference(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberReference", "find_member_reference", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ReferenceUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The renderings that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RenderingUsage> find_member_renderings(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberRenderings", "find_member_renderings", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<RenderingUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The rendering that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RenderingUsage> find_member_rendering(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberRendering", "find_member_rendering", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<RenderingUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The requirements that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RequirementUsage> find_member_requirements(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberRequirements", "find_member_requirements", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<RequirementUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The requirement that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RequirementUsage> find_member_requirement(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberRequirement", "find_member_requirement", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<RequirementUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The states that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<StateUsage> find_member_states(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberStates", "find_member_states", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<StateUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The state that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<StateUsage> find_member_state(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberState", "find_member_state", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<StateUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The transitions that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<TransitionUsage> find_member_transitions(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberTransitions", "find_member_transitions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<TransitionUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The transition that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<TransitionUsage> find_member_transition(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberTransition", "find_member_transition", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<TransitionUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The useCases that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<UseCaseUsage> find_member_use_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberUseCases", "find_member_use_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<UseCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The useCase that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<UseCaseUsage> find_member_use_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberUseCase", "find_member_use_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<UseCaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The verificationCases that are members of this namespace through any membership (owned,
+    /// aliased, imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<VerificationCaseUsage> find_member_verification_cases(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberVerificationCases", "find_member_verification_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<VerificationCaseUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The verificationCase that is a member under this simple name (an alias's name included), or
+    /// none. Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<VerificationCaseUsage> find_member_verification_case(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberVerificationCase", "find_member_verification_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<VerificationCaseUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The views that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewUsage> find_member_views(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberViews", "find_member_views", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ViewUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The view that is a member under this simple name (an alias's name included), or none. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewUsage> find_member_view(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberView", "find_member_view", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ViewUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The viewpoints that are members of this namespace through any membership (owned, aliased,
+    /// imported, inherited), each once. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewpointUsage> find_member_viewpoints(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberViewpoints", "find_member_viewpoints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<ViewpointUsage>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The viewpoint that is a member under this simple name (an alias's name included), or none.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param name The member name to look for, an alias's name included.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewpointUsage> find_member_viewpoint(const std::string& name, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findMemberViewpoint", "find_member_viewpoint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+        return Element::find_all_<ViewpointUsage>(*this, f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The definitions of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Definition> find_definitions(Scope scope = Scope::Owned) const {
+        static const Find f{"findDefinitions", "find_definitions", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Definition>(*this, f, {detail::arg(scope)});
+    }
+    /// The definition with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Definition> find_definition(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findDefinition", "find_definition", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<Definition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The actionDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ActionDefinition> find_action_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findActionDefs", "find_action_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ActionDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The actionDefs whose metaclass is exactly ActionDefinition, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ActionDefinition> find_action_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findActionDefsExact", "find_action_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ActionDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Actions::Action; refused where the model's library has no
+    /// Actions::Action. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_action_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findActionDefsSemantic", "find_action_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The actionDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ActionDefinition> find_action_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findActionDef", "find_action_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ActionDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The allocationDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AllocationDefinition> find_allocation_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findAllocationDefs", "find_allocation_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<AllocationDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Allocations::Allocation; refused where the model's library has no
+    /// Allocations::Allocation. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_allocation_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findAllocationDefsSemantic", "find_allocation_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The allocationDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AllocationDefinition> find_allocation_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findAllocationDef", "find_allocation_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<AllocationDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The analysisCaseDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AnalysisCaseDefinition> find_analysis_case_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findAnalysisCaseDefs", "find_analysis_case_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<AnalysisCaseDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize AnalysisCases::AnalysisCase; refused where the model's library has
+    /// no AnalysisCases::AnalysisCase. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_analysis_case_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findAnalysisCaseDefsSemantic", "find_analysis_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The analysisCaseDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AnalysisCaseDefinition> find_analysis_case_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findAnalysisCaseDef", "find_analysis_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<AnalysisCaseDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The attributeDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AttributeDefinition> find_attribute_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findAttributeDefs", "find_attribute_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<AttributeDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The attributeDefs whose metaclass is exactly AttributeDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AttributeDefinition> find_attribute_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findAttributeDefsExact", "find_attribute_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<AttributeDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Base::DataValue; refused where the model's library has no
+    /// Base::DataValue. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_attribute_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findAttributeDefsSemantic", "find_attribute_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The attributeDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<AttributeDefinition> find_attribute_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findAttributeDef", "find_attribute_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<AttributeDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The calculationDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CalculationDefinition> find_calculation_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findCalculationDefs", "find_calculation_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<CalculationDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The calculationDefs whose metaclass is exactly CalculationDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CalculationDefinition> find_calculation_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findCalculationDefsExact", "find_calculation_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<CalculationDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Calculations::Calculation; refused where the model's library has
+    /// no Calculations::Calculation. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_calculation_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findCalculationDefsSemantic", "find_calculation_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The calculationDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CalculationDefinition> find_calculation_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findCalculationDef", "find_calculation_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<CalculationDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The caseDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CaseDefinition> find_case_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findCaseDefs", "find_case_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<CaseDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The caseDefs whose metaclass is exactly CaseDefinition, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CaseDefinition> find_case_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findCaseDefsExact", "find_case_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<CaseDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Cases::Case; refused where the model's library has no Cases::Case.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_case_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findCaseDefsSemantic", "find_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The caseDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<CaseDefinition> find_case_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findCaseDef", "find_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<CaseDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The concernDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConcernDefinition> find_concern_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findConcernDefs", "find_concern_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ConcernDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Requirements::ConcernCheck; refused where the model's library has
+    /// no Requirements::ConcernCheck. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_concern_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findConcernDefsSemantic", "find_concern_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The concernDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConcernDefinition> find_concern_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findConcernDef", "find_concern_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ConcernDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The connectionDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConnectionDefinition> find_connection_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findConnectionDefs", "find_connection_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ConnectionDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The connectionDefs whose metaclass is exactly ConnectionDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConnectionDefinition> find_connection_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findConnectionDefsExact", "find_connection_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ConnectionDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Connections::Connection; refused where the model's library has no
+    /// Connections::Connection. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_connection_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findConnectionDefsSemantic", "find_connection_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The connectionDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConnectionDefinition> find_connection_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findConnectionDef", "find_connection_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ConnectionDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The constraintDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConstraintDefinition> find_constraint_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findConstraintDefs", "find_constraint_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ConstraintDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The constraintDefs whose metaclass is exactly ConstraintDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConstraintDefinition> find_constraint_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findConstraintDefsExact", "find_constraint_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ConstraintDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Constraints::ConstraintCheck; refused where the model's library
+    /// has no Constraints::ConstraintCheck. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_constraint_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findConstraintDefsSemantic", "find_constraint_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The constraintDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ConstraintDefinition> find_constraint_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findConstraintDef", "find_constraint_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ConstraintDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The enumerationDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<EnumerationDefinition> find_enumeration_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findEnumerationDefs", "find_enumeration_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<EnumerationDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The enumerationDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<EnumerationDefinition> find_enumeration_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findEnumerationDef", "find_enumeration_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<EnumerationDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The flowDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<FlowDefinition> find_flow_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findFlowDefs", "find_flow_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<FlowDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Flows::MessageAction; refused where the model's library has no
+    /// Flows::MessageAction. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_flow_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findFlowDefsSemantic", "find_flow_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The flowDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<FlowDefinition> find_flow_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findFlowDef", "find_flow_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<FlowDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The interfaceDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<InterfaceDefinition> find_interface_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findInterfaceDefs", "find_interface_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<InterfaceDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Interfaces::Interface; refused where the model's library has no
+    /// Interfaces::Interface. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_interface_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findInterfaceDefsSemantic", "find_interface_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The interfaceDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<InterfaceDefinition> find_interface_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findInterfaceDef", "find_interface_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<InterfaceDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The itemDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ItemDefinition> find_item_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findItemDefs", "find_item_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ItemDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The itemDefs whose metaclass is exactly ItemDefinition, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ItemDefinition> find_item_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findItemDefsExact", "find_item_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ItemDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Items::Item; refused where the model's library has no Items::Item.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_item_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findItemDefsSemantic", "find_item_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The itemDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ItemDefinition> find_item_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findItemDef", "find_item_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ItemDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The metadataDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<MetadataDefinition> find_metadata_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findMetadataDefs", "find_metadata_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<MetadataDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The metadataDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<MetadataDefinition> find_metadata_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findMetadataDef", "find_metadata_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<MetadataDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The occurrenceDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<OccurrenceDefinition> find_occurrence_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findOccurrenceDefs", "find_occurrence_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<OccurrenceDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The occurrenceDefs whose metaclass is exactly OccurrenceDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<OccurrenceDefinition> find_occurrence_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findOccurrenceDefsExact", "find_occurrence_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<OccurrenceDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Occurrences::Occurrence; refused where the model's library has no
+    /// Occurrences::Occurrence. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_occurrence_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findOccurrenceDefsSemantic", "find_occurrence_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The occurrenceDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<OccurrenceDefinition> find_occurrence_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findOccurrenceDef", "find_occurrence_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<OccurrenceDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The partDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PartDefinition> find_part_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findPartDefs", "find_part_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<PartDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The partDefs whose metaclass is exactly PartDefinition, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PartDefinition> find_part_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findPartDefsExact", "find_part_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<PartDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Parts::Part; refused where the model's library has no Parts::Part.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_part_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findPartDefsSemantic", "find_part_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The partDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PartDefinition> find_part_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findPartDef", "find_part_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<PartDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The portDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PortDefinition> find_port_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findPortDefs", "find_port_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<PortDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The portDefs whose metaclass is exactly PortDefinition, its subkinds left out. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PortDefinition> find_port_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findPortDefsExact", "find_port_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<PortDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Ports::Port; refused where the model's library has no Ports::Port.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_port_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findPortDefsSemantic", "find_port_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The portDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<PortDefinition> find_port_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findPortDef", "find_port_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<PortDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The renderingDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RenderingDefinition> find_rendering_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findRenderingDefs", "find_rendering_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<RenderingDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Views::Rendering; refused where the model's library has no
+    /// Views::Rendering. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_rendering_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findRenderingDefsSemantic", "find_rendering_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The renderingDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RenderingDefinition> find_rendering_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findRenderingDef", "find_rendering_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<RenderingDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The requirementDefs of this namespace: owned, imported (and inherited) only, or both. Over
+    /// the list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RequirementDefinition> find_requirement_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findRequirementDefs", "find_requirement_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<RequirementDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The requirementDefs whose metaclass is exactly RequirementDefinition, its subkinds left out.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RequirementDefinition> find_requirement_defs_exact(Scope scope = Scope::Owned) const {
+        static const Find f{"findRequirementDefsExact", "find_requirement_defs_exact", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<RequirementDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Requirements::RequirementCheck; refused where the model's library
+    /// has no Requirements::RequirementCheck. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_requirement_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findRequirementDefsSemantic", "find_requirement_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The requirementDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<RequirementDefinition> find_requirement_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findRequirementDef", "find_requirement_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<RequirementDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The stateDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<StateDefinition> find_state_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findStateDefs", "find_state_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<StateDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize States::StateAction; refused where the model's library has no
+    /// States::StateAction. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_state_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findStateDefsSemantic", "find_state_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The stateDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<StateDefinition> find_state_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findStateDef", "find_state_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<StateDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The useCaseDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<UseCaseDefinition> find_use_case_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findUseCaseDefs", "find_use_case_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<UseCaseDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize UseCases::UseCase; refused where the model's library has no
+    /// UseCases::UseCase. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_use_case_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findUseCaseDefsSemantic", "find_use_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The useCaseDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<UseCaseDefinition> find_use_case_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findUseCaseDef", "find_use_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<UseCaseDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The verificationCaseDefs of this namespace: owned, imported (and inherited) only, or both.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<VerificationCaseDefinition> find_verification_case_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findVerificationCaseDefs", "find_verification_case_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<VerificationCaseDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize VerificationCases::VerificationCase; refused where the model's
+    /// library has no VerificationCases::VerificationCase. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_verification_case_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findVerificationCaseDefsSemantic", "find_verification_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The verificationCaseDef with this simple (effective) name, or none. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<VerificationCaseDefinition> find_verification_case_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findVerificationCaseDef", "find_verification_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<VerificationCaseDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The viewDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewDefinition> find_view_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findViewDefs", "find_view_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ViewDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Views::View; refused where the model's library has no Views::View.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_view_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findViewDefsSemantic", "find_view_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The viewDef with this simple (effective) name, or none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewDefinition> find_view_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findViewDef", "find_view_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ViewDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The viewpointDefs of this namespace: owned, imported (and inherited) only, or both. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewpointDefinition> find_viewpoint_defs(Scope scope = Scope::Owned) const {
+        static const Find f{"findViewpointDefs", "find_viewpoint_defs", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<ViewpointDefinition>(*this, f, {detail::arg(scope)});
+    }
+    /// The types that specialize Views::ViewpointCheck; refused where the model's library has no
+    /// Views::ViewpointCheck. Over the list's elements, in order: list answers concatenated, absent
+    /// single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Type> find_viewpoint_defs_semantic(Scope scope = Scope::Owned) const {
+        static const Find f{"findViewpointDefsSemantic", "find_viewpoint_defs_semantic", {"scope"}, {"scope"}, "elements"};
+        return Element::find_all_<Type>(*this, f, {detail::arg(scope)});
+    }
+    /// The viewpointDef with this simple (effective) name, or none. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<ViewpointDefinition> find_viewpoint_def(const std::string& name, Scope scope = Scope::Owned) const {
+        static const Find f{"findViewpointDef", "find_viewpoint_def", {"name", "scope"}, {"str", "scope"}, "element"};
+        return Element::find_all_<ViewpointDefinition>(*this, f, {detail::arg(name), detail::arg(scope)});
+    }
+    /// The packages this namespace owns. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Package> find_packages() const {
+        static const Find f{"findPackages", "find_packages", {}, {}, "elements"};
+        return Element::find_all_<Package>(*this, f, {});
+    }
+    /// The owned package with this simple name, or none. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @param name The simple name to look for.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<Package> find_package(const std::string& name) const {
+        static const Find f{"findPackage", "find_package", {"name"}, {"str"}, "element"};
+        return Element::find_all_<Package>(*this, f, {detail::arg(name)});
+    }
+    /// The types this feature is declared with. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Type> find_declared_types() const {
+        static const Find f{"findDeclaredTypes", "find_declared_types", {}, {}, "elements"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// Direct supertypes as written: supertypes(true). A conjugated type's only supertype is its
+    /// original type; a feature chain's last feature is a supertype of the chain. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Type> find_declared_supertypes() const {
+        static const Find f{"findDeclaredSupertypes", "find_declared_supertypes", {}, {}, "elements"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// Direct supertypes the backend adds by the language's rules (Parts::Part for a part
+    /// definition). Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Type> find_implied_supertypes() const {
+        static const Find f{"findImpliedSupertypes", "find_implied_supertypes", {}, {}, "elements"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// Direct supertypes, written and implied: supertypes(false). Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Type> find_declared_and_implied_supertypes() const {
+        static const Find f{"findDeclaredAndImpliedSupertypes", "find_declared_and_implied_supertypes", {}, {}, "elements"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// The features this feature subsets as written (redefinitions and reference subsettings left
+    /// out). Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Feature> find_subsetted_features() const {
+        static const Find f{"findSubsettedFeatures", "find_subsetted_features", {}, {}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {});
+    }
+    /// The features this feature redefines as written. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Feature> find_redefined_features() const {
+        static const Find f{"findRedefinedFeatures", "find_redefined_features", {}, {}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {});
+    }
+    /// The feature this feature references (::>), or none. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Feature> find_referenced_feature() const {
+        static const Find f{"findReferencedFeature", "find_referenced_feature", {}, {}, "element"};
+        return Element::find_all_<Feature>(*this, f, {});
+    }
+    /// The feature a chain of written redefinitions starts from, following the first at each step
+    /// (Truck::mass to Frame::mass); itself when it redefines nothing. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Feature> find_redefinition_root() const {
+        static const Find f{"findRedefinitionRoot", "find_redefinition_root", {}, {}, "element"};
+        return Element::find_all_<Feature>(*this, f, {});
+    }
+    /// The feature in effect here for feature: itself where inherited as it is, else the one
+    /// redefining it; none where this type does not have it. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param feature The feature as declared, on this type or on a type it specializes.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_effective_feature(const Feature& feature) const {
+        static const Find f{"findEffectiveFeature", "find_effective_feature", {"feature"}, {"element"}, "element"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(feature)});
+    }
+    /// The value expression this feature is declared with (=, :=, default), or none. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Expression> find_value() const {
+        static const Find f{"findValue", "find_value", {}, {}, "element"};
+        return Element::find_all_<Expression>(*this, f, {});
+    }
+    /// The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference
+    /// names, SI::kilogram); none for a literal without a unit; refused for anything else, whose
+    /// unit needs evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit(). Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws refused Where the definition gives no answer for this element, as described above.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Expression, U>, int> = 0>
+    ElementList<Element> find_unit() const {
+        static const Find f{"findUnit", "find_unit", {}, {}, "element"};
+        return Element::find_all_<Element>(*this, f, {});
+    }
+    /// The lower bound's expression; none where there is none (no multiplicity, the lower bound of
+    /// [*], a multiplicity without a range). Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Expression> find_lower_bound_expr() const {
+        static const Find f{"findLowerBoundExpr", "find_lower_bound_expr", {}, {}, "element"};
+        return Element::find_all_<Expression>(*this, f, {});
+    }
+    /// The upper bound's expression; none where there is none. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Expression> find_upper_bound_expr() const {
+        static const Find f{"findUpperBoundExpr", "find_upper_bound_expr", {}, {}, "element"};
+        return Element::find_all_<Expression>(*this, f, {});
+    }
+    /// The directed features, scoped like the kind lists: those whose direction relative to this
+    /// behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Behavior, U>, int> = 0>
+    ElementList<Feature> find_parameters(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findParameters", "find_parameters", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The directed features, scoped like the kind lists: those whose direction relative to this
+    /// behaviour or step, directionOf, is not null. With scope all and library true, the
+    /// specification's parameter. Over the list's elements, in order: list answers concatenated,
+    /// absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Step, U>, int> = 0>
+    ElementList<Feature> find_parameters(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findParameters", "find_parameters", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features directed in or inout relative to this type, directionOf taking conjugation into
+    /// account (a conjugated port's out items are its inputs), scoped like the kind lists. With
+    /// scope all and library true, the specification's input. Over the list's elements, in order:
+    /// list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_inputs(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findInputs", "find_inputs", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features directed out or inout relative to this type, directionOf taking conjugation
+    /// into account (a conjugated port's in items are its outputs), scoped like the kind lists.
+    /// With scope all and library true, the specification's output. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_outputs(Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findOutputs", "find_outputs", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The features of this type that are, or specialize, feature (the wheels among a vehicle's
+    /// parts), scoped. Over the list's elements, in order: list answers concatenated, absent single
+    /// answers dropped.
+    /// @param feature The feature the answers are or specialize.
+    /// @param scope Which members a list reads: the type's own, those it inherits, or both. A list
+    ///     of features gives its own first; a list of members or definitions, outside the owned
+    ///     scope, is in the backend's order. For a namespace's members, inherited includes
+    ///     imported. Default: Scope::Owned.
+    /// @param visibility Which visibilities a list keeps: every one, public and protected, or
+    ///     public only. Default: VisibilityFilter::Any.
+    /// @param library Whether members inherited from the standard library's types are kept (a
+    ///     user's library package counts as model). Default: false.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Type, U>, int> = 0>
+    ElementList<Feature> find_subsetting_features_of(const Feature& feature, Scope scope = Scope::Owned, VisibilityFilter visibility = VisibilityFilter::Any, bool library = false) const {
+        static const Find f{"findSubsettingFeaturesOf", "find_subsetting_features_of", {"feature", "scope", "visibility", "library"}, {"element", "scope", "visibility", "bool"}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {detail::arg(feature), detail::arg(scope), detail::arg(visibility), detail::arg(library)});
+    }
+    /// The result expression of a calculation or constraint, owned or inherited; the specification
+    /// has resultExpression only on analysis cases. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Function, U>, int> = 0>
+    ElementList<Expression> find_result_expression() const {
+        static const Find f{"findResultExpression", "find_result_expression", {}, {}, "element"};
+        return Element::find_all_<Expression>(*this, f, {});
+    }
+    /// The result expression of a calculation or constraint, owned or inherited; the specification
+    /// has resultExpression only on analysis cases. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Expression, U>, int> = 0>
+    ElementList<Expression> find_result_expression() const {
+        static const Find f{"findResultExpression", "find_result_expression", {}, {}, "element"};
+        return Element::find_all_<Expression>(*this, f, {});
+    }
+    /// The type operand of a classification or cast (x istype T, x hastype T, x @ T, m @@ T, x as
+    /// T, m meta T give T): the grammar puts it in the second owned feature. Over the list's
+    /// elements, in order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<OperatorExpression, U>, int> = 0>
+    ElementList<Type> find_type_argument() const {
+        static const Find f{"findTypeArgument", "find_type_argument", {}, {}, "element"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// Initial states, by a priority chain over the notation's forms: first start then off; and,
+    /// only if that gives none, entry; then off; (the Annex A form, an entry action with a
+    /// transition from it, is not recognized). Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<StateUsage, U>, int> = 0>
+    ElementList<StateUsage> find_initial_states() const {
+        static const Find f{"findInitialStates", "find_initial_states", {}, {}, "elements"};
+        return Element::find_all_<StateUsage>(*this, f, {});
+    }
+    /// Initial states, by a priority chain over the notation's forms: first start then off; and,
+    /// only if that gives none, entry; then off; (the Annex A form, an entry action with a
+    /// transition from it, is not recognized). Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<StateDefinition, U>, int> = 0>
+    ElementList<StateUsage> find_initial_states() const {
+        static const Find f{"findInitialStates", "find_initial_states", {}, {}, "elements"};
+        return Element::find_all_<StateUsage>(*this, f, {});
+    }
+    /// What an accept action accepts: its payload's types. Over the list's elements, in order: list
+    /// answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<AcceptActionUsage, U>, int> = 0>
+    ElementList<Type> find_accepted_types() const {
+        static const Find f{"findAcceptedTypes", "find_accepted_types", {}, {}, "elements"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// What a transition's triggers accept. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<TransitionUsage, U>, int> = 0>
+    ElementList<Type> find_accepted_types() const {
+        static const Find f{"findAcceptedTypes", "find_accepted_types", {}, {}, "elements"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// A feature chain as its features (battery.powerOut gives [battery, powerOut]); else [self].
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Feature, U>, int> = 0>
+    ElementList<Feature> find_path() const {
+        static const Find f{"findPath", "find_path", {}, {}, "elements"};
+        return Element::find_all_<Feature>(*this, f, {});
+    }
+    /// The variation a variant belongs to (variation part def V { variant part a; }: a gives V; an
+    /// enumeration's values give the enumeration); none for a usage that is not a variant. Over the
+    /// list's elements, in order: list answers concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Usage, U>, int> = 0>
+    ElementList<Type> find_variation() const {
+        static const Find f{"findVariation", "find_variation", {}, {}, "element"};
+        return Element::find_all_<Type>(*this, f, {});
+    }
+    /// Metadata applied to an element by an owned annotation, or as an owned member annotating it
+    /// (#M part p;, part p { @M; }). Metadata placed elsewhere (metadata M about p;) is not found.
+    /// Over the list's elements, in order: list answers concatenated, absent single answers
+    /// dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Element, U>, int> = 0>
+    ElementList<MetadataFeature> find_applied_metadata() const {
+        static const Find f{"findAppliedMetadata", "find_applied_metadata", {}, {}, "elements"};
+        return Element::find_all_<MetadataFeature>(*this, f, {});
+    }
+    /// The metadata usages this namespace owns, whatever they annotate (metadata M about other;
+    /// included). Owned only: metadata is about the element that owns it, so it is never read
+    /// through inheritance or imports. Over the list's elements, in order: list answers
+    /// concatenated, absent single answers dropped.
+    /// @return The elements, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Namespace, U>, int> = 0>
+    ElementList<MetadataUsage> find_member_metadata() const {
+        static const Find f{"findMemberMetadata", "find_member_metadata", {}, {}, "elements"};
+        return Element::find_all_<MetadataUsage>(*this, f, {});
+    }
+    /// The bodies of the element's documentation comments, in order. Over the list's elements, in
+    /// order: list answers concatenated, absent single answers dropped.
+    /// @return The texts, in order.
+    /// @throws not_answered Where the backend cannot answer a property or operation this member
+    ///     reads; the message names it. If the member refuses for one element, the call refuses.
+    template <class U = T, std::enable_if_t<std::is_base_of_v<Element, U>, int> = 0>
+    std::vector<std::string> find_doc_text() const {
+        static const Find f{"findDocText", "find_doc_text", {}, {}, "strings"};
+        return Element::find_all_strings_(*this, f, {});
+    }
+};
+
 // --- typed getter definitions (all structs complete) ---
 inline std::vector<std::string> Element::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::optional<std::string> Element::getDeclaredName() const { return read_string_("declaredName"); }
@@ -20003,6 +28006,14 @@ inline std::optional<std::string> Element::effectiveShortName() const { return a
 inline std::optional<std::string> Element::escapedName() const { return as_string_(call_("escapedName", {})); }
 inline std::optional<Namespace> Element::libraryNamespace() const { return as_ref_<Namespace>(call_("libraryNamespace", {})); }
 inline std::optional<std::string> Element::path() const { return as_string_(call_("path", {})); }
+inline ElementList<MetadataFeature> Element::find_applied_metadata() const {
+    static const Find f{"findAppliedMetadata", "find_applied_metadata", {}, {}, "elements"};
+    return as_list_<MetadataFeature>(find_(f, {}));
+}
+inline std::vector<std::string> Element::find_doc_text() const {
+    static const Find f{"findDocText", "find_doc_text", {}, {}, "strings"};
+    return as_string_list_(find_(f, {}));
+}
 inline std::vector<std::string> Namespace::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::optional<std::string> Namespace::getDeclaredName() const { return read_string_("declaredName"); }
 inline std::optional<std::string> Namespace::getDeclaredShortName() const { return read_string_("declaredShortName"); }
@@ -20043,6 +28054,666 @@ inline std::optional<Membership> Namespace::resolveVisible(const std::optional<s
 inline std::optional<std::string> Namespace::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Namespace::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Namespace::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<Feature> Namespace::find_member_features(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberFeatures", "find_member_features", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<Feature> Namespace::find_member_feature(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberFeature", "find_member_feature", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<Feature>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Usage> Namespace::find_member_usages(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberUsages", "find_member_usages", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Usage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<Usage> Namespace::find_member_usage(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberUsage", "find_member_usage", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<Usage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ActionUsage> Namespace::find_member_actions(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberActions", "find_member_actions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ActionUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ActionUsage> Namespace::find_member_action(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAction", "find_member_action", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ActionUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AllocationUsage> Namespace::find_member_allocations(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAllocations", "find_member_allocations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AllocationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<AllocationUsage> Namespace::find_member_allocation(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAllocation", "find_member_allocation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<AllocationUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AnalysisCaseUsage> Namespace::find_member_analysis_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAnalysisCases", "find_member_analysis_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AnalysisCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<AnalysisCaseUsage> Namespace::find_member_analysis_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAnalysisCase", "find_member_analysis_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<AnalysisCaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AttributeUsage> Namespace::find_member_attributes(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAttributes", "find_member_attributes", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AttributeUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<AttributeUsage> Namespace::find_member_attribute(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberAttribute", "find_member_attribute", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<AttributeUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<CalculationUsage> Namespace::find_member_calculations(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberCalculations", "find_member_calculations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<CalculationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<CalculationUsage> Namespace::find_member_calculation(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberCalculation", "find_member_calculation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<CalculationUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<CaseUsage> Namespace::find_member_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberCases", "find_member_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<CaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<CaseUsage> Namespace::find_member_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberCase", "find_member_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<CaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConcernUsage> Namespace::find_member_concerns(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberConcerns", "find_member_concerns", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConcernUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ConcernUsage> Namespace::find_member_concern(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberConcern", "find_member_concern", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ConcernUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConnectorAsUsage> Namespace::find_member_connections(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberConnections", "find_member_connections", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConnectorAsUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ConnectorAsUsage> Namespace::find_member_connection(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberConnection", "find_member_connection", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ConnectorAsUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConstraintUsage> Namespace::find_member_constraints(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberConstraints", "find_member_constraints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConstraintUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ConstraintUsage> Namespace::find_member_constraint(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberConstraint", "find_member_constraint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ConstraintUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<EnumerationUsage> Namespace::find_member_enumerations(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberEnumerations", "find_member_enumerations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<EnumerationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<EnumerationUsage> Namespace::find_member_enumeration(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberEnumeration", "find_member_enumeration", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<EnumerationUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<FlowUsage> Namespace::find_member_flows(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberFlows", "find_member_flows", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<FlowUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<FlowUsage> Namespace::find_member_flow(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberFlow", "find_member_flow", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<FlowUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<InterfaceUsage> Namespace::find_member_interfaces(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberInterfaces", "find_member_interfaces", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<InterfaceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<InterfaceUsage> Namespace::find_member_interface(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberInterface", "find_member_interface", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<InterfaceUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ItemUsage> Namespace::find_member_items(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberItems", "find_member_items", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ItemUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ItemUsage> Namespace::find_member_item(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberItem", "find_member_item", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ItemUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<OccurrenceUsage> Namespace::find_member_occurrences(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberOccurrences", "find_member_occurrences", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<OccurrenceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<OccurrenceUsage> Namespace::find_member_occurrence(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberOccurrence", "find_member_occurrence", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<OccurrenceUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<PartUsage> Namespace::find_member_parts(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberParts", "find_member_parts", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<PartUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<PartUsage> Namespace::find_member_part(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberPart", "find_member_part", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<PartUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<PortUsage> Namespace::find_member_ports(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberPorts", "find_member_ports", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<PortUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<PortUsage> Namespace::find_member_port(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberPort", "find_member_port", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<PortUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ReferenceUsage> Namespace::find_member_references(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberReferences", "find_member_references", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ReferenceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ReferenceUsage> Namespace::find_member_reference(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberReference", "find_member_reference", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ReferenceUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<RenderingUsage> Namespace::find_member_renderings(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberRenderings", "find_member_renderings", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<RenderingUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<RenderingUsage> Namespace::find_member_rendering(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberRendering", "find_member_rendering", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<RenderingUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<RequirementUsage> Namespace::find_member_requirements(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberRequirements", "find_member_requirements", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<RequirementUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<RequirementUsage> Namespace::find_member_requirement(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberRequirement", "find_member_requirement", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<RequirementUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<StateUsage> Namespace::find_member_states(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberStates", "find_member_states", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<StateUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<StateUsage> Namespace::find_member_state(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberState", "find_member_state", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<StateUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<TransitionUsage> Namespace::find_member_transitions(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberTransitions", "find_member_transitions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<TransitionUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<TransitionUsage> Namespace::find_member_transition(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberTransition", "find_member_transition", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<TransitionUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<UseCaseUsage> Namespace::find_member_use_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberUseCases", "find_member_use_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<UseCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<UseCaseUsage> Namespace::find_member_use_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberUseCase", "find_member_use_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<UseCaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<VerificationCaseUsage> Namespace::find_member_verification_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberVerificationCases", "find_member_verification_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<VerificationCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<VerificationCaseUsage> Namespace::find_member_verification_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberVerificationCase", "find_member_verification_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<VerificationCaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ViewUsage> Namespace::find_member_views(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberViews", "find_member_views", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ViewUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ViewUsage> Namespace::find_member_view(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberView", "find_member_view", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ViewUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ViewpointUsage> Namespace::find_member_viewpoints(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberViewpoints", "find_member_viewpoints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ViewpointUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ViewpointUsage> Namespace::find_member_viewpoint(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findMemberViewpoint", "find_member_viewpoint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ViewpointUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Definition> Namespace::find_definitions(Scope scope) const {
+    static const Find f{"findDefinitions", "find_definitions", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Definition>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<Definition> Namespace::find_definition(const std::string& name, Scope scope) const {
+    static const Find f{"findDefinition", "find_definition", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<Definition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<Definition> Namespace::find_definitions_by_name(Scope scope) const {
+    static const Find f{"findDefinitionsByName", "find_definitions_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<Definition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ActionDefinition> Namespace::find_action_defs(Scope scope) const {
+    static const Find f{"findActionDefs", "find_action_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ActionDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ActionDefinition> Namespace::find_action_defs_exact(Scope scope) const {
+    static const Find f{"findActionDefsExact", "find_action_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ActionDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_action_defs_semantic(Scope scope) const {
+    static const Find f{"findActionDefsSemantic", "find_action_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ActionDefinition> Namespace::find_action_def(const std::string& name, Scope scope) const {
+    static const Find f{"findActionDef", "find_action_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ActionDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ActionDefinition> Namespace::find_action_defs_by_name(Scope scope) const {
+    static const Find f{"findActionDefsByName", "find_action_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ActionDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<AllocationDefinition> Namespace::find_allocation_defs(Scope scope) const {
+    static const Find f{"findAllocationDefs", "find_allocation_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<AllocationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_allocation_defs_semantic(Scope scope) const {
+    static const Find f{"findAllocationDefsSemantic", "find_allocation_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<AllocationDefinition> Namespace::find_allocation_def(const std::string& name, Scope scope) const {
+    static const Find f{"findAllocationDef", "find_allocation_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<AllocationDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<AllocationDefinition> Namespace::find_allocation_defs_by_name(Scope scope) const {
+    static const Find f{"findAllocationDefsByName", "find_allocation_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<AllocationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<AnalysisCaseDefinition> Namespace::find_analysis_case_defs(Scope scope) const {
+    static const Find f{"findAnalysisCaseDefs", "find_analysis_case_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<AnalysisCaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_analysis_case_defs_semantic(Scope scope) const {
+    static const Find f{"findAnalysisCaseDefsSemantic", "find_analysis_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<AnalysisCaseDefinition> Namespace::find_analysis_case_def(const std::string& name, Scope scope) const {
+    static const Find f{"findAnalysisCaseDef", "find_analysis_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<AnalysisCaseDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<AnalysisCaseDefinition> Namespace::find_analysis_case_defs_by_name(Scope scope) const {
+    static const Find f{"findAnalysisCaseDefsByName", "find_analysis_case_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<AnalysisCaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<AttributeDefinition> Namespace::find_attribute_defs(Scope scope) const {
+    static const Find f{"findAttributeDefs", "find_attribute_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<AttributeDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<AttributeDefinition> Namespace::find_attribute_defs_exact(Scope scope) const {
+    static const Find f{"findAttributeDefsExact", "find_attribute_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<AttributeDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_attribute_defs_semantic(Scope scope) const {
+    static const Find f{"findAttributeDefsSemantic", "find_attribute_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<AttributeDefinition> Namespace::find_attribute_def(const std::string& name, Scope scope) const {
+    static const Find f{"findAttributeDef", "find_attribute_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<AttributeDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<AttributeDefinition> Namespace::find_attribute_defs_by_name(Scope scope) const {
+    static const Find f{"findAttributeDefsByName", "find_attribute_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<AttributeDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<CalculationDefinition> Namespace::find_calculation_defs(Scope scope) const {
+    static const Find f{"findCalculationDefs", "find_calculation_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<CalculationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<CalculationDefinition> Namespace::find_calculation_defs_exact(Scope scope) const {
+    static const Find f{"findCalculationDefsExact", "find_calculation_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<CalculationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_calculation_defs_semantic(Scope scope) const {
+    static const Find f{"findCalculationDefsSemantic", "find_calculation_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<CalculationDefinition> Namespace::find_calculation_def(const std::string& name, Scope scope) const {
+    static const Find f{"findCalculationDef", "find_calculation_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<CalculationDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<CalculationDefinition> Namespace::find_calculation_defs_by_name(Scope scope) const {
+    static const Find f{"findCalculationDefsByName", "find_calculation_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<CalculationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<CaseDefinition> Namespace::find_case_defs(Scope scope) const {
+    static const Find f{"findCaseDefs", "find_case_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<CaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<CaseDefinition> Namespace::find_case_defs_exact(Scope scope) const {
+    static const Find f{"findCaseDefsExact", "find_case_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<CaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_case_defs_semantic(Scope scope) const {
+    static const Find f{"findCaseDefsSemantic", "find_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<CaseDefinition> Namespace::find_case_def(const std::string& name, Scope scope) const {
+    static const Find f{"findCaseDef", "find_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<CaseDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<CaseDefinition> Namespace::find_case_defs_by_name(Scope scope) const {
+    static const Find f{"findCaseDefsByName", "find_case_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<CaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ConcernDefinition> Namespace::find_concern_defs(Scope scope) const {
+    static const Find f{"findConcernDefs", "find_concern_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ConcernDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_concern_defs_semantic(Scope scope) const {
+    static const Find f{"findConcernDefsSemantic", "find_concern_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ConcernDefinition> Namespace::find_concern_def(const std::string& name, Scope scope) const {
+    static const Find f{"findConcernDef", "find_concern_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ConcernDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ConcernDefinition> Namespace::find_concern_defs_by_name(Scope scope) const {
+    static const Find f{"findConcernDefsByName", "find_concern_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ConcernDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ConnectionDefinition> Namespace::find_connection_defs(Scope scope) const {
+    static const Find f{"findConnectionDefs", "find_connection_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ConnectionDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ConnectionDefinition> Namespace::find_connection_defs_exact(Scope scope) const {
+    static const Find f{"findConnectionDefsExact", "find_connection_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ConnectionDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_connection_defs_semantic(Scope scope) const {
+    static const Find f{"findConnectionDefsSemantic", "find_connection_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ConnectionDefinition> Namespace::find_connection_def(const std::string& name, Scope scope) const {
+    static const Find f{"findConnectionDef", "find_connection_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ConnectionDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ConnectionDefinition> Namespace::find_connection_defs_by_name(Scope scope) const {
+    static const Find f{"findConnectionDefsByName", "find_connection_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ConnectionDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ConstraintDefinition> Namespace::find_constraint_defs(Scope scope) const {
+    static const Find f{"findConstraintDefs", "find_constraint_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ConstraintDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ConstraintDefinition> Namespace::find_constraint_defs_exact(Scope scope) const {
+    static const Find f{"findConstraintDefsExact", "find_constraint_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ConstraintDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_constraint_defs_semantic(Scope scope) const {
+    static const Find f{"findConstraintDefsSemantic", "find_constraint_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ConstraintDefinition> Namespace::find_constraint_def(const std::string& name, Scope scope) const {
+    static const Find f{"findConstraintDef", "find_constraint_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ConstraintDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ConstraintDefinition> Namespace::find_constraint_defs_by_name(Scope scope) const {
+    static const Find f{"findConstraintDefsByName", "find_constraint_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ConstraintDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<EnumerationDefinition> Namespace::find_enumeration_defs(Scope scope) const {
+    static const Find f{"findEnumerationDefs", "find_enumeration_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<EnumerationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<EnumerationDefinition> Namespace::find_enumeration_def(const std::string& name, Scope scope) const {
+    static const Find f{"findEnumerationDef", "find_enumeration_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<EnumerationDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<EnumerationDefinition> Namespace::find_enumeration_defs_by_name(Scope scope) const {
+    static const Find f{"findEnumerationDefsByName", "find_enumeration_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<EnumerationDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<FlowDefinition> Namespace::find_flow_defs(Scope scope) const {
+    static const Find f{"findFlowDefs", "find_flow_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<FlowDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_flow_defs_semantic(Scope scope) const {
+    static const Find f{"findFlowDefsSemantic", "find_flow_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<FlowDefinition> Namespace::find_flow_def(const std::string& name, Scope scope) const {
+    static const Find f{"findFlowDef", "find_flow_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<FlowDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<FlowDefinition> Namespace::find_flow_defs_by_name(Scope scope) const {
+    static const Find f{"findFlowDefsByName", "find_flow_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<FlowDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<InterfaceDefinition> Namespace::find_interface_defs(Scope scope) const {
+    static const Find f{"findInterfaceDefs", "find_interface_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<InterfaceDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_interface_defs_semantic(Scope scope) const {
+    static const Find f{"findInterfaceDefsSemantic", "find_interface_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<InterfaceDefinition> Namespace::find_interface_def(const std::string& name, Scope scope) const {
+    static const Find f{"findInterfaceDef", "find_interface_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<InterfaceDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<InterfaceDefinition> Namespace::find_interface_defs_by_name(Scope scope) const {
+    static const Find f{"findInterfaceDefsByName", "find_interface_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<InterfaceDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ItemDefinition> Namespace::find_item_defs(Scope scope) const {
+    static const Find f{"findItemDefs", "find_item_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ItemDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ItemDefinition> Namespace::find_item_defs_exact(Scope scope) const {
+    static const Find f{"findItemDefsExact", "find_item_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ItemDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_item_defs_semantic(Scope scope) const {
+    static const Find f{"findItemDefsSemantic", "find_item_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ItemDefinition> Namespace::find_item_def(const std::string& name, Scope scope) const {
+    static const Find f{"findItemDef", "find_item_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ItemDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ItemDefinition> Namespace::find_item_defs_by_name(Scope scope) const {
+    static const Find f{"findItemDefsByName", "find_item_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ItemDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<MetadataDefinition> Namespace::find_metadata_defs(Scope scope) const {
+    static const Find f{"findMetadataDefs", "find_metadata_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<MetadataDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<MetadataDefinition> Namespace::find_metadata_def(const std::string& name, Scope scope) const {
+    static const Find f{"findMetadataDef", "find_metadata_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<MetadataDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<MetadataDefinition> Namespace::find_metadata_defs_by_name(Scope scope) const {
+    static const Find f{"findMetadataDefsByName", "find_metadata_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<MetadataDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<OccurrenceDefinition> Namespace::find_occurrence_defs(Scope scope) const {
+    static const Find f{"findOccurrenceDefs", "find_occurrence_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<OccurrenceDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<OccurrenceDefinition> Namespace::find_occurrence_defs_exact(Scope scope) const {
+    static const Find f{"findOccurrenceDefsExact", "find_occurrence_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<OccurrenceDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_occurrence_defs_semantic(Scope scope) const {
+    static const Find f{"findOccurrenceDefsSemantic", "find_occurrence_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<OccurrenceDefinition> Namespace::find_occurrence_def(const std::string& name, Scope scope) const {
+    static const Find f{"findOccurrenceDef", "find_occurrence_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<OccurrenceDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<OccurrenceDefinition> Namespace::find_occurrence_defs_by_name(Scope scope) const {
+    static const Find f{"findOccurrenceDefsByName", "find_occurrence_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<OccurrenceDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<PartDefinition> Namespace::find_part_defs(Scope scope) const {
+    static const Find f{"findPartDefs", "find_part_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<PartDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<PartDefinition> Namespace::find_part_defs_exact(Scope scope) const {
+    static const Find f{"findPartDefsExact", "find_part_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<PartDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_part_defs_semantic(Scope scope) const {
+    static const Find f{"findPartDefsSemantic", "find_part_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<PartDefinition> Namespace::find_part_def(const std::string& name, Scope scope) const {
+    static const Find f{"findPartDef", "find_part_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<PartDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<PartDefinition> Namespace::find_part_defs_by_name(Scope scope) const {
+    static const Find f{"findPartDefsByName", "find_part_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<PartDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<PortDefinition> Namespace::find_port_defs(Scope scope) const {
+    static const Find f{"findPortDefs", "find_port_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<PortDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<PortDefinition> Namespace::find_port_defs_exact(Scope scope) const {
+    static const Find f{"findPortDefsExact", "find_port_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<PortDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_port_defs_semantic(Scope scope) const {
+    static const Find f{"findPortDefsSemantic", "find_port_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<PortDefinition> Namespace::find_port_def(const std::string& name, Scope scope) const {
+    static const Find f{"findPortDef", "find_port_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<PortDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<PortDefinition> Namespace::find_port_defs_by_name(Scope scope) const {
+    static const Find f{"findPortDefsByName", "find_port_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<PortDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<RenderingDefinition> Namespace::find_rendering_defs(Scope scope) const {
+    static const Find f{"findRenderingDefs", "find_rendering_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<RenderingDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_rendering_defs_semantic(Scope scope) const {
+    static const Find f{"findRenderingDefsSemantic", "find_rendering_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<RenderingDefinition> Namespace::find_rendering_def(const std::string& name, Scope scope) const {
+    static const Find f{"findRenderingDef", "find_rendering_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<RenderingDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<RenderingDefinition> Namespace::find_rendering_defs_by_name(Scope scope) const {
+    static const Find f{"findRenderingDefsByName", "find_rendering_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<RenderingDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<RequirementDefinition> Namespace::find_requirement_defs(Scope scope) const {
+    static const Find f{"findRequirementDefs", "find_requirement_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<RequirementDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<RequirementDefinition> Namespace::find_requirement_defs_exact(Scope scope) const {
+    static const Find f{"findRequirementDefsExact", "find_requirement_defs_exact", {"scope"}, {"scope"}, "elements"};
+    return as_list_<RequirementDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_requirement_defs_semantic(Scope scope) const {
+    static const Find f{"findRequirementDefsSemantic", "find_requirement_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<RequirementDefinition> Namespace::find_requirement_def(const std::string& name, Scope scope) const {
+    static const Find f{"findRequirementDef", "find_requirement_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<RequirementDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<RequirementDefinition> Namespace::find_requirement_defs_by_name(Scope scope) const {
+    static const Find f{"findRequirementDefsByName", "find_requirement_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<RequirementDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<StateDefinition> Namespace::find_state_defs(Scope scope) const {
+    static const Find f{"findStateDefs", "find_state_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<StateDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_state_defs_semantic(Scope scope) const {
+    static const Find f{"findStateDefsSemantic", "find_state_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<StateDefinition> Namespace::find_state_def(const std::string& name, Scope scope) const {
+    static const Find f{"findStateDef", "find_state_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<StateDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<StateDefinition> Namespace::find_state_defs_by_name(Scope scope) const {
+    static const Find f{"findStateDefsByName", "find_state_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<StateDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<UseCaseDefinition> Namespace::find_use_case_defs(Scope scope) const {
+    static const Find f{"findUseCaseDefs", "find_use_case_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<UseCaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_use_case_defs_semantic(Scope scope) const {
+    static const Find f{"findUseCaseDefsSemantic", "find_use_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<UseCaseDefinition> Namespace::find_use_case_def(const std::string& name, Scope scope) const {
+    static const Find f{"findUseCaseDef", "find_use_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<UseCaseDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<UseCaseDefinition> Namespace::find_use_case_defs_by_name(Scope scope) const {
+    static const Find f{"findUseCaseDefsByName", "find_use_case_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<UseCaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<VerificationCaseDefinition> Namespace::find_verification_case_defs(Scope scope) const {
+    static const Find f{"findVerificationCaseDefs", "find_verification_case_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<VerificationCaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_verification_case_defs_semantic(Scope scope) const {
+    static const Find f{"findVerificationCaseDefsSemantic", "find_verification_case_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<VerificationCaseDefinition> Namespace::find_verification_case_def(const std::string& name, Scope scope) const {
+    static const Find f{"findVerificationCaseDef", "find_verification_case_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<VerificationCaseDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<VerificationCaseDefinition> Namespace::find_verification_case_defs_by_name(Scope scope) const {
+    static const Find f{"findVerificationCaseDefsByName", "find_verification_case_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<VerificationCaseDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ViewDefinition> Namespace::find_view_defs(Scope scope) const {
+    static const Find f{"findViewDefs", "find_view_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ViewDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_view_defs_semantic(Scope scope) const {
+    static const Find f{"findViewDefsSemantic", "find_view_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ViewDefinition> Namespace::find_view_def(const std::string& name, Scope scope) const {
+    static const Find f{"findViewDef", "find_view_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ViewDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ViewDefinition> Namespace::find_view_defs_by_name(Scope scope) const {
+    static const Find f{"findViewDefsByName", "find_view_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ViewDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<ViewpointDefinition> Namespace::find_viewpoint_defs(Scope scope) const {
+    static const Find f{"findViewpointDefs", "find_viewpoint_defs", {"scope"}, {"scope"}, "elements"};
+    return as_list_<ViewpointDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Type> Namespace::find_viewpoint_defs_semantic(Scope scope) const {
+    static const Find f{"findViewpointDefsSemantic", "find_viewpoint_defs_semantic", {"scope"}, {"scope"}, "elements"};
+    return as_list_<Type>(find_(f, {detail::arg(scope)}));
+}
+inline std::optional<ViewpointDefinition> Namespace::find_viewpoint_def(const std::string& name, Scope scope) const {
+    static const Find f{"findViewpointDef", "find_viewpoint_def", {"name", "scope"}, {"str", "scope"}, "element"};
+    return as_ref_<ViewpointDefinition>(find_(f, {detail::arg(name), detail::arg(scope)}));
+}
+inline NameMap<ViewpointDefinition> Namespace::find_viewpoint_defs_by_name(Scope scope) const {
+    static const Find f{"findViewpointDefsByName", "find_viewpoint_defs_by_name", {"scope"}, {"scope"}, "map"};
+    return as_map_<ViewpointDefinition>(find_(f, {detail::arg(scope)}));
+}
+inline ElementList<Package> Namespace::find_packages() const {
+    static const Find f{"findPackages", "find_packages", {}, {}, "elements"};
+    return as_list_<Package>(find_(f, {}));
+}
+inline std::optional<Package> Namespace::find_package(const std::string& name) const {
+    static const Find f{"findPackage", "find_package", {"name"}, {"str"}, "element"};
+    return as_ref_<Package>(find_(f, {detail::arg(name)}));
+}
+inline ElementList<MetadataUsage> Namespace::find_member_metadata() const {
+    static const Find f{"findMemberMetadata", "find_member_metadata", {}, {}, "elements"};
+    return as_list_<MetadataUsage>(find_(f, {}));
+}
 inline std::vector<std::string> Type::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::optional<std::string> Type::getDeclaredName() const { return read_string_("declaredName"); }
 inline std::optional<std::string> Type::getDeclaredShortName() const { return read_string_("declaredShortName"); }
@@ -20120,6 +28791,414 @@ inline std::vector<Type> Type::supertypes(const std::optional<bool>& excludeImpl
 inline std::optional<std::string> Type::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Type::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Type::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<Feature> Type::find_features(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findFeatures", "find_features", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<Feature> Type::find_feature(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findFeature", "find_feature", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<Feature>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Usage> Type::find_usages(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findUsages", "find_usages", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Usage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<Usage> Type::find_usage(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findUsage", "find_usage", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<Usage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ActionUsage> Type::find_actions(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findActions", "find_actions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ActionUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ActionUsage> Type::find_actions_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findActionsExact", "find_actions_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ActionUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_actions_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findActionsSemantic", "find_actions_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ActionUsage> Type::find_action(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAction", "find_action", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ActionUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AllocationUsage> Type::find_allocations(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAllocations", "find_allocations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AllocationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_allocations_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAllocationsSemantic", "find_allocations_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<AllocationUsage> Type::find_allocation(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAllocation", "find_allocation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<AllocationUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AnalysisCaseUsage> Type::find_analysis_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAnalysisCases", "find_analysis_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AnalysisCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_analysis_cases_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAnalysisCasesSemantic", "find_analysis_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<AnalysisCaseUsage> Type::find_analysis_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAnalysisCase", "find_analysis_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<AnalysisCaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AttributeUsage> Type::find_attributes(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAttributes", "find_attributes", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AttributeUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<AttributeUsage> Type::find_attributes_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAttributesExact", "find_attributes_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<AttributeUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_attributes_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAttributesSemantic", "find_attributes_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<AttributeUsage> Type::find_attribute(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findAttribute", "find_attribute", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<AttributeUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<CalculationUsage> Type::find_calculations(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCalculations", "find_calculations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<CalculationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<CalculationUsage> Type::find_calculations_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCalculationsExact", "find_calculations_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<CalculationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_calculations_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCalculationsSemantic", "find_calculations_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<CalculationUsage> Type::find_calculation(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCalculation", "find_calculation", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<CalculationUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<CaseUsage> Type::find_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCases", "find_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<CaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<CaseUsage> Type::find_cases_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCasesExact", "find_cases_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<CaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_cases_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCasesSemantic", "find_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<CaseUsage> Type::find_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findCase", "find_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<CaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConcernUsage> Type::find_concerns(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConcerns", "find_concerns", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConcernUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_concerns_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConcernsSemantic", "find_concerns_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ConcernUsage> Type::find_concern(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConcern", "find_concern", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ConcernUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConnectorAsUsage> Type::find_connections(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConnections", "find_connections", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConnectorAsUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConnectionUsage> Type::find_connections_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConnectionsExact", "find_connections_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConnectionUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_connections_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConnectionsSemantic", "find_connections_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ConnectorAsUsage> Type::find_connection(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConnection", "find_connection", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ConnectorAsUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConstraintUsage> Type::find_constraints(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConstraints", "find_constraints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConstraintUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ConstraintUsage> Type::find_constraints_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConstraintsExact", "find_constraints_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ConstraintUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_constraints_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConstraintsSemantic", "find_constraints_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ConstraintUsage> Type::find_constraint(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findConstraint", "find_constraint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ConstraintUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<EnumerationUsage> Type::find_enumerations(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findEnumerations", "find_enumerations", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<EnumerationUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<EnumerationUsage> Type::find_enumeration(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findEnumeration", "find_enumeration", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<EnumerationUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<FlowUsage> Type::find_flows(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findFlows", "find_flows", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<FlowUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<FlowUsage> Type::find_flows_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findFlowsExact", "find_flows_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<FlowUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_flows_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findFlowsSemantic", "find_flows_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<FlowUsage> Type::find_flow(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findFlow", "find_flow", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<FlowUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<InterfaceUsage> Type::find_interfaces(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findInterfaces", "find_interfaces", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<InterfaceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_interfaces_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findInterfacesSemantic", "find_interfaces_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<InterfaceUsage> Type::find_interface(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findInterface", "find_interface", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<InterfaceUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ItemUsage> Type::find_items(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findItems", "find_items", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ItemUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ItemUsage> Type::find_items_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findItemsExact", "find_items_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ItemUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_items_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findItemsSemantic", "find_items_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ItemUsage> Type::find_item(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findItem", "find_item", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ItemUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<OccurrenceUsage> Type::find_occurrences(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findOccurrences", "find_occurrences", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<OccurrenceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<OccurrenceUsage> Type::find_occurrences_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findOccurrencesExact", "find_occurrences_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<OccurrenceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_occurrences_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findOccurrencesSemantic", "find_occurrences_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<OccurrenceUsage> Type::find_occurrence(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findOccurrence", "find_occurrence", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<OccurrenceUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<PartUsage> Type::find_parts(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findParts", "find_parts", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<PartUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<PartUsage> Type::find_parts_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findPartsExact", "find_parts_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<PartUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_parts_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findPartsSemantic", "find_parts_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<PartUsage> Type::find_part(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findPart", "find_part", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<PartUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<PortUsage> Type::find_ports(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findPorts", "find_ports", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<PortUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_ports_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findPortsSemantic", "find_ports_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<PortUsage> Type::find_port(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findPort", "find_port", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<PortUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ReferenceUsage> Type::find_references(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findReferences", "find_references", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ReferenceUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ReferenceUsage> Type::find_reference(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findReference", "find_reference", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ReferenceUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<RenderingUsage> Type::find_renderings(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRenderings", "find_renderings", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<RenderingUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_renderings_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRenderingsSemantic", "find_renderings_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<RenderingUsage> Type::find_rendering(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRendering", "find_rendering", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<RenderingUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<RequirementUsage> Type::find_requirements(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRequirements", "find_requirements", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<RequirementUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<RequirementUsage> Type::find_requirements_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRequirementsExact", "find_requirements_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<RequirementUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_requirements_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRequirementsSemantic", "find_requirements_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<RequirementUsage> Type::find_requirement(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findRequirement", "find_requirement", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<RequirementUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<StateUsage> Type::find_states(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findStates", "find_states", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<StateUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<StateUsage> Type::find_states_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findStatesExact", "find_states_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<StateUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_states_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findStatesSemantic", "find_states_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<StateUsage> Type::find_state(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findState", "find_state", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<StateUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<TransitionUsage> Type::find_transitions(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findTransitions", "find_transitions", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<TransitionUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<TransitionUsage> Type::find_transition(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findTransition", "find_transition", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<TransitionUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<UseCaseUsage> Type::find_use_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findUseCases", "find_use_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<UseCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<UseCaseUsage> Type::find_use_cases_exact(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findUseCasesExact", "find_use_cases_exact", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<UseCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_use_cases_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findUseCasesSemantic", "find_use_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<UseCaseUsage> Type::find_use_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findUseCase", "find_use_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<UseCaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<VerificationCaseUsage> Type::find_verification_cases(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findVerificationCases", "find_verification_cases", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<VerificationCaseUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_verification_cases_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findVerificationCasesSemantic", "find_verification_cases_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<VerificationCaseUsage> Type::find_verification_case(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findVerificationCase", "find_verification_case", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<VerificationCaseUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ViewUsage> Type::find_views(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findViews", "find_views", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ViewUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_views_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findViewsSemantic", "find_views_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ViewUsage> Type::find_view(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findView", "find_view", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ViewUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<ViewpointUsage> Type::find_viewpoints(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findViewpoints", "find_viewpoints", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<ViewpointUsage>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_viewpoints_semantic(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findViewpointsSemantic", "find_viewpoints_semantic", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline std::optional<ViewpointUsage> Type::find_viewpoint(const std::string& name, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findViewpoint", "find_viewpoint", {"name", "scope", "visibility", "library"}, {"str", "scope", "visibility", "bool"}, "element"};
+    return as_ref_<ViewpointUsage>(find_(f, {detail::arg(name), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Type> Type::find_declared_supertypes() const {
+    static const Find f{"findDeclaredSupertypes", "find_declared_supertypes", {}, {}, "elements"};
+    return as_list_<Type>(find_(f, {}));
+}
+inline ElementList<Type> Type::find_implied_supertypes() const {
+    static const Find f{"findImpliedSupertypes", "find_implied_supertypes", {}, {}, "elements"};
+    return as_list_<Type>(find_(f, {}));
+}
+inline ElementList<Type> Type::find_declared_and_implied_supertypes() const {
+    static const Find f{"findDeclaredAndImpliedSupertypes", "find_declared_and_implied_supertypes", {}, {}, "elements"};
+    return as_list_<Type>(find_(f, {}));
+}
+inline std::optional<Feature> Type::find_effective_feature(const Feature& feature) const {
+    static const Find f{"findEffectiveFeature", "find_effective_feature", {"feature"}, {"element"}, "element"};
+    return as_ref_<Feature>(find_(f, {detail::arg(feature)}));
+}
+inline std::optional<Literal> Type::find_lower_bound() const {
+    static const Find f{"findLowerBound", "find_lower_bound", {}, {}, "int"};
+    return as_bound_(find_raw_(f, {}), false);
+}
+inline std::optional<Literal> Type::find_upper_bound() const {
+    static const Find f{"findUpperBound", "find_upper_bound", {}, {}, "unlimited"};
+    return as_bound_(find_raw_(f, {}), true);
+}
+inline std::optional<Expression> Type::find_lower_bound_expr() const {
+    static const Find f{"findLowerBoundExpr", "find_lower_bound_expr", {}, {}, "element"};
+    return as_ref_<Expression>(find_(f, {}));
+}
+inline std::optional<Expression> Type::find_upper_bound_expr() const {
+    static const Find f{"findUpperBoundExpr", "find_upper_bound_expr", {}, {}, "element"};
+    return as_ref_<Expression>(find_(f, {}));
+}
+inline bool Type::find_has_literal_lower_bound() const {
+    static const Find f{"findHasLiteralLowerBound", "find_has_literal_lower_bound", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Type::find_has_literal_upper_bound() const {
+    static const Find f{"findHasLiteralUpperBound", "find_has_literal_upper_bound", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline ElementList<Feature> Type::find_inputs(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findInputs", "find_inputs", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_outputs(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findOutputs", "find_outputs", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
+inline ElementList<Feature> Type::find_subsetting_features_of(const Feature& feature, Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findSubsettingFeaturesOf", "find_subsetting_features_of", {"feature", "scope", "visibility", "library"}, {"element", "scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(feature), detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
 inline std::vector<std::string> Feature::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Feature> Feature::getChainingFeature() const { return read_list_<Feature>("chainingFeature"); }
 inline std::optional<Feature> Feature::getCrossFeature() const { return read_ref_<Feature>("crossFeature"); }
@@ -20236,6 +29315,134 @@ inline std::vector<Feature> Feature::typingFeatures() const { return as_list_<Fe
 inline std::optional<std::string> Feature::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Feature::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Feature::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline bool Feature::find_is_semantic_action() const {
+    static const Find f{"findIsSemanticAction", "find_is_semantic_action", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_allocation() const {
+    static const Find f{"findIsSemanticAllocation", "find_is_semantic_allocation", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_analysis_case() const {
+    static const Find f{"findIsSemanticAnalysisCase", "find_is_semantic_analysis_case", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_attribute() const {
+    static const Find f{"findIsSemanticAttribute", "find_is_semantic_attribute", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_calculation() const {
+    static const Find f{"findIsSemanticCalculation", "find_is_semantic_calculation", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_case() const {
+    static const Find f{"findIsSemanticCase", "find_is_semantic_case", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_concern() const {
+    static const Find f{"findIsSemanticConcern", "find_is_semantic_concern", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_connection() const {
+    static const Find f{"findIsSemanticConnection", "find_is_semantic_connection", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_constraint() const {
+    static const Find f{"findIsSemanticConstraint", "find_is_semantic_constraint", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_flow() const {
+    static const Find f{"findIsSemanticFlow", "find_is_semantic_flow", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_interface() const {
+    static const Find f{"findIsSemanticInterface", "find_is_semantic_interface", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_item() const {
+    static const Find f{"findIsSemanticItem", "find_is_semantic_item", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_occurrence() const {
+    static const Find f{"findIsSemanticOccurrence", "find_is_semantic_occurrence", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_part() const {
+    static const Find f{"findIsSemanticPart", "find_is_semantic_part", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_port() const {
+    static const Find f{"findIsSemanticPort", "find_is_semantic_port", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_rendering() const {
+    static const Find f{"findIsSemanticRendering", "find_is_semantic_rendering", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_requirement() const {
+    static const Find f{"findIsSemanticRequirement", "find_is_semantic_requirement", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_state() const {
+    static const Find f{"findIsSemanticState", "find_is_semantic_state", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_use_case() const {
+    static const Find f{"findIsSemanticUseCase", "find_is_semantic_use_case", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_verification_case() const {
+    static const Find f{"findIsSemanticVerificationCase", "find_is_semantic_verification_case", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_view() const {
+    static const Find f{"findIsSemanticView", "find_is_semantic_view", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_semantic_viewpoint() const {
+    static const Find f{"findIsSemanticViewpoint", "find_is_semantic_viewpoint", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline ElementList<Type> Feature::find_declared_types() const {
+    static const Find f{"findDeclaredTypes", "find_declared_types", {}, {}, "elements"};
+    return as_list_<Type>(find_(f, {}));
+}
+inline ElementList<Feature> Feature::find_subsetted_features() const {
+    static const Find f{"findSubsettedFeatures", "find_subsetted_features", {}, {}, "elements"};
+    return as_list_<Feature>(find_(f, {}));
+}
+inline ElementList<Feature> Feature::find_redefined_features() const {
+    static const Find f{"findRedefinedFeatures", "find_redefined_features", {}, {}, "elements"};
+    return as_list_<Feature>(find_(f, {}));
+}
+inline std::optional<Feature> Feature::find_referenced_feature() const {
+    static const Find f{"findReferencedFeature", "find_referenced_feature", {}, {}, "element"};
+    return as_ref_<Feature>(find_(f, {}));
+}
+inline std::optional<Feature> Feature::find_redefinition_root() const {
+    static const Find f{"findRedefinitionRoot", "find_redefinition_root", {}, {}, "element"};
+    return as_ref_<Feature>(find_(f, {}));
+}
+inline std::optional<Expression> Feature::find_value() const {
+    static const Find f{"findValue", "find_value", {}, {}, "element"};
+    return as_ref_<Expression>(find_(f, {}));
+}
+inline bool Feature::find_has_default_value() const {
+    static const Find f{"findHasDefaultValue", "find_has_default_value", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_has_initial_value() const {
+    static const Find f{"findHasInitialValue", "find_has_initial_value", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Feature::find_is_effectively_ordered() const {
+    static const Find f{"findIsEffectivelyOrdered", "find_is_effectively_ordered", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline ElementList<Feature> Feature::find_path() const {
+    static const Find f{"findPath", "find_path", {}, {}, "elements"};
+    return as_list_<Feature>(find_(f, {}));
+}
 inline std::vector<std::string> Step::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Behavior> Step::getBehavior() const { return read_list_<Behavior>("behavior"); }
 inline std::vector<Feature> Step::getChainingFeature() const { return read_list_<Feature>("chainingFeature"); }
@@ -20354,6 +29561,10 @@ inline std::vector<Feature> Step::typingFeatures() const { return as_list_<Featu
 inline std::optional<std::string> Step::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Step::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Step::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<Feature> Step::find_parameters(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findParameters", "find_parameters", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
 inline std::vector<std::string> Usage::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Feature> Usage::getChainingFeature() const { return read_list_<Feature>("chainingFeature"); }
 inline std::optional<Feature> Usage::getCrossFeature() const { return read_ref_<Feature>("crossFeature"); }
@@ -20508,6 +29719,10 @@ inline std::vector<Feature> Usage::typingFeatures() const { return as_list_<Feat
 inline std::optional<std::string> Usage::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Usage::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Usage::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline std::optional<Type> Usage::find_variation() const {
+    static const Find f{"findVariation", "find_variation", {}, {}, "element"};
+    return as_ref_<Type>(find_(f, {}));
+}
 inline std::vector<std::string> OccurrenceUsage::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Feature> OccurrenceUsage::getChainingFeature() const { return read_list_<Feature>("chainingFeature"); }
 inline std::optional<Feature> OccurrenceUsage::getCrossFeature() const { return read_ref_<Feature>("crossFeature"); }
@@ -21000,6 +30215,14 @@ inline std::vector<Feature> AcceptActionUsage::typingFeatures() const { return a
 inline std::optional<std::string> AcceptActionUsage::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> AcceptActionUsage::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> AcceptActionUsage::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<Type> AcceptActionUsage::find_accepted_types() const {
+    static const Find f{"findAcceptedTypes", "find_accepted_types", {}, {}, "elements"};
+    return as_list_<Type>(find_(f, {}));
+}
+inline bool AcceptActionUsage::find_is_accepted_type(const Type& type) const {
+    static const Find f{"findIsAcceptedType", "find_is_accepted_type", {"type"}, {"element"}, "bool"};
+    return as_bool_(find_(f, {detail::arg(type)})).value_or(false);
+}
 inline std::vector<std::string> Classifier::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::optional<std::string> Classifier::getDeclaredName() const { return read_string_("declaredName"); }
 inline std::optional<std::string> Classifier::getDeclaredShortName() const { return read_string_("declaredShortName"); }
@@ -21457,6 +30680,10 @@ inline std::vector<Type> Behavior::supertypes(const std::optional<bool>& exclude
 inline std::optional<std::string> Behavior::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Behavior::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Behavior::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<Feature> Behavior::find_parameters(Scope scope, VisibilityFilter visibility, bool library) const {
+    static const Find f{"findParameters", "find_parameters", {"scope", "visibility", "library"}, {"scope", "visibility", "bool"}, "elements"};
+    return as_list_<Feature>(find_(f, {detail::arg(scope), detail::arg(visibility), detail::arg(library)}));
+}
 inline std::vector<ActionUsage> ActionDefinition::getAction() const { return read_list_<ActionUsage>("action"); }
 inline std::vector<std::string> ActionDefinition::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::optional<std::string> ActionDefinition::getDeclaredName() const { return read_string_("declaredName"); }
@@ -23571,6 +32798,10 @@ inline std::vector<Type> Function::supertypes(const std::optional<bool>& exclude
 inline std::optional<std::string> Function::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Function::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Function::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline std::optional<Expression> Function::find_result_expression() const {
+    static const Find f{"findResultExpression", "find_result_expression", {}, {}, "element"};
+    return as_ref_<Expression>(find_(f, {}));
+}
 inline std::vector<ActionUsage> CalculationDefinition::getAction() const { return read_list_<ActionUsage>("action"); }
 inline std::vector<std::string> CalculationDefinition::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<CalculationUsage> CalculationDefinition::getCalculation() const { return read_list_<CalculationUsage>("calculation"); }
@@ -24056,6 +33287,26 @@ inline std::vector<Feature> Expression::typingFeatures() const { return as_list_
 inline std::optional<std::string> Expression::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> Expression::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> Expression::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline bool Expression::find_has_unit() const {
+    static const Find f{"findHasUnit", "find_has_unit", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline bool Expression::find_is_literal() const {
+    static const Find f{"findIsLiteral", "find_is_literal", {}, {}, "bool"};
+    return as_bool_(find_(f, {})).value_or(false);
+}
+inline Literal Expression::find_literal() const {
+    static const Find f{"findLiteral", "find_literal", {}, {}, "literal"};
+    return as_literal_(find_raw_(f, {}));
+}
+inline std::optional<Element> Expression::find_unit() const {
+    static const Find f{"findUnit", "find_unit", {}, {}, "element"};
+    return as_ref_<Element>(find_(f, {}));
+}
+inline std::optional<Expression> Expression::find_result_expression() const {
+    static const Find f{"findResultExpression", "find_result_expression", {}, {}, "element"};
+    return as_ref_<Expression>(find_(f, {}));
+}
 inline std::vector<Behavior> CalculationUsage::getActionDefinition() const { return read_list_<Behavior>("actionDefinition"); }
 inline std::vector<std::string> CalculationUsage::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Behavior> CalculationUsage::getBehavior() const { return read_list_<Behavior>("behavior"); }
@@ -26419,6 +35670,10 @@ inline std::vector<Feature> OperatorExpression::typingFeatures() const { return 
 inline std::optional<std::string> OperatorExpression::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> OperatorExpression::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> OperatorExpression::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline std::optional<Type> OperatorExpression::find_type_argument() const {
+    static const Find f{"findTypeArgument", "find_type_argument", {}, {}, "element"};
+    return as_ref_<Type>(find_(f, {}));
+}
 inline std::vector<std::string> CollectExpression::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Expression> CollectExpression::getArgument() const { return read_list_<Expression>("argument"); }
 inline std::vector<Behavior> CollectExpression::getBehavior() const { return read_list_<Behavior>("behavior"); }
@@ -29242,6 +38497,10 @@ inline std::vector<Feature> StateUsage::typingFeatures() const { return as_list_
 inline std::optional<std::string> StateUsage::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> StateUsage::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> StateUsage::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<StateUsage> StateUsage::find_initial_states() const {
+    static const Find f{"findInitialStates", "find_initial_states", {}, {}, "elements"};
+    return as_list_<StateUsage>(find_(f, {}));
+}
 inline std::vector<Behavior> ExhibitStateUsage::getActionDefinition() const { return read_list_<Behavior>("actionDefinition"); }
 inline std::vector<std::string> ExhibitStateUsage::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Behavior> ExhibitStateUsage::getBehavior() const { return read_list_<Behavior>("behavior"); }
@@ -35981,6 +45240,10 @@ inline std::vector<Type> StateDefinition::supertypes(const std::optional<bool>& 
 inline std::optional<std::string> StateDefinition::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> StateDefinition::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> StateDefinition::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<StateUsage> StateDefinition::find_initial_states() const {
+    static const Find f{"findInitialStates", "find_initial_states", {}, {}, "elements"};
+    return as_list_<StateUsage>(find_(f, {}));
+}
 inline std::optional<ActionUsage> StateSubactionMembership::getAction() const { return read_ref_<ActionUsage>("action"); }
 inline std::vector<std::string> StateSubactionMembership::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::optional<std::string> StateSubactionMembership::getDeclaredName() const { return read_string_("declaredName"); }
@@ -37132,6 +46395,14 @@ inline std::vector<Feature> TransitionUsage::typingFeatures() const { return as_
 inline std::optional<std::string> TransitionUsage::unqualifiedNameOf(const std::optional<std::string>& qualifiedName) const { return as_string_(call_("unqualifiedNameOf", {detail::arg(qualifiedName)})); }
 inline std::optional<std::string> TransitionUsage::visibilityOf(const std::optional<Membership>& mem) const { return as_string_(call_("visibilityOf", {detail::arg(mem)})); }
 inline std::vector<Membership> TransitionUsage::visibleMemberships(const std::vector<Namespace>& excluded, const std::optional<bool>& isRecursive, const std::optional<bool>& includeAll) const { return as_list_<Membership>(call_("visibleMemberships", {detail::arg(excluded), detail::arg(isRecursive), detail::arg(includeAll)})); }
+inline ElementList<Type> TransitionUsage::find_accepted_types() const {
+    static const Find f{"findAcceptedTypes", "find_accepted_types", {}, {}, "elements"};
+    return as_list_<Type>(find_(f, {}));
+}
+inline bool TransitionUsage::find_is_accepted_type(const Type& type) const {
+    static const Find f{"findIsAcceptedType", "find_is_accepted_type", {"type"}, {"element"}, "bool"};
+    return as_bool_(find_(f, {detail::arg(type)})).value_or(false);
+}
 inline std::vector<std::string> TriggerInvocationExpression::getAliasIds() const { return read_string_list_("aliasIds"); }
 inline std::vector<Expression> TriggerInvocationExpression::getArgument() const { return read_list_<Expression>("argument"); }
 inline std::vector<Behavior> TriggerInvocationExpression::getBehavior() const { return read_list_<Behavior>("behavior"); }

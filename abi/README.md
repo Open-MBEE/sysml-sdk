@@ -81,9 +81,11 @@ The SysML Toolkit pin is one entry; everything else follows from it.
 
 1. Update `toolkit.tag` and `toolkit.commit` in `vendor/sysml-toolkit/PIN.json`. Continuous
    integration reads the tag from there, so the workflow needs no edit.
-2. If the SysML Toolkit's specification inputs changed (the two XMI files and the two property
-   tables listed under `files`), re-vendor them, update their hashes and `sourceCommit`, rerun
-   `tools/extract_metamodel.py` with a table version bump, and rerun the generators.
+2. If the SysML Toolkit's specification inputs changed (the two property tables listed under
+   `files`), re-vendor them, update their hashes and `sourceCommit`, rerun
+   `tools/extract_metamodel.py` with a table version bump, and rerun the generators. The
+   specification's XMI, listed under `downloads` with its URLs at the OMG, changes only with a new
+   version of the specification.
 3. Run `cargo update` here when the SysML Toolkit's own dependencies moved (the lock file is
    committed).
 4. Build, then run the whole test matrix and the Annex A regression test

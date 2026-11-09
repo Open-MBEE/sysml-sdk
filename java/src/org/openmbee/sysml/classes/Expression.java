@@ -127,4 +127,69 @@ public interface Expression extends Step {
     default String unqualifiedNameOf(String qualifiedName) { return $string($model().call(this, "unqualifiedNameOf", new Object[] {qualifiedName})); }
     default String visibilityOf(Membership mem) { return $string($model().call(this, "visibilityOf", new Object[] {mem})); }
     default java.util.List<Membership> visibleMemberships(java.util.List<Namespace> excluded, Boolean isRecursive, Boolean includeAll) { return $list($model().call(this, "visibleMemberships", new Object[] {excluded, isRecursive, includeAll})); }
+    /**
+     * Whether the value is written with a unit, &lt;expression&gt; [&lt;unit&gt;], a sign allowed.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findHasUnit() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_HAS_UNIT)); }
+    /**
+     * Whether findLiteral answers: a literal, or a sign on a number literal; a value with a unit is
+     * not one.
+     *
+     * @return true or false.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default boolean findIsLiteral() { return Boolean.TRUE.equals($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_IS_LITERAL)); }
+    /**
+     * A literal's value, a sign folded. Refused for anything else: a value with a unit (1500 [kg];
+     * findUnit gives the unit), an expression (2 * x), a reference (= other).
+     *
+     * @return The value as a Literal: an integer, a real, a Boolean, a string, or unbounded (*).
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default org.openmbee.sysml.Literal findLiteral() { return (org.openmbee.sysml.Literal) ($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_LITERAL)); }
+    /**
+     * A literal's value, a sign folded. Refused for anything else: a value with a unit (1500 [kg];
+     * findUnit gives the unit), an expression (2 * x), a reference (= other). Read as the type
+     * given: Long, Integer, Double, Boolean or String, or a case of Literal.
+     *
+     * @param type The class to read the value as: Long, Integer, Double, Boolean or String, or a
+     *     case of Literal.
+     * @return The value as the type given.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     * @throws java.lang.IllegalStateException Where the literal is of another kind (an integer read
+     *     as a String; unbounded read as a number).
+     */
+    default <T> T findLiteral(java.lang.Class<T> type) { return findLiteral().as(type); }
+    /**
+     * The unit a number literal is written in (1500 [kg], -5 [kg]: the element the reference names,
+     * SI::kilogram); none for a literal without a unit; refused for anything else, whose unit needs
+     * evaluation (3 [m/s], 2 * x). On a feature: findValue().findUnit().
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.RefusedException Where the definition gives no answer for this
+     *     element, as described above.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default org.openmbee.sysml.Element findUnit() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_UNIT)); }
+    /**
+     * The result expression of a calculation or constraint, owned or inherited; the specification
+     * has resultExpression only on analysis cases.
+     *
+     * @return The element, or null where there is none.
+     * @throws org.openmbee.sysml.NotAnsweredException Where the backend cannot answer a property or
+     *     operation this member reads; the message names it.
+     */
+    default Expression findResultExpression() { return $ref($model().findMember(this, org.openmbee.sysml.classes.Finds.FIND_RESULT_EXPRESSION)); }
 }

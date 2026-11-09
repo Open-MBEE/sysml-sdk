@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -131,6 +132,33 @@ void run_smoke(const std::string& payload) {
     const std::vector<Feature> inputs = calc.as<CalculationDefinition>().getInput();
     check(inputs.size() == 1 && inputs[0].getDeclaredName() == "x", "K.input");
     std::cout << "K.input -> [x] OK\n";
+
+    // --- convenience members: a payload holds property values only ---------
+    // Every convenience member is refused by the backend (not_answered, not the contract's refused),
+    // naming the member, on an element and over a list, whatever the arguments. The same checks run in
+    // every language.
+    auto demo = m.resolve("Demo").value().as<Namespace>();
+    const std::vector<std::pair<std::string, std::function<void()>>> finds = {
+        {"findPartDefs", [&] { (void)demo.find_part_defs(); }},
+        {"findPartDef", [&] { (void)demo.find_part_def("Vehicle", Scope::All); }},
+        {"findParts", [&] { (void)pd.find_parts(Scope::All, VisibilityFilter::Public, true); }},
+        {"findDocText", [&] { (void)pd.find_doc_text(); }},
+        {"findParts", [&] {
+             (void)ElementList<Type>(std::vector<Type>{vehicle.as<Type>(), base_def.as<Type>()}).find_parts();
+         }},
+    };
+    for (const auto& [member, call] : finds) {
+        try {
+            call();
+            check(false, member + " answered on a payload model");
+        } catch (const refused&) {
+            check(false, member + ": the contract's refusal, not the backend's");
+        } catch (const not_answered& e) {
+            check(std::string(e.what()).rfind(member + ": the convenience members are not available on payload models", 0) == 0,
+                  "the refusal names " + member + ": " + e.what());
+        }
+    }
+    std::cout << "convenience members on a payload model -> not_answered (as designed)\n";
 
     // --- collision rule: MetadataUsage.metaclass is the SPEC member --------
     const std::string meta_payload = R"json([

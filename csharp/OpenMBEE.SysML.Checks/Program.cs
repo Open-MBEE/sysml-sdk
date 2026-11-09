@@ -5,6 +5,9 @@ using OpenMBEE.SysML;
 using OpenMBEE.SysML.Checks;
 using SpecType = OpenMBEE.SysML.Type;
 
+if (args.Length > 0 && args[0] == "--fake-engine")
+    return EngineChecks.FakeEngine();
+
 var root = FindRepoRoot();
 Conformance.Run(Path.Combine(root, "metamodel.json"));
 RunSmoke(Path.Combine(root, "data", "bigger.full.json"));
@@ -12,6 +15,12 @@ CheckPayloadLibrary();
 LibraryChecks.Run();
 Console.WriteLine();
 ToolkitChecks.RunIfAvailable();
+Console.WriteLine();
+ConvenienceChecks.RunIfAvailable(root);
+Console.WriteLine();
+EngineChecks.Run();
+Console.WriteLine();
+PilotChecks.RunIfAvailable();
 Console.WriteLine("ALL C#-BACKEND SMOKE TESTS PASSED");
 return 0;
 
@@ -99,6 +108,39 @@ static void RunSmoke(string payloadPath)
     IReadOnlyList<Feature> inputs = ((CalculationDefinition)calc).input;
     Check(inputs.Count == 1 && inputs[0].declaredName == "x", "K.input");
     Console.WriteLine("K.input -> [x] OK");
+
+    // --- convenience members: a payload holds property values only ---------
+    // Every convenience member is refused by the backend (NotAnsweredException, not the contract's
+    // RefusedException), naming the member, on an element and over a list, whatever the arguments.
+    // The same checks run in every language.
+    var demo = (Namespace)m.Resolve("Demo")!;
+    var vehicleDef = (PartDefinition)vehicle;
+    (string Member, Action Call)[] finds =
+    {
+        ("findPartDefs", () => _ = demo.FindPartDefs()),
+        ("findPartDef", () => _ = demo.FindPartDef("Vehicle", Scope.All)),
+        ("findParts", () => _ = vehicleDef.FindParts(Scope.All, VisibilityFilter.Public, true)),
+        ("findDocText", () => _ = vehicleDef.FindDocText()),
+        ("findParts", () => _ = new List<SpecType> { vehicleDef, (SpecType)baseDef }.FindParts()),
+    };
+    foreach (var (member, call) in finds)
+    {
+        try
+        {
+            call();
+            throw new Exception($"FAILED: {member} answered on a payload model");
+        }
+        catch (RefusedException)
+        {
+            throw new Exception($"FAILED: {member}: the contract's refusal, not the backend's");
+        }
+        catch (NotAnsweredException e)
+        {
+            Check(e.Message.StartsWith($"{member}: the convenience members are not available on payload models"),
+                $"the refusal names {member}: {e.Message}");
+        }
+    }
+    Console.WriteLine("convenience members on a payload model -> NotAnsweredException (as designed)");
 
     // --- collision rule: MetadataUsage.metaclass is the SPEC member -------
     const string metaPayload = """

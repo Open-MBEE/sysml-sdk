@@ -8,6 +8,7 @@ import java.util.Map;
  * operation, its parameters' C types joined by ';'; plus bases. */
 final class ToolkitTable {
     static final String NAMES_DIGEST = "3f9b7564be50625bf64b6d5b8f8959ad9b0ca10a64c6b56ce5b1c84b6d2cd351";
+    static final String CONVENIENCE_DIGEST = "edcab7ef0f4863bdd8c564da76ea3cebd92d8a1ba5bd360d7805f7061f235feb";
     static final Map<String, String[]> FUNCS = new HashMap<>();
     static final Map<String, String[]> BASES = new HashMap<>();
     private ToolkitTable() {}

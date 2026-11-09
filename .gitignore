@@ -19,7 +19,9 @@ ts/sysmlv2_abi.wasm
 ts/LICENSE
 ts/NOTICE
 python/sysml/stdlib/
+python/sysml/_pilot/
 ts/stdlib/
+ts/pilot/
 
 # Query example build outputs
 examples/queries/java/out/
@@ -30,7 +32,12 @@ examples/vehicle.full.json
 examples/queries/models/*.full.json
 examples/sysml.library.full.json
 
+# The specification's XMI, which tools/extract_metamodel.py downloads from the OMG (URLs and hashes
+# in vendor/sysml-toolkit/PIN.json); never committed
+vendor/sysml-toolkit/spec-refs/
+
 # Binding libraries tools/package.py stages for the NuGet package
 csharp/*/runtimes/
 csharp/*/THIRD-PARTY/
 csharp/*/stdlib/
+csharp/*/pilot/

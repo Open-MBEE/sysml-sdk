@@ -21,8 +21,10 @@ use sysmlv2_model::full::{resolved_to_full_json, EmissionPolicy};
 use sysmlv2_model::json::{metaclass_conforms, ClosurePolicy, ElementRef, ResolvedModel};
 use sysmlv2_transform::{Library, Session as ToolkitSession};
 
-pub mod ops;
+pub mod convenience;
 pub mod generated;
+pub mod generated_convenience;
+pub mod ops;
 pub mod read;
 
 pub const ABI_VERSION: u32 = 1;
@@ -43,6 +45,9 @@ pub enum Status {
     Internal = 6,
     /// A reference in the model did not resolve; the message carries its spelling.
     Unresolved = 7,
+    /// A convenience member refuses for this element: its contract gives no answer here (`invalid` in
+    /// its OCL, such as the literal of an expression that is not one). The message says why.
+    Refused = 8,
 }
 
 pub type Handle = u64;
@@ -157,6 +162,13 @@ pub struct Session {
     handles: Vec<ElementRef>,
     index: HashMap<ElementRef, Handle>,
     last_error: String,
+    /// The answers already read, kept for the session's life: this library never changes the model,
+    /// and the SysML Toolkit computes its certified lists and `type` again on every read (a few
+    /// milliseconds each on the specification's Annex A model), which the convenience members read
+    /// many times. Property reads by element and name; operation calls by element, operation and
+    /// arguments. Only answers are kept, never refusals. A future editing entry point clears both.
+    pub(crate) reads: HashMap<ElementRef, HashMap<String, read::Answer>>,
+    pub(crate) calls: HashMap<(ElementRef, String), read::Answer>,
 }
 
 impl Session {
@@ -201,6 +213,11 @@ impl Session {
     pub fn fail(&mut self, status: Status, msg: impl Into<String>) -> Status {
         self.last_error = msg.into();
         status
+    }
+
+    /// Put the member that failed in front of the last error's message.
+    pub fn prefix_error(&mut self, member: &str) {
+        self.last_error = format!("{member}: {}", self.last_error);
     }
 }
 
@@ -272,6 +289,39 @@ unsafe fn read_units(names: *const Str, texts: *const Str, len: usize) -> Result
     Ok(units)
 }
 
+/// Keeps one session over the standard library in `dir` for the rest of the process. The SysML
+/// Toolkit shares a library directory's prepared library among the sessions that hold it; once the
+/// last of them is closed, the next session decodes the library's snapshot again (about 80 ms a
+/// model, against about 15 ms with the library held). Its documentation says so: "a retained SDK
+/// session also avoids disk decoding". The library stays in memory until the process ends; a library
+/// directory whose content changes is prepared again under its new content, as without this.
+///
+/// The toolkit keys the shared library by its library cache's content key, so it shares nothing when
+/// that cache is off (`SYSMLV2_LIB_CACHE=off`) or has no directory (none of `SYSMLV2_CACHE_DIR`,
+/// `XDG_CACHE_HOME`, `HOME` set, as on Windows outside a POSIX shell): each session then prepares
+/// its own library, and a retained one would only cost another preparation and the memory.
+fn retain_library(dir: &std::path::Path) {
+    let cache_on = std::env::var_os("SYSMLV2_LIB_CACHE").map_or(true, |v| v != "off");
+    if !cache_on || sysmlv2_model::libcache::default_cache_path(0).is_none() {
+        return;
+    }
+    thread_local! {
+        static RETAINED: std::cell::RefCell<HashMap<PathBuf, ToolkitSession>> =
+            std::cell::RefCell::new(HashMap::new());
+    }
+    let key = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    RETAINED.with(|retained| {
+        let mut retained = retained.borrow_mut();
+        if retained.contains_key(&key) {
+            return;
+        }
+        // A session of no units of its own: the library is all it holds.
+        if let Ok(anchor) = ToolkitSession::from_sources_with_library(Vec::new(), Some(Library::dir(dir))) {
+            retained.insert(key, anchor);
+        }
+    });
+}
+
 unsafe fn open_session(opts: *const LoadOptions, library: Option<Library>, out: *mut *mut Session) -> Status {
     if opts.is_null() || out.is_null() {
         return Status::InvalidArg;
@@ -321,11 +371,19 @@ unsafe fn open_session(opts: *const LoadOptions, library: Option<Library>, out: 
             eprintln!("sysmlv2-abi: library load failed ({}): {e}", dir.display());
             return Status::LoadFailed;
         }
+        retain_library(dir);
     }
     // Answer derived properties as the specification defines them, over the inheritance and
     // import closures and the implied library heritage, rather than the owned side only.
     inner.resolved().set_closure_policy(ClosurePolicy::Closure { include_implied: true });
-    let session = Box::new(Session { inner, handles: Vec::new(), index: HashMap::new(), last_error: String::new() });
+    let session = Box::new(Session {
+        inner,
+        handles: Vec::new(),
+        index: HashMap::new(),
+        last_error: String::new(),
+        reads: HashMap::new(),
+        calls: HashMap::new(),
+    });
     *out = Box::into_raw(session);
     Status::Ok
 }
@@ -368,9 +426,11 @@ pub unsafe extern "C" fn sysmlv2_last_error(s: *mut Session, out: *mut Str) -> S
 // ---------------------------------------------------------------- helpers the SDK needs
 
 /// The element a `::`-separated qualified name (quoted segments allowed) names, looked up from
-/// the model's root namespace; absent when nothing has that name. This is the SDK's own lookup,
-/// not the specification operation `Namespace::resolve`, which answers a Membership relative to
-/// a namespace.
+/// the model's root namespace; absent when nothing has that name. Only the names the model gives
+/// count: the toolkit's semantic lookup, not its compatibility one, which also finds an unnamed
+/// element under the name of what it references. This is the SDK's own lookup, not the
+/// specification operation `Namespace::resolve`, which answers a Membership relative to a
+/// namespace.
 #[no_mangle]
 pub unsafe extern "C" fn sysmlv2_session_resolve(s: *mut Session, name: *const Str, out: *mut Ref) -> Status {
     if s.is_null() || name.is_null() || out.is_null() {
@@ -381,7 +441,7 @@ pub unsafe extern "C" fn sysmlv2_session_resolve(s: *mut Session, name: *const S
         Ok(n) => n,
         Err(st) => return s.fail(st, "qualified name is not UTF-8"),
     };
-    let r = s.model().resolve_qualified(&name);
+    let r = s.model().resolve_semantic_qualified(&name);
     *out = s.mint_opt(r);
     Status::Ok
 }

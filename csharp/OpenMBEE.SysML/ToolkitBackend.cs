@@ -23,7 +23,7 @@ namespace OpenMBEE.SysML;
 
 public sealed unsafe class ToolkitBackend : IBackend, IDisposable
 {
-    private const int Ok = 0, NotImplemented = 1, NotApplicable = 2, InvalidHandle = 3, Unresolved = 7;
+    private const int Ok = 0, NotImplemented = 1, NotApplicable = 2, InvalidHandle = 3, Unresolved = 7, Refused = 8;
 
     // -- struct layouts (ABI section 4), x86-64 -------------------------------------------
     [StructLayout(LayoutKind.Sequential)]
@@ -82,6 +82,23 @@ public sealed unsafe class ToolkitBackend : IBackend, IDisposable
             NativeLibrary.TryGetExport(Handle, name, out var p) ? p : throw new SdkException($"binding library lacks {name}");
 
         /// <summary>A per-member function: (session, handle, out*) -> status.</summary>
+        private bool _convenienceChecked;
+
+        /// <summary>Whether the library has the convenience members this SDK was generated with.</summary>
+        internal void CheckConvenience()
+        {
+            if (_convenienceChecked) return;
+            if (!NativeLibrary.TryGetExport(Handle, "sysmlv2_convenience_digest", out var dp)
+                || !NativeLibrary.TryGetExport(Handle, "sysmlv2_convenience_digest_len", out var lp))
+                throw new SdkException("this binding library has no convenience members; rebuild it (abi/)");
+            var p = ((delegate* unmanaged[Cdecl]<IntPtr>)dp)();
+            var n = ((delegate* unmanaged[Cdecl]<nuint>)lp)();
+            var have = Encoding.UTF8.GetString((byte*)p, (int)n);
+            if (have != ToolkitTable.ConvenienceDigest)
+                throw new SdkException($"binding library was generated with convenience members {have[..12]}, this SDK with {ToolkitTable.ConvenienceDigest[..12]}; regenerate one side");
+            _convenienceChecked = true;
+        }
+
         internal delegate* unmanaged[Cdecl]<IntPtr, ulong, IntPtr, int> Member(string symbol) =>
             (delegate* unmanaged[Cdecl]<IntPtr, ulong, IntPtr, int>)Symbol(symbol);
 
@@ -211,6 +228,7 @@ public sealed unsafe class ToolkitBackend : IBackend, IDisposable
         if (st == NotImplemented) throw new NotImplementedInToolkitException(msg.Length == 0 ? $"{where}: not implemented by the SysML Toolkit" : msg);
         if (st == InvalidHandle) throw new GoneException(msg.Length == 0 ? $"{where}: invalid handle" : msg);
         if (st == Unresolved) throw new UnresolvedReferenceException(msg.Length == 0 ? $"{where}: a reference did not resolve" : msg);
+        if (st == Refused) throw new RefusedException(msg.Length == 0 ? $"{where}: refused" : msg);
         throw new SdkException($"{where}: status {st}: {msg}");
     }
 
@@ -245,7 +263,7 @@ public sealed unsafe class ToolkitBackend : IBackend, IDisposable
     /// checking the status.</summary>
     private JsonElement? Unpack(char code, byte* o, int st, string where)
     {
-        if (!Check(st, where)) return code is 'H' or 'T' ? ToJson(Array.Empty<object>()) : null;
+        if (!Check(st, where)) return code is 'H' or 'T' or 'M' ? ToJson(Array.Empty<object>()) : null;
         switch (code)
         {
             case 'H': return ToJson(TakeHandles((Handles*)o).Select(h => new Dictionary<string, string> { ["@id"] = h }).ToList());
@@ -258,6 +276,17 @@ public sealed unsafe class ToolkitBackend : IBackend, IDisposable
                 if (s is null) return ToJson(Array.Empty<object>());
                 using var doc = JsonDocument.Parse(s);
                 return doc.RootElement.Clone();
+            }
+            case 'M':
+            {
+                // A name-keyed map: JSON pairs of a name and a handle.
+                var s = TakeStr((Str*)o);
+                if (s is null) return ToJson(Array.Empty<object>());
+                using var doc = JsonDocument.Parse(s);
+                var pairs = doc.RootElement.EnumerateArray()
+                    .Select(p => new object[] { p[0].GetString()!, new Dictionary<string, string> { ["@id"] = p[1].GetString()! } })
+                    .ToList();
+                return ToJson(pairs);
             }
             case 'B': { var b = (Bool*)o; return b->Present == 0 ? null : ToJson(b->Value != 0); }
             case 'I': { var i = (Int*)o; return i->Present == 0 ? null : ToJson(i->Value); }
@@ -361,6 +390,64 @@ public sealed unsafe class ToolkitBackend : IBackend, IDisposable
                 var other => throw new SdkException($"{where}: no call shape for parameters '{other}'"),
             };
             return Unpack(e.Code, o, st, where);
+        }
+        finally { foreach (var p in pins) p.Free(); }
+    }
+
+    /// <summary>A convenience member, through its binding library function: a scope or visibility
+    /// filter as the literal's index, a boolean as a C bool, a string as text, an element as its
+    /// handle.</summary>
+    public JsonElement? Find(string handle, Find member, IReadOnlyList<object?> args)
+    {
+        _lib.CheckConvenience();
+        var where = $"{Metaclass(handle)}.{member.Name}()";
+        var code = member.Result switch
+        {
+            "elements" => 'H', "element" => 'R', "bool" => 'B', "int" or "unlimited" => 'I', "real" => 'F',
+            "strings" => 'T', "map" => 'M', _ => 'S',
+        };
+        var pins = new List<GCHandle>();
+        try
+        {
+            var kinds = member.ParamKinds;
+            var words = new ulong[kinds.Length];
+            var strs = new Str[kinds.Length];
+            var strBase = Pin(strs, pins);
+            var sig = new StringBuilder();
+            for (var i = 0; i < kinds.Length; i++)
+            {
+                var a = args[i];
+                switch (kinds[i])
+                {
+                    case "scope": words[i] = (ulong)(int)(Scope)a!; sig.Append('E'); break;
+                    case "visibility": words[i] = (ulong)(int)(VisibilityFilter)a!; sig.Append('E'); break;
+                    case "bool": words[i] = a is true ? 1UL : 0UL; sig.Append('B'); break;
+                    case "str":
+                        strs[i] = MakeStr((string)a!, pins);
+                        words[i] = (ulong)(strBase + i * sizeof(Str)); sig.Append('P'); break;
+                    default:
+                        words[i] = a is IElement el ? ulong.Parse(el.Handle)
+                            : throw new ArgumentException($"{where}: {member.ParamNames[i]} must be an element, not {a?.ToString() ?? "null"}");
+                        sig.Append('U'); break;
+                }
+            }
+            var fp = _lib.Symbol("sysmlv2_conv_" + member.Symbol);
+            var o = stackalloc byte[OutSize];
+            var h = ulong.Parse(handle);
+            var outp = (IntPtr)o;
+            int st = sig.ToString() switch
+            {
+                "" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, IntPtr, int>)fp)(_session, h, outp),
+                "E" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, uint, IntPtr, int>)fp)(_session, h, (uint)words[0], outp),
+                "P" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, IntPtr, IntPtr, int>)fp)(_session, h, (IntPtr)words[0], outp),
+                "U" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, ulong, IntPtr, int>)fp)(_session, h, words[0], outp),
+                "PE" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, IntPtr, uint, IntPtr, int>)fp)(_session, h, (IntPtr)words[0], (uint)words[1], outp),
+                "EEB" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, uint, uint, byte, IntPtr, int>)fp)(_session, h, (uint)words[0], (uint)words[1], (byte)words[2], outp),
+                "PEEB" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, IntPtr, uint, uint, byte, IntPtr, int>)fp)(_session, h, (IntPtr)words[0], (uint)words[1], (uint)words[2], (byte)words[3], outp),
+                "UEEB" => ((delegate* unmanaged[Cdecl]<IntPtr, ulong, ulong, uint, uint, byte, IntPtr, int>)fp)(_session, h, words[0], (uint)words[1], (uint)words[2], (byte)words[3], outp),
+                var other => throw new SdkException($"{where}: no call shape for parameters '{other}'"),
+            };
+            return Unpack(code, o, st, where);
         }
         finally { foreach (var p in pins) p.Free(); }
     }
